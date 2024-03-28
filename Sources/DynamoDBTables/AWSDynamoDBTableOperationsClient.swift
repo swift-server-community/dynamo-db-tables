@@ -1,0 +1,143 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the DynamoDBTables open source project
+//
+// This file is forked from https://github.com/amzn/smoke-dynamodb. Any commits
+// prior to February 2024
+// Copyright (c) 2021-2021 the DynamoDBTables authors
+// Licensed under Apache License v2.0
+//
+// Subsequent commits
+// Copyright (c) 2024 the DynamoDBTables authors
+// Licensed under Apache License v2.0
+//
+// See LICENSE.txt for license information
+// See CONTRIBUTORS.txt for the list of DynamoDBTables authors
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+//===----------------------------------------------------------------------===//
+// AWSDynamoDBTableOperationsClient.swift
+// DynamoDBClient
+//
+
+import DynamoDBModel
+import SmokeAWSCore
+import SmokeHTTPClient
+import SmokeAWSHttp
+import AsyncHTTPClient
+
+public typealias AWSDynamoDBTableOperationsClient =
+    AWSGenericDynamoDBTableOperationsClient<StandardHTTPClientCoreInvocationReporting<AWSClientInvocationTraceContext>>
+
+public struct AWSGenericDynamoDBTableOperationsClient<InvocationReportingType: HTTPClientCoreInvocationReporting> {
+    public let config: AWSGenericDynamoDBClientConfiguration<InvocationReportingType>
+    public let tableName: String
+    public let httpClient: HTTPOperationsClient
+    
+    public init<TraceContextType: InvocationTraceContext>(
+        tableName: String,
+        credentialsProvider: CredentialsProvider,
+        awsRegion: AWSRegion,
+        endpointHostName endpointHostNameOptional: String? = nil,
+        endpointPort: Int = 443,
+        requiresTLS: Bool? = nil,
+        service: String = "dynamodb",
+        contentType: String = "application/x-amz-json-1.0",
+        target: String? = "DynamoDB_20120810",
+        ignoreInvocationEventLoop: Bool = false,
+        traceContext: TraceContextType,
+        timeoutConfiguration: HTTPClient.Configuration.Timeout = .init(),
+        retryConfiguration: HTTPClientRetryConfiguration = .default,
+        eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
+        reportingConfiguration: SmokeAWSClientReportingConfiguration<DynamoDBModelOperations>
+            = SmokeAWSClientReportingConfiguration<DynamoDBModelOperations>(),
+        connectionPoolConfiguration: HTTPClient.Configuration.ConnectionPool? = nil,
+        enableAHCLogging: Bool = false)
+    where InvocationReportingType == StandardHTTPClientCoreInvocationReporting<TraceContextType> {
+        self.config = AWSGenericDynamoDBClientConfiguration(
+            credentialsProvider: credentialsProvider,
+            awsRegion: awsRegion,
+            endpointHostName: endpointHostNameOptional,
+            endpointPort: endpointPort,
+            requiresTLS: requiresTLS,
+            service: service,
+            contentType: contentType,
+            target: target,
+            ignoreInvocationEventLoop: ignoreInvocationEventLoop,
+            traceContext: traceContext,
+            timeoutConfiguration: timeoutConfiguration,
+            retryConfiguration: retryConfiguration,
+            eventLoopProvider: eventLoopProvider,
+            reportingConfiguration: reportingConfiguration,
+            connectionPoolConfiguration: connectionPoolConfiguration,
+            enableAHCLogging: enableAHCLogging)
+        self.httpClient = self.config.createHTTPOperationsClient()
+        self.tableName = tableName
+    }
+    
+    public init(
+        tableName: String,
+        credentialsProvider: CredentialsProvider,
+        awsRegion: AWSRegion,
+        endpointHostName endpointHostNameOptional: String? = nil,
+        endpointPort: Int = 443,
+        requiresTLS: Bool? = nil,
+        service: String = "dynamodb",
+        contentType: String = "application/x-amz-json-1.0",
+        target: String? = "DynamoDB_20120810",
+        ignoreInvocationEventLoop: Bool = false,
+        timeoutConfiguration: HTTPClient.Configuration.Timeout = .init(),
+        retryConfiguration: HTTPClientRetryConfiguration = .default,
+        eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
+        reportingConfiguration: SmokeAWSClientReportingConfiguration<DynamoDBModelOperations>
+            = SmokeAWSClientReportingConfiguration<DynamoDBModelOperations>(),
+        connectionPoolConfiguration: HTTPClient.Configuration.ConnectionPool? = nil,
+        enableAHCLogging: Bool = false)
+    where InvocationReportingType == StandardHTTPClientCoreInvocationReporting<AWSClientInvocationTraceContext> {
+        self.init(tableName: tableName,
+                  credentialsProvider: credentialsProvider,
+                  awsRegion: awsRegion,
+                  endpointHostName: endpointHostNameOptional,
+                  endpointPort: endpointPort,
+                  requiresTLS: requiresTLS,
+                  service: service,
+                  contentType: contentType,
+                  target: target,
+                  ignoreInvocationEventLoop: ignoreInvocationEventLoop,
+                  traceContext: AWSClientInvocationTraceContext(),
+                  timeoutConfiguration: timeoutConfiguration,
+                  retryConfiguration: retryConfiguration,
+                  eventLoopProvider: eventLoopProvider,
+                  reportingConfiguration: reportingConfiguration,
+                  connectionPoolConfiguration: connectionPoolConfiguration,
+                  enableAHCLogging: enableAHCLogging)
+    }
+    
+    internal init(config: AWSGenericDynamoDBClientConfiguration<InvocationReportingType>,
+                  tableName: String) {
+        self.config = config
+        self.tableName = tableName
+        self.httpClient = self.config.createHTTPOperationsClient()
+    }
+    
+    /**
+     Gracefully shuts down the eventloop if owned by this client.
+     This function is idempotent and will handle being called multiple
+     times. Will block until shutdown is complete.
+     */
+    public func syncShutdown() throws {
+        try httpClient.syncShutdown()
+    }
+    
+    /**
+     Gracefully shuts down the eventloop if owned by this client.
+     This function is idempotent and will handle being called multiple
+     times. Will return when shutdown is complete.
+     */
+#if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
+    public func shutdown() async throws {
+        try await httpClient.shutdown()
+    }
+#endif
+}
