@@ -5,7 +5,7 @@
 //
 // This file is forked from https://github.com/amzn/smoke-dynamodb. Any commits
 // prior to February 2024
-// Copyright (c) 2021-2021 the DynamoDBTables authors
+// Copyright 2018-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // Licensed under Apache License v2.0
 //
 // Subsequent commits
