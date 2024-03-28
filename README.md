@@ -16,7 +16,7 @@
 
 DynamoDBTables is a library to make it easy to use DynamoDB from Swift-based applications, with a particular focus on usage with polymorphic database tables (tables that don't have a single schema for all rows.
 
-DynamoDBTables is a fork of https://github.com/swift-server-community/dynamo-db-tables is acknowledges that authors of that original package.
+DynamoDBTables is a fork of https://github.com/amzn/smoke-dynamodb and acknowledges that authors of that original package.
 
 # Getting Started
 
