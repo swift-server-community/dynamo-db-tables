@@ -8,15 +8,12 @@
 <img src="https://img.shields.io/badge/ubuntu-18.04|20.04-yellow.svg?style=flat" alt="Ubuntu 18.04 and 20.04 Tested">
 <img src="https://img.shields.io/badge/CentOS-8-yellow.svg?style=flat" alt="CentOS 8 Tested">
 <img src="https://img.shields.io/badge/AmazonLinux-2-yellow.svg?style=flat" alt="Amazon Linux 2 Tested">
-<a href="https://gitter.im/SmokeServerSide">
-<img src="https://img.shields.io/badge/chat-on%20gitter-ee115e.svg?style=flat" alt="Join the Smoke Server Side community on gitter">
-</a>
 <img src="https://img.shields.io/badge/license-Apache2-blue.svg?style=flat" alt="Apache 2">
 </p>
 
 DynamoDBTables is a library to make it easy to use DynamoDB from Swift-based applications, with a particular focus on usage with polymorphic database tables (tables that don't have a single schema for all rows.
 
-DynamoDBTables is a fork of https://github.com/amzn/smoke-dynamodb and acknowledges that authors of that original package.
+DynamoDBTables is a fork of https://github.com/amzn/smoke-dynamodb and acknowledges the authors of that original package.
 
 # Getting Started
 
@@ -34,7 +31,7 @@ dependencies: [
 
 .target(name: ..., dependencies: [
     ..., 
-    .product(name: "DynamoDBTables", package: "smoke-dynamodb"),
+    .product(name: "DynamoDBTables", package: "dynamo-db-tables"),
 ]),
 ```
 
