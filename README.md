@@ -1,6 +1,6 @@
 <p align="center">
-<a href="https://github.com/amzn/smoke-dynamodb/actions">
-<img src="https://github.com/amzn/smoke-dynamodb/actions/workflows/swift.yml/badge.svg?branch=main" alt="Build - Main Branch">
+<a href="https://github.com/swift-server-community/dynamo-db-tables/actions">
+<img src="https://github.com/swift-server-community/dynamo-db-tables/actions/workflows/swift.yml/badge.svg?branch=main" alt="Build - Main Branch">
 </a>
 <a href="http://swift.org">
 <img src="https://img.shields.io/badge/swift-5.6|5.7|5.8-orange.svg?style=flat" alt="Swift 5.6, 5.7 and 5.8 Tested">
@@ -14,25 +14,27 @@
 <img src="https://img.shields.io/badge/license-Apache2-blue.svg?style=flat" alt="Apache 2">
 </p>
 
-SmokeDynamoDB is a library to make it easy to use DynamoDB from Swift-based applications, with a particular focus on usage with polymorphic database tables (tables that don't have a single schema for all rows.
+DynamoDBTables is a library to make it easy to use DynamoDB from Swift-based applications, with a particular focus on usage with polymorphic database tables (tables that don't have a single schema for all rows.
+
+DynamoDBTables is a fork of https://github.com/swift-server-community/dynamo-db-tables is acknowledges that authors of that original package.
 
 # Getting Started
 
-## Step 1: Add the SmokeDynamoDB dependency
+## Step 1: Add the DynamoDBTables dependency
 
-SmokeDynamoDB uses the Swift Package Manager. To use the framework, add the following dependency
+DynamoDBTables uses the Swift Package Manager. To use the framework, add the following dependency
 to your Package.swift-
 
 For swift-tools version 5.2 and greater-
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/amzn/smoke-dynamodb", from: "3.0.0-alpha.5")
+    .package(url: "https://github.com/swift-server-community/dynamo-db-tables", from: "0.1.0")
 ]
 
 .target(name: ..., dependencies: [
     ..., 
-    .product(name: "SmokeDynamoDB", package: "smoke-dynamodb"),
+    .product(name: "DynamoDBTables", package: "smoke-dynamodb"),
 ]),
 ```
 
@@ -41,19 +43,19 @@ For swift-tools version 5.1 and prior-
  
 ```swift
 dependencies: [
-    .package(url: "https://github.com/amzn/smoke-dynamodb", from: "3.0.0-alpha.5")
+    .package(url: "https://github.com/swift-server-community/dynamo-db-tables", from: "0.1.0")
 ]
 
 .target(
     name: ...,
-    dependencies: [..., "SmokeDynamoDB"]),
+    dependencies: [..., "DynamoDBTables"]),
 ```
 
 # Basic Usage
 
 ## Naming Schema
 
-For consistency in naming across the library, SmokeDynamoDB will case DynamoDB to what is observed and standardized in AWS's documentation of DynamoDB:
+For consistency in naming across the library, DynamoDBTables will case DynamoDB to what is observed and standardized in AWS's documentation of DynamoDB:
 
 - Uppercase: `DynamoDB`
   - Use-cases: Class names, struct names, upper-cased while in the middle of a camel cased function/variable name, and strings referring to it as a proper noun.
@@ -162,7 +164,7 @@ The instructions to set up  DynamoDB Local is [here](https://docs.aws.amazon.com
 You can then call DynamoDB Local using the following code.
 
 ```swift
-import SmokeDynamoDB
+import DynamoDBTables
 import SmokeAWSCore
 import SmokeAWSHttp
 import Logging
