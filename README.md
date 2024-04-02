@@ -5,7 +5,7 @@
 <a href="http://swift.org">
 <img src="https://img.shields.io/badge/swift-5.8|5.9|5.10-orange.svg?style=flat" alt="Swift 5.8, 5.9 and 5.10 Tested">
 </a>
-<img src="https://img.shields.io/badge/ubuntu-18.04|20.04-yellow.svg?style=flat" alt="Ubuntu 20.04 and 22.04 Tested">
+<img src="https://img.shields.io/badge/ubuntu-20.04|22.04-yellow.svg?style=flat" alt="Ubuntu 20.04 and 22.04 Tested">
 <img src="https://img.shields.io/badge/license-Apache2-blue.svg?style=flat" alt="Apache 2">
 </p>
 
