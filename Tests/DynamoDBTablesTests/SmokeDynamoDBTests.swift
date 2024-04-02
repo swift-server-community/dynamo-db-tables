@@ -23,9 +23,10 @@
 // DynamoDBTablesTests.swift
 // DynamoDBTablesTests
 //
+
 import XCTest
 @testable import DynamoDBTables
-import DynamoDBModel
+import AWSDynamoDB
 
 fileprivate let dynamodbEncoder = DynamoDBEncoder()
 fileprivate let dynamodbDecoder = DynamoDBDecoder()
@@ -61,7 +62,7 @@ class DynamoDBTablesTests: XCTestCase {
         let inputData = serializedTypeADatabaseItem.data(using: .utf8)!
         
         guard let jsonAttributeValue = assertNoThrow(
-            try jsonDecoder.decode(DynamoDBModel.AttributeValue.self, from: inputData)) else {
+            try jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)) else {
                 return
         }
         
@@ -75,14 +76,19 @@ class DynamoDBTablesTests: XCTestCase {
                 return
         }
         
-        XCTAssertEqual(decodeAttributeValue.M!.count, jsonAttributeValue.M!.count)
+        switch (decodeAttributeValue, jsonAttributeValue) {
+        case (.m(let left), .m(let right)):
+            XCTAssertEqual(left.count, right.count)
+        default:
+            XCTFail()
+        }
     }
     
     func testEncodeTypedItemWithTimeToLive() {
         let inputData = serializedTypeADatabaseItemWithTimeToLive.data(using: .utf8)!
         
         guard let jsonAttributeValue = assertNoThrow(
-            try jsonDecoder.decode(DynamoDBModel.AttributeValue.self, from: inputData)) else {
+            try jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)) else {
             return
         }
         
@@ -96,14 +102,19 @@ class DynamoDBTablesTests: XCTestCase {
             return
         }
         
-        XCTAssertEqual(decodeAttributeValue.M!.count, jsonAttributeValue.M!.count)
+        switch (decodeAttributeValue, jsonAttributeValue) {
+        case (.m(let left), .m(let right)):
+            XCTAssertEqual(left.count, right.count)
+        default:
+            XCTFail()
+        }
     }
 
     func testTypedDatabaseItem() {
         let inputData = serializedTypeADatabaseItem.data(using: .utf8)!
         
         guard let attributeValue = assertNoThrow(
-                try jsonDecoder.decode(DynamoDBModel.AttributeValue.self, from: inputData)) else {
+                try jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)) else {
             return
         }
         
@@ -127,7 +138,7 @@ class DynamoDBTablesTests: XCTestCase {
         let inputData = serializedTypeADatabaseItemWithTimeToLive.data(using: .utf8)!
         
         guard let attributeValue = assertNoThrow(
-            try jsonDecoder.decode(DynamoDBModel.AttributeValue.self, from: inputData)) else {
+            try jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)) else {
             return
         }
         
@@ -155,7 +166,7 @@ class DynamoDBTablesTests: XCTestCase {
         let inputData = serializedPolymorphicDatabaseItemList.data(using: .utf8)!
         
         guard let attributeValues = assertNoThrow(
-                try jsonDecoder.decode([DynamoDBModel.AttributeValue].self, from: inputData)) else {
+                try jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData)) else {
             return
         }
         
@@ -205,7 +216,7 @@ class DynamoDBTablesTests: XCTestCase {
         let inputData = serializedPolymorphicDatabaseItemList.data(using: .utf8)!
         
         guard let attributeValues = assertNoThrow(
-                try jsonDecoder.decode([DynamoDBModel.AttributeValue].self, from: inputData)) else {
+                try jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData)) else {
             return
         }
         
@@ -228,7 +239,7 @@ class DynamoDBTablesTests: XCTestCase {
         let inputData = serializedPolymorphicDatabaseItemListWithIndex.data(using: .utf8)!
         
         guard let attributeValues = assertNoThrow(
-                try jsonDecoder.decode([DynamoDBModel.AttributeValue].self, from: inputData)) else {
+                try jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData)) else {
             return
         }
         

@@ -3,7 +3,7 @@
 // This source file is part of the DynamoDBTables open source project
 //
 // This file is forked from
-// https://github.com/amzn/smoke-dynamodb/tree/smoke-dynamodb-3.x/Sources/SmokeDynamoDB/DynamoDBDecoder.swift
+// https://github.com/amzn/smoke-dynamodb/tree/aws-sdk-swift-main/Sources/SmokeDynamoDB/DynamoDBDecoder.swift
 // Copyright 2018-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // Licensed under Apache License v2.0
 //
@@ -25,7 +25,7 @@
 //
 
 import Foundation
-import DynamoDBModel
+import AWSDynamoDB
 
 public class DynamoDBDecoder {
     internal let attributeNameTransform: ((String) -> String)?
@@ -34,7 +34,7 @@ public class DynamoDBDecoder {
         self.attributeNameTransform = attributeNameTransform
     }
     
-    public func decode<T: Swift.Decodable>(_ value: DynamoDBModel.AttributeValue, userInfo: [CodingUserInfoKey: Any] = [:]) throws -> T {
+    public func decode<T: Swift.Decodable>(_ value: DynamoDBClientTypes.AttributeValue, userInfo: [CodingUserInfoKey: Any] = [:]) throws -> T {
         let container = InternalSingleValueDecodingContainer(attributeValue: value,
                                                              codingPath: [],
                                                              userInfo: userInfo,

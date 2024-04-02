@@ -25,10 +25,9 @@
 //  DynamoDBTablesTests
 //
 
+import Foundation
 import XCTest
 @testable import DynamoDBTables
-import SmokeHTTPClient
-import DynamoDBModel
 
 private typealias DatabaseRowType =
     TypedDatabaseItem<StandardPrimaryKeyAttributes, RowWithItemVersion<TestTypeA>>

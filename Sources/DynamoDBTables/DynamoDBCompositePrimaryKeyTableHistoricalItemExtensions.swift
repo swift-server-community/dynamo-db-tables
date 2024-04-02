@@ -27,8 +27,7 @@
 
 import Foundation
 import Logging
-import SmokeHTTPClient
-import DynamoDBModel
+import AWSDynamoDB
 
 public extension DynamoDBCompositePrimaryKeyTable {
 
