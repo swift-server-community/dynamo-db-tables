@@ -3,7 +3,7 @@
 // This source file is part of the DynamoDBTables open source project
 //
 // This file is forked from
-// https://github.com/amzn/smoke-dynamodb/tree/smoke-dynamodb-3.x/Sources/SmokeDynamoDB/DynamoDBEncoder.swift
+// https://github.com/amzn/smoke-dynamodb/tree/aws-sdk-swift-main/Sources/SmokeDynamoDB/DynamoDBEncoder.swift
 // Copyright 2018-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // Licensed under Apache License v2.0
 //
@@ -25,7 +25,7 @@
 //
 
 import Foundation
-import DynamoDBModel
+import AWSDynamoDB
 
 public class DynamoDBEncoder {
     private let attributeNameTransform: ((String) -> String)?
@@ -34,7 +34,7 @@ public class DynamoDBEncoder {
         self.attributeNameTransform = attributeNameTransform
     }
     
-    public func encode<T: Swift.Encodable>(_ value: T, userInfo: [CodingUserInfoKey: Any] = [:]) throws -> DynamoDBModel.AttributeValue {
+    public func encode<T: Swift.Encodable>(_ value: T, userInfo: [CodingUserInfoKey: Any] = [:]) throws -> DynamoDBClientTypes.AttributeValue {
         let container = InternalSingleValueEncodingContainer(userInfo: userInfo,
                                                              codingPath: [],
                                                              attributeNameTransform: attributeNameTransform,
@@ -46,11 +46,11 @@ public class DynamoDBEncoder {
 }
 
 internal protocol AttributeValueConvertable {
-    var attributeValue: DynamoDBModel.AttributeValue { get }
+    var attributeValue: DynamoDBClientTypes.AttributeValue { get }
 }
 
-extension DynamoDBModel.AttributeValue: AttributeValueConvertable {
-    var attributeValue: DynamoDBModel.AttributeValue {
+extension DynamoDBClientTypes.AttributeValue: AttributeValueConvertable {
+    var attributeValue: DynamoDBClientTypes.AttributeValue {
         return self
     }
 }

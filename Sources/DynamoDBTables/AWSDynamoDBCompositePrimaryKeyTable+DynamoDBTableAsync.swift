@@ -25,9 +25,7 @@
 //
 
 import Foundation
-import SmokeAWSCore
-import DynamoDBModel
-import SmokeHTTPClient
+import AWSDynamoDB
 import Logging
 
 /// DynamoDBTable conformance async functions
@@ -42,8 +40,8 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
     func clobberItem<AttributesType, ItemType>(_ item: TypedDatabaseItem<AttributesType, ItemType>) async throws {
         let attributes = try getAttributes(forItem: item)
         
-        let putItemInput = DynamoDBModel.PutItemInput(item: attributes,
-                                                      tableName: targetTableName)
+        let putItemInput = AWSDynamoDB.PutItemInput(item: attributes,
+                                                    tableName: targetTableName)
         
         try await putItem(forInput: putItemInput, withKey: item.compositePrimaryKey)
     }
@@ -61,30 +59,22 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             
         self.logger.trace("dynamodb.getItem with key: \(key) and table name \(targetTableName)")
         
-        do {
-            let attributeValue = try await self.dynamodb.getItem(input: getItemInput)
+        let attributeValue = try await self.dynamodb.getItem(input: getItemInput)
+        
+        if let item = attributeValue.item {
+            self.logger.trace("Value returned from DynamoDB.")
             
-            if let item = attributeValue.item {
-                self.logger.trace("Value returned from DynamoDB.")
-                
-                do {
-                    let decodedItem: TypedDatabaseItem<AttributesType, ItemType>? =
-                        try DynamoDBDecoder().decode(DynamoDBModel.AttributeValue(M: item))
-                    return decodedItem
-                } catch {
-                    throw error.asUnrecognizedDynamoDBTableError()
-                }
-            } else {
-                self.logger.trace("No item returned from DynamoDB.")
-                
-                return nil
+            do {
+                let decodedItem: TypedDatabaseItem<AttributesType, ItemType>? =
+                    try DynamoDBDecoder().decode(DynamoDBClientTypes.AttributeValue.m(item))
+                return decodedItem
+            } catch {
+                throw error.asUnrecognizedDynamoDBTableError()
             }
-        } catch {
-            if let typedError = error as? DynamoDBError {
-                throw typedError.asDynamoDBTableError()
-            }
+        } else {
+            self.logger.trace("No item returned from DynamoDB.")
             
-            throw error.asUnrecognizedDynamoDBTableError()
+            return nil
         }
     }
     
@@ -167,73 +157,66 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                                                              exclusiveStartKey: String?,
                                                              consistentRead: Bool) async throws
     -> (items: [ReturnedType], lastEvaluatedKey: String?) {
-        let queryInput = try DynamoDBModel.QueryInput.forSortKeyCondition(partitionKey: partitionKey, targetTableName: targetTableName,
-                                                                          primaryKeyType: ReturnedType.AttributesType.self,
-                                                                          sortKeyCondition: sortKeyCondition, limit: limit,
-                                                                          scanIndexForward: scanIndexForward, exclusiveStartKey: exclusiveStartKey,
-                                                                          consistentRead: consistentRead)
+        let queryInput = try AWSDynamoDB.QueryInput.forSortKeyCondition(partitionKey: partitionKey, targetTableName: targetTableName,
+                                                                        primaryKeyType: ReturnedType.AttributesType.self,
+                                                                        sortKeyCondition: sortKeyCondition, limit: limit,
+                                                                        scanIndexForward: scanIndexForward,
+                                                                        exclusiveStartKey: exclusiveStartKey,
+                                                                        consistentRead: consistentRead)
         
         let logMessage = "dynamodb.query with partitionKey: \(partitionKey), " +
             "sortKeyCondition: \(sortKeyCondition.debugDescription), and table name \(targetTableName)."
         self.logger.trace("\(logMessage)")
         
-        do {
-            let queryOutput = try await self.dynamodb.query(input: queryInput)
+        let queryOutput = try await self.dynamodb.query(input: queryInput)
+        
+        let lastEvaluatedKey: String?
+        if let returnedLastEvaluatedKey = queryOutput.lastEvaluatedKey {
+            let encodedLastEvaluatedKey: Data
             
-            let lastEvaluatedKey: String?
-            if let returnedLastEvaluatedKey = queryOutput.lastEvaluatedKey {
-                let encodedLastEvaluatedKey: Data
-                
-                do {
-                    encodedLastEvaluatedKey = try JSONEncoder().encode(returnedLastEvaluatedKey)
-                } catch {
-                    throw error.asUnrecognizedDynamoDBTableError()
+            do {
+                encodedLastEvaluatedKey = try JSONEncoder().encode(returnedLastEvaluatedKey)
+            } catch {
+                throw error.asUnrecognizedDynamoDBTableError()
+            }
+            
+            lastEvaluatedKey = String(data: encodedLastEvaluatedKey, encoding: .utf8)
+        } else {
+            lastEvaluatedKey = nil
+        }
+        
+        if let outputAttributeValues = queryOutput.items {
+            let items: [ReturnedType]
+            
+            do {
+                items = try outputAttributeValues.map { values in
+                    let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
+                    
+                    let decodedItem: ReturnTypeDecodable<ReturnedType> = try DynamoDBDecoder().decode(attributeValue)
+                                                    
+                    return decodedItem.decodedValue
                 }
-                
-                lastEvaluatedKey = String(data: encodedLastEvaluatedKey, encoding: .utf8)
-            } else {
-                lastEvaluatedKey = nil
+            } catch {
+                throw error.asUnrecognizedDynamoDBTableError()
             }
             
-            if let outputAttributeValues = queryOutput.items {
-                let items: [ReturnedType]
-                
-                do {
-                    items = try outputAttributeValues.map { values in
-                        let attributeValue = DynamoDBModel.AttributeValue(M: values)
-                        
-                        let decodedItem: ReturnTypeDecodable<ReturnedType> = try DynamoDBDecoder().decode(attributeValue)
-                                                        
-                        return decodedItem.decodedValue
-                    }
-                } catch {
-                    throw error.asUnrecognizedDynamoDBTableError()
-                }
-                
-                return (items, lastEvaluatedKey)
-            } else {
-                return ([], lastEvaluatedKey)
-            }
-        } catch {
-            if let typedError = error as? DynamoDBError {
-                throw typedError.asDynamoDBTableError()
-            }
-            
-            throw error.asUnrecognizedDynamoDBTableError()
+            return (items, lastEvaluatedKey)
+        } else {
+            return ([], lastEvaluatedKey)
         }
     }
     
-    private func putItem<AttributesType>(forInput putItemInput: DynamoDBModel.PutItemInput,
+    private func putItem<AttributesType>(forInput putItemInput: AWSDynamoDB.PutItemInput,
                                          withKey compositePrimaryKey: CompositePrimaryKey<AttributesType>) async throws {
-        let logMessage = "dynamodb.putItem with item: \(putItemInput.item) and table name \(targetTableName)."
+        let logMessage = "dynamodb.putItem with item: \(putItemInput) and table name \(targetTableName)."
         self.logger.trace("\(logMessage)")
         
         do {
             _ = try await self.dynamodb.putItem(input: putItemInput)
-        } catch DynamoDBError.conditionalCheckFailed(let errorPayload) {
+        } catch let error as ConditionalCheckFailedException {
             throw DynamoDBTableError.conditionalCheckFailed(partitionKey: compositePrimaryKey.partitionKey,
                                                             sortKey: compositePrimaryKey.sortKey,
-                                                            message: errorPayload.message)
+                                                            message: error.message)
         } catch {
             self.logger.warning("Error from AWSDynamoDBTable: \(error)")
 
@@ -289,7 +272,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                                                         exclusiveStartKey: String?,
                                                         consistentRead: Bool) async throws
     -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?) {
-        let queryInput = try DynamoDBModel.QueryInput.forSortKeyCondition(
+        let queryInput = try AWSDynamoDB.QueryInput.forSortKeyCondition(
                 partitionKey: partitionKey, targetTableName: targetTableName,
                 primaryKeyType: AttributesType.self,
                 sortKeyCondition: sortKeyCondition, limit: limit,
@@ -300,47 +283,39 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             "sortKeyCondition: \(sortKeyCondition.debugDescription), and table name \(targetTableName)."
         self.logger.trace("\(logMessage)")
         
-        do {
-            let queryOutput = try await self.dynamodb.query(input: queryInput)
+        let queryOutput = try await self.dynamodb.query(input: queryInput)
+        
+        let lastEvaluatedKey: String?
+        if let returnedLastEvaluatedKey = queryOutput.lastEvaluatedKey {
+            let encodedLastEvaluatedKey: Data
             
-            let lastEvaluatedKey: String?
-            if let returnedLastEvaluatedKey = queryOutput.lastEvaluatedKey {
-                let encodedLastEvaluatedKey: Data
-                
-                do {
-                    encodedLastEvaluatedKey = try JSONEncoder().encode(returnedLastEvaluatedKey)
-                } catch {
-                    throw error.asUnrecognizedDynamoDBTableError()
+            do {
+                encodedLastEvaluatedKey = try JSONEncoder().encode(returnedLastEvaluatedKey)
+            } catch {
+                throw error.asUnrecognizedDynamoDBTableError()
+            }
+            
+            lastEvaluatedKey = String(data: encodedLastEvaluatedKey, encoding: .utf8)
+        } else {
+            lastEvaluatedKey = nil
+        }
+        
+        if let outputAttributeValues = queryOutput.items {
+            let items: [TypedDatabaseItem<AttributesType, ItemType>]
+            
+            do {
+                items = try outputAttributeValues.map { values in
+                    let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
+                    
+                    return try DynamoDBDecoder().decode(attributeValue)
                 }
-                
-                lastEvaluatedKey = String(data: encodedLastEvaluatedKey, encoding: .utf8)
-            } else {
-                lastEvaluatedKey = nil
+            } catch {
+                throw error.asUnrecognizedDynamoDBTableError()
             }
             
-            if let outputAttributeValues = queryOutput.items {
-                let items: [TypedDatabaseItem<AttributesType, ItemType>]
-                
-                do {
-                    items = try outputAttributeValues.map { values in
-                        let attributeValue = DynamoDBModel.AttributeValue(M: values)
-                        
-                        return try DynamoDBDecoder().decode(attributeValue)
-                    }
-                } catch {
-                    throw error.asUnrecognizedDynamoDBTableError()
-                }
-                
-                return (items, lastEvaluatedKey)
-            } else {
-                return ([], lastEvaluatedKey)
-            }
-        } catch {
-            if let typedError = error as? DynamoDBError {
-                throw typedError.asDynamoDBTableError()
-            }
-            
-            throw error.asUnrecognizedDynamoDBTableError()
+            return (items, lastEvaluatedKey)
+        } else {
+            return ([], lastEvaluatedKey)
         }
     }
 }

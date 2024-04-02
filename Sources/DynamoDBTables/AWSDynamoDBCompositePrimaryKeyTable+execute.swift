@@ -25,9 +25,7 @@
 //
 
 import Foundation
-import SmokeAWSCore
-import DynamoDBModel
-import SmokeHTTPClient
+import AWSDynamoDB
 import Logging
 
 // ExecuteStatement has a maximum of 50 of decomposed read operations per request
@@ -85,36 +83,28 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                                      additionalWhereClause: additionalWhereClause)
         let executeInput = ExecuteStatementInput(consistentRead: true, nextToken: nextToken, statement: statement)
         
-        do {
-            let executeOutput = try await self.dynamodb.executeStatement(input: executeInput)
+        let executeOutput = try await self.dynamodb.executeStatement(input: executeInput)
+        
+        let nextToken = executeOutput.nextToken
+        
+        if let outputAttributeValues = executeOutput.items {
+            let items: [ReturnedType]
             
-            let nextToken = executeOutput.nextToken
-            
-            if let outputAttributeValues = executeOutput.items {
-                let items: [ReturnedType]
-                
-                do {
-                    items = try outputAttributeValues.map { values in
-                        let attributeValue = DynamoDBModel.AttributeValue(M: values)
-                        
-                        let decodedItem: ReturnTypeDecodable<ReturnedType> = try DynamoDBDecoder().decode(attributeValue)
-                                                        
-                        return decodedItem.decodedValue
-                    }
-                } catch {
-                    throw error.asUnrecognizedDynamoDBTableError()
+            do {
+                items = try outputAttributeValues.map { values in
+                    let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
+                    
+                    let decodedItem: ReturnTypeDecodable<ReturnedType> = try DynamoDBDecoder().decode(attributeValue)
+                                                    
+                    return decodedItem.decodedValue
                 }
-                
-                return (items, nextToken)
-            } else {
-                return ([], nextToken)
-            }
-        } catch {
-            if let typedError = error as? DynamoDBError {
-                throw typedError.asDynamoDBTableError()
+            } catch {
+                throw error.asUnrecognizedDynamoDBTableError()
             }
             
-            throw error.asUnrecognizedDynamoDBTableError()
+            return (items, nextToken)
+        } else {
+            return ([], nextToken)
         }
     }
     
@@ -160,34 +150,26 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                                      additionalWhereClause: additionalWhereClause)
         let executeInput = ExecuteStatementInput(consistentRead: true, nextToken: nextToken, statement: statement)
         
-        do {
-            let executeOutput = try await self.dynamodb.executeStatement(input: executeInput)
+        let executeOutput = try await self.dynamodb.executeStatement(input: executeInput)
+        
+        let nextToken = executeOutput.nextToken
+        
+        if let outputAttributeValues = executeOutput.items {
+            let items: [TypedDatabaseItem<AttributesType, ItemType>]
             
-            let nextToken = executeOutput.nextToken
-            
-            if let outputAttributeValues = executeOutput.items {
-                let items: [TypedDatabaseItem<AttributesType, ItemType>]
-                
-                do {
-                    items = try outputAttributeValues.map { values in
-                        let attributeValue = DynamoDBModel.AttributeValue(M: values)
-                        
-                        return try DynamoDBDecoder().decode(attributeValue)
-                    }
-                } catch {
-                    throw error.asUnrecognizedDynamoDBTableError()
+            do {
+                items = try outputAttributeValues.map { values in
+                    let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
+                    
+                    return try DynamoDBDecoder().decode(attributeValue)
                 }
-                
-                return (items, nextToken)
-            } else {
-                return ([], nextToken)
-            }
-        } catch {
-            if let typedError = error as? DynamoDBError {
-                throw typedError.asDynamoDBTableError()
+            } catch {
+                throw error.asUnrecognizedDynamoDBTableError()
             }
             
-            throw error.asUnrecognizedDynamoDBTableError()
+            return (items, nextToken)
+        } else {
+            return ([], nextToken)
         }
     }
     

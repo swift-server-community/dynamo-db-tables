@@ -25,9 +25,8 @@
 //
 
 import Foundation
-import SmokeHTTPClient
 import Logging
-import DynamoDBModel
+import AWSDynamoDB
 
 internal enum AttributeDifference: Equatable {
     case update(path: String, value: String)
@@ -49,11 +48,11 @@ internal enum AttributeDifference: Equatable {
 extension DynamoDBCompositePrimaryKeyTable {
     
     func getAttributes<AttributesType, ItemType>(forItem item: TypedDatabaseItem<AttributesType, ItemType>) throws
-        -> [String: DynamoDBModel.AttributeValue] {
+        -> [String: DynamoDBClientTypes.AttributeValue] {
             let attributeValue = try DynamoDBEncoder().encode(item)
 
-            let attributes: [String: DynamoDBModel.AttributeValue]
-            if let itemAttributes = attributeValue.M {
+            let attributes: [String: DynamoDBClientTypes.AttributeValue]
+            if case .m(let itemAttributes) = attributeValue {
                 attributes = itemAttributes
             } else {
                 throw DynamoDBTableError.unexpectedResponse(reason: "Expected a map.")
@@ -137,36 +136,37 @@ extension DynamoDBCompositePrimaryKeyTable {
     }
     
     private func diffAttribute(path: String,
-                               newAttribute: DynamoDBModel.AttributeValue,
-                               existingAttribute: DynamoDBModel.AttributeValue) throws -> [AttributeDifference] {
-        if newAttribute.B != nil || existingAttribute.B != nil {
+                               newAttribute: DynamoDBClientTypes.AttributeValue,
+                               existingAttribute: DynamoDBClientTypes.AttributeValue) throws -> [AttributeDifference] {
+        switch (newAttribute, existingAttribute) {
+        case (.b, .b):
             throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle Binary types.")
-        } else if let newTypedAttribute = newAttribute.BOOL, let existingTypedAttribute = existingAttribute.BOOL {
+        case (.bool(let newTypedAttribute), .bool(let existingTypedAttribute)):
             if newTypedAttribute != existingTypedAttribute {
                 return [.update(path: path, value: String(newTypedAttribute))]
             }
-        } else if newAttribute.BS != nil || existingAttribute.BS != nil {
+        case (.bs, .bs):
             throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle Binary Set types.")
-        } else if let newTypedAttribute = newAttribute.L, let existingTypedAttribute = existingAttribute.L {
+        case (.l(let newTypedAttribute), .l(let existingTypedAttribute)):
             return try diffListAttribute(path: path, newAttribute: newTypedAttribute, existingAttribute: existingTypedAttribute)
-        } else if let newTypedAttribute = newAttribute.M, let existingTypedAttribute = existingAttribute.M {
+        case (.m(let newTypedAttribute), .m(let existingTypedAttribute)):
             return try diffMapAttribute(path: path, newAttribute: newTypedAttribute, existingAttribute: existingTypedAttribute)
-        } else if let newTypedAttribute = newAttribute.N, let existingTypedAttribute = existingAttribute.N {
+        case (.n(let newTypedAttribute), .n(let existingTypedAttribute)):
             if newTypedAttribute != existingTypedAttribute {
                 return [.update(path: path, value: String(newTypedAttribute))]
             }
-        } else if newAttribute.NS != nil || existingAttribute.NS  != nil {
+        case (.ns, .ns):
             throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle Number Set types.")
-        } else if newAttribute.NULL != nil && existingAttribute.NULL != nil {
+        case (.null, .null):
             // always equal
             return []
-        } else if let newTypedAttribute = newAttribute.S, let existingTypedAttribute = existingAttribute.S {
+        case (.s(let newTypedAttribute), .s(let existingTypedAttribute)):
             if newTypedAttribute != existingTypedAttribute {
                 return [.update(path: path, value: "'\(sanitizeString(newTypedAttribute))'")]
             }
-        } else if newAttribute.SS != nil || existingAttribute.SS  != nil {
+        case (.ss, .ss):
             throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle String Set types.")
-        } else {
+        default:
             // new value is a different type and could be replaced
             return try updateAttribute(newPath: path, attribute: newAttribute)
         }
@@ -176,8 +176,8 @@ extension DynamoDBCompositePrimaryKeyTable {
     }
     
     private func diffListAttribute(path: String,
-                                   newAttribute: [DynamoDBModel.AttributeValue],
-                                   existingAttribute: [DynamoDBModel.AttributeValue]) throws -> [AttributeDifference] {
+                                   newAttribute: [DynamoDBClientTypes.AttributeValue],
+                                   existingAttribute: [DynamoDBClientTypes.AttributeValue]) throws -> [AttributeDifference] {
         let maxIndex = max(newAttribute.count, existingAttribute.count)
         
         return try (0..<maxIndex).flatMap { index -> [AttributeDifference] in
@@ -197,10 +197,10 @@ extension DynamoDBCompositePrimaryKeyTable {
     }
     
     private func diffMapAttribute(path: String?,
-                                  newAttribute: [String: DynamoDBModel.AttributeValue],
-                                  existingAttribute: [String: DynamoDBModel.AttributeValue]) throws -> [AttributeDifference] {
-        var combinedMap: [String: (new: DynamoDBModel.AttributeValue?, existing: DynamoDBModel.AttributeValue?)] = [:]
-        
+                                  newAttribute: [String: DynamoDBClientTypes.AttributeValue],
+                                  existingAttribute: [String: DynamoDBClientTypes.AttributeValue]) throws -> [AttributeDifference] {
+        var combinedMap: [String: (new: DynamoDBClientTypes.AttributeValue?, existing: DynamoDBClientTypes.AttributeValue?)] = [:]
+
         newAttribute.forEach { (key, attribute) in
             var existingEntry = combinedMap[key] ?? (nil, nil)
             existingEntry.new = attribute
@@ -237,7 +237,7 @@ extension DynamoDBCompositePrimaryKeyTable {
         }
     }
     
-    private func updateAttribute(newPath: String, attribute: DynamoDBModel.AttributeValue) throws -> [AttributeDifference] {
+    private func updateAttribute(newPath: String, attribute: DynamoDBClientTypes.AttributeValue) throws -> [AttributeDifference] {
         if let newValue = try getFlattenedAttribute(attribute: attribute) {
             return [.update(path: newPath, value: newValue)]
         } else {
@@ -245,33 +245,34 @@ extension DynamoDBCompositePrimaryKeyTable {
         }
     }
     
-    func getFlattenedAttribute(attribute: DynamoDBModel.AttributeValue) throws -> String? {
-        if attribute.B != nil {
+    func getFlattenedAttribute(attribute: DynamoDBClientTypes.AttributeValue) throws -> String? {
+        switch attribute {
+        case .b:
             throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle Binary types.")
-        } else if let typedAttribute = attribute.BOOL {
+        case .bool(let typedAttribute):
             return String(typedAttribute)
-        } else if attribute.BS != nil {
+        case .bs:
             throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle Binary Set types.")
-        } else if let typedAttribute = attribute.L {
+        case .l(let typedAttribute):
             return try getFlattenedListAttribute(attribute: typedAttribute)
-        } else if let typedAttribute = attribute.M {
+        case .m(let typedAttribute):
             return try getFlattenedMapAttribute(attribute: typedAttribute)
-        } else if let typedAttribute = attribute.N {
+        case .n(let typedAttribute):
             return String(typedAttribute)
-        } else if attribute.NS != nil {
+        case .ns:
             throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle Number Set types.")
-        } else if attribute.NULL != nil {
+        case .null:
             return nil
-        } else if let typedAttribute = attribute.S {
+        case .s(let typedAttribute):
             return "'\(sanitizeString(typedAttribute))'"
-        } else if attribute.SS != nil {
+        case .ss:
             throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle String Set types.")
+        case .sdkUnknown(let payload):
+            throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle unknown type: '\(payload)'.")
         }
-        
-        return nil
     }
     
-    private func getFlattenedListAttribute(attribute: [DynamoDBModel.AttributeValue]) throws -> String {
+    private func getFlattenedListAttribute(attribute: [DynamoDBClientTypes.AttributeValue]) throws -> String {
         let elements: [String] = try attribute.compactMap { nestedAttribute in
             return try getFlattenedAttribute(attribute: nestedAttribute)
         }
@@ -280,7 +281,7 @@ extension DynamoDBCompositePrimaryKeyTable {
         return "[\(joinedElements)]"
     }
     
-    private func getFlattenedMapAttribute(attribute: [String: DynamoDBModel.AttributeValue]) throws -> String {
+    private func getFlattenedMapAttribute(attribute: [String: DynamoDBClientTypes.AttributeValue]) throws -> String {
         let elements: [String] = try attribute.compactMap { (key, nestedAttribute) in
             guard let flattenedNestedAttribute = try getFlattenedAttribute(attribute: nestedAttribute) else {
                 return nil

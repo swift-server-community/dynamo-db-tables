@@ -26,8 +26,7 @@
 //
 
 import Foundation
-import SmokeHTTPClient
-import DynamoDBModel
+import AWSDynamoDB
 
 private let itemAlreadyExistsMessage = "Row already exists."
 
@@ -300,8 +299,8 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
     
     func monomorphicBulkWriteWithoutThrowing<AttributesType, ItemType>(
         _ entries: [WriteEntry<AttributesType, ItemType>]) throws
-    -> Set<BatchStatementErrorCodeEnum> {
-        let results = entries.map { entry -> BatchStatementErrorCodeEnum? in
+    -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum> {
+        let results = entries.map { entry -> DynamoDBClientTypes.BatchStatementErrorCodeEnum? in
             switch entry {
             case .update(new: let new, existing: let existing):
                 do {
@@ -309,7 +308,7 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
                     
                     return nil
                 } catch {
-                    return BatchStatementErrorCodeEnum.duplicateitem
+                    return .duplicateitem
                 }
             case .insert(new: let new):
                 do {
@@ -317,7 +316,7 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
                     
                     return nil
                 } catch {
-                    return BatchStatementErrorCodeEnum.duplicateitem
+                    return .duplicateitem
                 }
             case .deleteAtKey(key: let key):
                 do {
@@ -325,7 +324,7 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
                     
                     return nil
                 } catch {
-                    return BatchStatementErrorCodeEnum.duplicateitem
+                    return .duplicateitem
                 }
             case .deleteItem(existing: let existing):
                 do {
@@ -333,12 +332,12 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
                     
                     return nil
                 } catch {
-                    return BatchStatementErrorCodeEnum.duplicateitem
+                    return .duplicateitem
                 }
             }
         }
         
-        var errors: Set<BatchStatementErrorCodeEnum> = Set()
+        var errors: Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum> = Set()
         results.forEach { result in
             if let result {
                 errors.insert(result)

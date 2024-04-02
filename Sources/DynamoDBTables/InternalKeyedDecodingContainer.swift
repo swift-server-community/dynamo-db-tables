@@ -3,7 +3,7 @@
 // This source file is part of the DynamoDBTables open source project
 //
 // This file is forked from
-// https://github.com/amzn/smoke-dynamodb/tree/smoke-dynamodb-3.x/Sources/SmokeDynamoDB/InternalKeyedDecodingContainer.swift
+// https://github.com/amzn/smoke-dynamodb/tree/aws-sdk-swift-main/Sources/SmokeDynamoDB/InternalKeyedDecodingContainer.swift
 // Copyright 2018-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // Licensed under Apache License v2.0
 //
@@ -25,7 +25,7 @@
 //
 
 import Foundation
-import DynamoDBModel
+import AWSDynamoDB
 
 internal struct InternalKeyedDecodingContainer<K: CodingKey>: KeyedDecodingContainerProtocol {
     typealias Key = K
@@ -114,8 +114,8 @@ internal struct InternalKeyedDecodingContainer<K: CodingKey>: KeyedDecodingConta
         return try createNestedContainer(for: key).unkeyedContainer()
     }
 
-    private func getValues() -> [String: DynamoDBModel.AttributeValue] {
-        guard let values = decodingContainer.attributeValue.M else {
+    private func getValues() -> [String: DynamoDBClientTypes.AttributeValue] {
+        guard case .m(let values) = decodingContainer.attributeValue else {
             fatalError("Expected keyed container and there wasn't one.")
         }
         
@@ -145,7 +145,7 @@ internal struct InternalKeyedDecodingContainer<K: CodingKey>: KeyedDecodingConta
     // MARK: -
 
     private func createNestedContainer(for key: CodingKey) throws -> InternalSingleValueDecodingContainer {
-        guard let values = decodingContainer.attributeValue.M else {
+        guard case .m(let values) = decodingContainer.attributeValue else {
             let description = "Expected to decode a map."
             let context = DecodingError.Context(codingPath: codingPath, debugDescription: description)
             throw DecodingError.dataCorrupted(context)

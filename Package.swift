@@ -1,4 +1,4 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.7
 
 //===----------------------------------------------------------------------===//
 //
@@ -34,8 +34,7 @@ let package = Package(
             targets: ["DynamoDBTables"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/amzn/smoke-aws.git", from: "2.42.37"),
-        .package(url: "https://github.com/amzn/smoke-http.git", from: "2.16.0"),
+        .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "0.40.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
         .package(url: "https://github.com/JohnSundell/CollectionConcurrencyKit", from :"0.2.0")
@@ -45,15 +44,12 @@ let package = Package(
             name: "DynamoDBTables", dependencies: [
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Metrics", package: "swift-metrics"),
-                .product(name: "DynamoDBClient", package: "smoke-aws"),
-                .product(name: "SmokeHTTPClient", package: "smoke-http"),
-                .product(name: "_SmokeAWSHttpConcurrency", package: "smoke-aws"),
+                .product(name: "AWSDynamoDB", package: "aws-sdk-swift"),
                 .product(name: "CollectionConcurrencyKit", package: "CollectionConcurrencyKit"),
             ]),
         .testTarget(
             name: "DynamoDBTablesTests", dependencies: [
                 .target(name: "DynamoDBTables"),
-                .product(name: "SmokeHTTPClient", package: "smoke-http"),
             ]),
     ],
     swiftLanguageVersions: [.v5]
