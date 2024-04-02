@@ -18,7 +18,7 @@ jobs:
       - uses: swift-actions/setup-swift@v2.0.0
         with:
           swift-version: ${{ matrix.swift }}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build
         run: swift build -c release -Xswiftc -strict-concurrency=complete
       - name: Run tests
@@ -34,7 +34,7 @@ jobs:
       - uses: swift-actions/setup-swift@v2.0.0
         with:
           swift-version: ${{ matrix.swift }}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build
         run: swift build -c release
       - name: Run tests
@@ -43,6 +43,6 @@ jobs:
     name: SwiftLint version 3.2.1
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - name: GitHub Action for SwiftLint
         uses: norio-nomura/action-swiftlint@3.2.1
