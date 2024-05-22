@@ -24,15 +24,14 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 
 /**
  Protocol presenting a Keys Only projection of a DynamoDB table such as a Keys Only GSI projection.
  Provides the ability to query the projection to get the list of keys without attempting to decode the row into a particular data type.
  */
 public protocol DynamoDBCompositePrimaryKeysProjection {
-
     /**
      * Queries a partition in the database table and optionally a sort key condition. If the
        partition doesn't exist, this operation will return an empty list as a response. This
@@ -53,7 +52,7 @@ public protocol DynamoDBCompositePrimaryKeysProjection {
                                limit: Int?,
                                exclusiveStartKey: String?) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
-    
+
     func query<AttributesType>(forPartitionKey partitionKey: String,
                                sortKeyCondition: AttributeCondition?,
                                limit: Int?,

@@ -24,22 +24,22 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 
 public class DynamoDBDecoder {
-    internal let attributeNameTransform: ((String) -> String)?
+    let attributeNameTransform: ((String) -> String)?
 
     public init(attributeNameTransform: ((String) -> String)? = nil) {
         self.attributeNameTransform = attributeNameTransform
     }
-    
+
     public func decode<T: Swift.Decodable>(_ value: DynamoDBClientTypes.AttributeValue, userInfo: [CodingUserInfoKey: Any] = [:]) throws -> T {
         let container = InternalSingleValueDecodingContainer(attributeValue: value,
                                                              codingPath: [],
                                                              userInfo: userInfo,
                                                              attributeNameTransform: attributeNameTransform)
-        
+
         return try T(from: container)
     }
 }

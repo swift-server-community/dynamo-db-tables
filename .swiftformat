@@ -4,16 +4,7 @@
 # file options
 --exclude .build
 
-# rules
-
 # format options
---ifdef no-indent
---nospaceoperators ...,..<
---self insert
 --allman false
-
-#--maxwidth 150
---wraparguments after-first
---wrapparameters after-first
---wrapcollections after-first
 --closingparen same-line
+--self insert

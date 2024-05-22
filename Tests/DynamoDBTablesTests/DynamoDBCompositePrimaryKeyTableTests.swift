@@ -24,11 +24,10 @@
 //  DynamoDBTablesTests
 //
 
-import XCTest
 @testable import DynamoDBTables
+import XCTest
 
 class DynamoDBCompositePrimaryKeyTableTests: XCTestCase {
-    
     public func testmonomorphicBulkWriteWithFallback() async throws {
         // Length of insert statements of payload1 is larger than the limitation
         let payload1 = TestTypeA(
@@ -40,30 +39,30 @@ class DynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         let payload2 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let partitionKey2 = "partitionId2"
         let key2 = StandardCompositePrimaryKey(partitionKey: partitionKey2,
-                                              sortKey: "sortId")
-        
+                                               sortKey: "sortId")
+
         var nodeEntries: [(key: String, entry: TestTypeAWriteEntry)] = []
         nodeEntries.append((partitionKey1, TestTypeAWriteEntry.insert(new: StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1))))
         nodeEntries.append((partitionKey2, TestTypeAWriteEntry.insert(new: StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2))))
-        
+
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
         do {
             try table.validateEntry(entry: nodeEntries.map(\.entry)[0])
             XCTFail("Expect error doesn't throw")
         } catch DynamoDBTableError.statementLengthExceeded {
-            //expect error. Entry1's statement length should exceed the limitation
+            // expect error. Entry1's statement length should exceed the limitation
         } catch {
             XCTFail("Unexpect error \(error)")
         }
-        
+
         _ = try await table.monomorphicBulkWriteWithFallback(nodeEntries.map(\.entry))
-        
+
         // verify the item has inserted
-        let inserted1: StandardTypedDatabaseItem<TestTypeA> = (try await table.getItem(forKey: key1))!
+        let inserted1: StandardTypedDatabaseItem<TestTypeA> = try await (table.getItem(forKey: key1))!
         // verify item1 which exceed statements limitation inserted
         XCTAssertEqual(inserted1.rowValue.firstly, payload1.firstly)
         XCTAssertEqual(inserted1.rowValue.secondly, payload1.secondly)
-        let inserted2: StandardTypedDatabaseItem<TestTypeA> = (try await table.getItem(forKey: key2))!
+        let inserted2: StandardTypedDatabaseItem<TestTypeA> = try await (table.getItem(forKey: key2))!
         XCTAssertEqual(inserted2.rowValue.firstly, payload2.firstly)
         XCTAssertEqual(inserted2.rowValue.secondly, payload2.secondly)
     }

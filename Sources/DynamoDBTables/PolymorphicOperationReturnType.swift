@@ -24,57 +24,58 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 
 public protocol BatchCapableReturnType {
     associatedtype AttributesType: PrimaryKeyAttributes
-    
+
     func getItemKey() -> CompositePrimaryKey<AttributesType>
 }
 
 public protocol PolymorphicOperationReturnType {
     associatedtype AttributesType: PrimaryKeyAttributes
-        
+
     static var types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self>)] { get }
 }
 
 public struct PolymorphicOperationReturnOption<AttributesType: PrimaryKeyAttributes, ReturnType> {
     private let decodingPayloadHandler: (Decoder) throws -> ReturnType
     private let typeConvertingPayloadHander: (Any) throws -> ReturnType
-    
+
     public init<RowType: Codable>(
-        _ payloadHandler: @escaping (TypedDatabaseItem<AttributesType, RowType>) -> ReturnType) {
+        _ payloadHandler: @escaping (TypedDatabaseItem<AttributesType, RowType>) -> ReturnType)
+    {
         func newDecodingPayloadHandler(decoder: Decoder) throws -> ReturnType {
             let typedDatabaseItem: TypedDatabaseItem<AttributesType, RowType> = try TypedDatabaseItem(from: decoder)
-            
+
             return payloadHandler(typedDatabaseItem)
         }
-        
+
         func newTypeConvertingPayloadHandler(input: Any) throws -> ReturnType {
             guard let typedDatabaseItem = input as? TypedDatabaseItem<AttributesType, RowType> else {
                 let description = "Expected to use item type \(TypedDatabaseItem<AttributesType, RowType>.self)."
                 let context = DecodingError.Context(codingPath: [], debugDescription: description)
                 throw DecodingError.typeMismatch(TypedDatabaseItem<AttributesType, RowType>.self, context)
             }
-                        
+
             return payloadHandler(typedDatabaseItem)
         }
-        
+
         self.decodingPayloadHandler = newDecodingPayloadHandler
         self.typeConvertingPayloadHander = newTypeConvertingPayloadHandler
     }
-    
-    internal func getReturnType(from decoder: Decoder) throws -> ReturnType {
-        return try self.decodingPayloadHandler(decoder)
+
+    func getReturnType(from decoder: Decoder) throws -> ReturnType {
+        try self.decodingPayloadHandler(decoder)
     }
-    
-    internal func getReturnType(input: Any) throws -> ReturnType {
-        return try self.typeConvertingPayloadHander(input)
+
+    func getReturnType(input: Any) throws -> ReturnType {
+        try self.typeConvertingPayloadHander(input)
     }
 }
 
-internal struct ReturnTypeDecodable<ReturnType: PolymorphicOperationReturnType>: Decodable {
+struct ReturnTypeDecodable<ReturnType: PolymorphicOperationReturnType>: Decodable {
     public let decodedValue: ReturnType
 
     enum CodingKeys: String, CodingKey {
@@ -84,13 +85,13 @@ internal struct ReturnTypeDecodable<ReturnType: PolymorphicOperationReturnType>:
     init(decodedValue: ReturnType) {
         self.decodedValue = decodedValue
     }
-    
+
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let storedRowTypeName = try values.decode(String.self, forKey: .rowType)
-        
+
         var queryableTypeProviders: [String: PolymorphicOperationReturnOption<ReturnType.AttributesType, ReturnType>] = [:]
-        ReturnType.types.forEach { (type, provider) in
+        for (type, provider) in ReturnType.types {
             queryableTypeProviders[getTypeRowIdentifier(type: type)] = provider
         }
 

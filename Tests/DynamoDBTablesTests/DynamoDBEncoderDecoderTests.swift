@@ -24,8 +24,8 @@
 //  DynamoDBTablesTests
 //
 
-import XCTest
 @testable import DynamoDBTables
+import XCTest
 
 private let dynamodbEncoder = DynamoDBEncoder()
 private let dynamodbDecoder = DynamoDBDecoder()
@@ -37,9 +37,9 @@ struct CoreAccountAttributes: Codable {
 }
 
 extension CoreAccountAttributes: Equatable {
-    static func ==(lhs: CoreAccountAttributes, rhs: CoreAccountAttributes) -> Bool {
-        return lhs.description == rhs.description && lhs.notificationTargets == rhs.notificationTargets
-        && lhs.mappedValues == rhs.mappedValues
+    static func == (lhs: CoreAccountAttributes, rhs: CoreAccountAttributes) -> Bool {
+        lhs.description == rhs.description && lhs.notificationTargets == rhs.notificationTargets
+            && lhs.mappedValues == rhs.mappedValues
     }
 }
 
@@ -49,8 +49,8 @@ struct NotificationTargets: Codable {
 }
 
 extension NotificationTargets: Equatable {
-    static func ==(lhs: NotificationTargets, rhs: NotificationTargets) -> Bool {
-        return lhs.currentIDs == rhs.currentIDs && lhs.maximum == rhs.maximum
+    static func == (lhs: NotificationTargets, rhs: NotificationTargets) -> Bool {
+        lhs.currentIDs == rhs.currentIDs && lhs.maximum == rhs.maximum
     }
 }
 
@@ -63,42 +63,42 @@ class DynamoDBEncoderDecoderTests: XCTestCase {
         description: "Description",
         mappedValues: ["A": "one", "B": "two"],
         notificationTargets: NotificationTargets(currentIDs: [], maximum: 20))
-    
+
     func testEncoderDecoder() {
         // create key and database item to create
         let key = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: sortKey)
-        let newDatabaseItem: DatabaseItemType = StandardTypedDatabaseItem.newItem(withKey: key, andValue: attributes)
-        
+        let newDatabaseItem: DatabaseItemType = StandardTypedDatabaseItem.newItem(withKey: key, andValue: self.attributes)
+
         let encodedAttributeValue = try! dynamodbEncoder.encode(newDatabaseItem)
-        
+
         let output: DatabaseItemType = try! dynamodbDecoder.decode(encodedAttributeValue)
-        
+
         XCTAssertEqual(newDatabaseItem.rowValue, output.rowValue)
-        XCTAssertEqual(partitionKey, output.compositePrimaryKey.partitionKey)
-        XCTAssertEqual(sortKey, output.compositePrimaryKey.sortKey)
-        XCTAssertEqual(attributes, output.rowValue)
+        XCTAssertEqual(self.partitionKey, output.compositePrimaryKey.partitionKey)
+        XCTAssertEqual(self.sortKey, output.compositePrimaryKey.sortKey)
+        XCTAssertEqual(self.attributes, output.rowValue)
         XCTAssertNil(output.timeToLive)
     }
-    
+
     func testEncoderDecoderWithTimeToLive() {
-        let timeToLiveTimestamp: Int64 = 123456789
+        let timeToLiveTimestamp: Int64 = 123_456_789
         let timeToLive = StandardTimeToLive(timeToLiveTimestamp: timeToLiveTimestamp)
-        
+
         // create key and database item to create
         let key = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: sortKey)
         let newDatabaseItem: DatabaseItemType = StandardTypedDatabaseItem.newItem(
             withKey: key,
-            andValue: attributes,
+            andValue: self.attributes,
             andTimeToLive: timeToLive)
-        
+
         let encodedAttributeValue = try! dynamodbEncoder.encode(newDatabaseItem)
-        
+
         let output: DatabaseItemType = try! dynamodbDecoder.decode(encodedAttributeValue)
-        
+
         XCTAssertEqual(newDatabaseItem.rowValue, output.rowValue)
-        XCTAssertEqual(partitionKey, output.compositePrimaryKey.partitionKey)
-        XCTAssertEqual(sortKey, output.compositePrimaryKey.sortKey)
-        XCTAssertEqual(attributes, output.rowValue)
+        XCTAssertEqual(self.partitionKey, output.compositePrimaryKey.partitionKey)
+        XCTAssertEqual(self.sortKey, output.compositePrimaryKey.sortKey)
+        XCTAssertEqual(self.attributes, output.rowValue)
         XCTAssertEqual(timeToLiveTimestamp, output.timeToLive?.timeToLiveTimestamp)
     }
 }

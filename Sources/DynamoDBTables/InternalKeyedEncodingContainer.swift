@@ -26,116 +26,120 @@
 
 import AWSDynamoDB
 
-internal struct InternalKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProtocol {
+struct InternalKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProtocol {
     typealias Key = K
 
     private let enclosingContainer: InternalSingleValueEncodingContainer
-    
+
     init(enclosingContainer: InternalSingleValueEncodingContainer) {
         self.enclosingContainer = enclosingContainer
     }
 
     // MARK: - Swift.KeyedEncodingContainerProtocol Methods
-    
+
     var codingPath: [CodingKey] {
-        return enclosingContainer.codingPath
+        self.enclosingContainer.codingPath
     }
 
     func encodeNil(forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.null(true))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.null(true))
     }
-    
+
     func encode(_ value: Bool, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.bool(value))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.bool(value))
     }
-    
+
     func encode(_ value: Int, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: Int8, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: Int16, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: Int32, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: Int64, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: UInt, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: UInt8, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: UInt16, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: UInt32, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: UInt64, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: Float, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: Double, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.n(String(value)))
     }
-    
+
     func encode(_ value: String, forKey key: Key) throws {
-        enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.s(value)) }
-    
-    func encode<T>(_ value: T, forKey key: Key)   throws where T: Encodable {
-        let nestedContainer = createNestedContainer(for: key)
-        
+        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBClientTypes.AttributeValue.s(value))
+    }
+
+    func encode(_ value: some Encodable, forKey key: Key) throws {
+        let nestedContainer = self.createNestedContainer(for: key)
+
         try nestedContainer.encode(value)
     }
 
-    func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type,
-                                    forKey key: Key) -> KeyedEncodingContainer<NestedKey> {
-        let nestedContainer = createNestedContainer(for: key, defaultValue: .keyedContainer([:]))
-        
+    func nestedContainer<NestedKey>(keyedBy _: NestedKey.Type,
+                                    forKey key: Key) -> KeyedEncodingContainer<NestedKey>
+    {
+        let nestedContainer = self.createNestedContainer(for: key, defaultValue: .keyedContainer([:]))
+
         let nestedKeyContainer = InternalKeyedEncodingContainer<NestedKey>(enclosingContainer: nestedContainer)
-        
+
         return KeyedEncodingContainer<NestedKey>(nestedKeyContainer)
     }
 
     func nestedUnkeyedContainer(forKey key: Key) -> UnkeyedEncodingContainer {
-        let nestedContainer = createNestedContainer(for: key, defaultValue: .unkeyedContainer([]))
-        
+        let nestedContainer = self.createNestedContainer(for: key, defaultValue: .unkeyedContainer([]))
+
         let nestedKeyContainer = InternalUnkeyedEncodingContainer(enclosingContainer: nestedContainer)
-        
+
         return nestedKeyContainer
     }
 
-    func superEncoder() -> Encoder { return createNestedContainer(for: InternalDynamoDBCodingKey.super) }
-    func superEncoder(forKey key: Key) -> Encoder { return createNestedContainer(for: key) }
+    func superEncoder() -> Encoder { self.createNestedContainer(for: InternalDynamoDBCodingKey.super) }
+    func superEncoder(forKey key: Key) -> Encoder { self.createNestedContainer(for: key) }
 
     // MARK: -
-    private func createNestedContainer<NestedKey: CodingKey>(for key: NestedKey,
-                                                             defaultValue: ContainerValueType? = nil)
-        -> InternalSingleValueEncodingContainer {
+
+    private func createNestedContainer(for key: some CodingKey,
+                                       defaultValue: ContainerValueType? = nil)
+        -> InternalSingleValueEncodingContainer
+    {
         let nestedContainer = InternalSingleValueEncodingContainer(userInfo: enclosingContainer.userInfo,
-                                                                   codingPath: enclosingContainer.codingPath + [key],
-                                                                   attributeNameTransform: enclosingContainer.attributeNameTransform,
+                                                                   codingPath: self.enclosingContainer.codingPath + [key],
+                                                                   attributeNameTransform: self.enclosingContainer.attributeNameTransform,
                                                                    defaultValue: defaultValue)
-        enclosingContainer.addToKeyedContainer(key: key, value: nestedContainer)
-        
+        self.enclosingContainer.addToKeyedContainer(key: key, value: nestedContainer)
+
         return nestedContainer
     }
 }

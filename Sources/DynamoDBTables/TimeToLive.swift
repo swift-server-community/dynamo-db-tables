@@ -32,7 +32,7 @@ public protocol TimeToLiveAttributes {
 
 public struct StandardTimeToLiveAttributes: TimeToLiveAttributes {
     public static var timeToLiveAttributeName: String {
-        return "ExpireDate"
+        "ExpireDate"
     }
 }
 
@@ -40,20 +40,20 @@ public typealias StandardTimeToLive = TimeToLive<StandardTimeToLiveAttributes>
 
 public struct TimeToLive<AttributesType: TimeToLiveAttributes>: Codable, CustomStringConvertible, Hashable {
     public var description: String {
-        return "TimeToLive(timeToLiveTimestamp: \(timeToLiveTimestamp)"
+        "TimeToLive(timeToLiveTimestamp: \(self.timeToLiveTimestamp)"
     }
-    
+
     public let timeToLiveTimestamp: Int64
-    
+
     public init(timeToLiveTimestamp: Int64) {
         self.timeToLiveTimestamp = timeToLiveTimestamp
     }
-    
+
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: DynamoDBAttributesTypeCodingKey.self)
         self.timeToLiveTimestamp = try values.decode(Int64.self, forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.timeToLiveAttributeName)!)
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: DynamoDBAttributesTypeCodingKey.self)
         try container.encode(self.timeToLiveTimestamp, forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.timeToLiveAttributeName)!)

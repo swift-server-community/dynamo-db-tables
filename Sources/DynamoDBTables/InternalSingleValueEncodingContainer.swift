@@ -24,156 +24,157 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 import Logging
 
-internal class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
-    internal private(set) var containerValue: ContainerValueType?
-    internal let attributeNameTransform: ((String) -> String)?
-    
+class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
+    private(set) var containerValue: ContainerValueType?
+    let attributeNameTransform: ((String) -> String)?
+
     let codingPath: [CodingKey]
     let userInfo: [CodingUserInfoKey: Any]
-    
+
     init(userInfo: [CodingUserInfoKey: Any],
          codingPath: [CodingKey],
          attributeNameTransform: ((String) -> String)?,
-         defaultValue: ContainerValueType?) {
+         defaultValue: ContainerValueType?)
+    {
         self.containerValue = defaultValue
         self.userInfo = userInfo
         self.codingPath = codingPath
         self.attributeNameTransform = attributeNameTransform
     }
-    
+
     func encodeNil() throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.null(true))
-    }
-    
-    func encode(_ value: Bool) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.bool(value))
-    }
-    
-    func encode(_ value: Int) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Int8) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Int16) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Int32) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Int64) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: UInt) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: UInt8) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: UInt16) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: UInt32) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: UInt64) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Float) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Double) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: String) throws {
-        containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.s(value))
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.null(true))
     }
 
-    func encode<T>(_ value: T) throws where T: Encodable {
+    func encode(_ value: Bool) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.bool(value))
+    }
+
+    func encode(_ value: Int) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Int8) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Int16) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Int32) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Int64) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: UInt) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: UInt8) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: UInt16) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: UInt32) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: UInt64) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Float) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Double) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: String) throws {
+        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.s(value))
+    }
+
+    func encode(_ value: some Encodable) throws {
         if let date = value as? Foundation.Date {
             let dateAsString = date.iso8601
-            
-            containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.s(dateAsString))
+
+            self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.s(dateAsString))
             return
         }
-        
+
         try value.encode(to: self)
     }
-    
-    func addToKeyedContainer<KeyType: CodingKey>(key: KeyType, value: AttributeValueConvertable) {
+
+    func addToKeyedContainer(key: some CodingKey, value: AttributeValueConvertable) {
         guard let currentContainerValue = containerValue else {
             fatalError("Attempted to add a keyed item to an unitinialized container.")
         }
-        
-        guard case .keyedContainer(var values) = currentContainerValue else {
+
+        guard case var .keyedContainer(values) = currentContainerValue else {
             fatalError("Expected keyed container and there wasn't one.")
         }
-        
-        let attributeName = getAttributeName(key: key)
-        
+
+        let attributeName = self.getAttributeName(key: key)
+
         values[attributeName] = value
-        
-        containerValue = .keyedContainer(values)
+
+        self.containerValue = .keyedContainer(values)
     }
-    
+
     func addToUnkeyedContainer(value: AttributeValueConvertable) {
         guard let currentContainerValue = containerValue else {
             fatalError("Attempted to ad an unkeyed item to an uninitialized container.")
         }
-        
-        guard case .unkeyedContainer(var values) = currentContainerValue else {
+
+        guard case var .unkeyedContainer(values) = currentContainerValue else {
             fatalError("Expected unkeyed container and there wasn't one.")
         }
-        
+
         values.append(value)
-        
-        containerValue = .unkeyedContainer(values)
+
+        self.containerValue = .unkeyedContainer(values)
     }
-    
+
     private func getAttributeName(key: CodingKey) -> String {
         let attributeName: String
-        if let attributeNameTransform = attributeNameTransform {
+        if let attributeNameTransform {
             attributeName = attributeNameTransform(key.stringValue)
         } else {
             attributeName = key.stringValue
         }
-        
+
         return attributeName
     }
 }
 
 extension InternalSingleValueEncodingContainer: AttributeValueConvertable {
     var attributeValue: DynamoDBClientTypes.AttributeValue {
-        guard let containerValue = containerValue else {
+        guard let containerValue else {
             fatalError("Attempted to access uninitialized container.")
         }
-        
+
         switch containerValue {
-        case .singleValue(let value):
+        case let .singleValue(value):
             return value.attributeValue
-        case .unkeyedContainer(let values):
+        case let .unkeyedContainer(values):
             let mappedValues = values.map { value in value.attributeValue }
-            
+
             return DynamoDBClientTypes.AttributeValue.l(mappedValues)
-        case .keyedContainer(let values):
+        case let .keyedContainer(values):
             let mappedValues = values.mapValues { value in value.attributeValue }
-        
+
             return DynamoDBClientTypes.AttributeValue.m(mappedValues)
         }
     }
@@ -181,50 +182,48 @@ extension InternalSingleValueEncodingContainer: AttributeValueConvertable {
 
 extension InternalSingleValueEncodingContainer: Swift.Encoder {
     var unkeyedContainerCount: Int {
-        guard let containerValue = containerValue else {
+        guard let containerValue else {
             fatalError("Attempted to access unitialized container.")
         }
-        
-        guard case .unkeyedContainer(let values) = containerValue else {
+
+        guard case let .unkeyedContainer(values) = containerValue else {
             fatalError("Expected unkeyed container and there wasn't one.")
         }
-        
+
         return values.count
     }
-    
-    func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key: CodingKey {
-        
+
+    func container<Key>(keyedBy _: Key.Type) -> KeyedEncodingContainer<Key> where Key: CodingKey {
         // if there container is already initialized
         if let currentContainerValue = containerValue {
             guard case .keyedContainer = currentContainerValue else {
                 fatalError("Trying to use an already initialized container as a keyed container.")
             }
         } else {
-            containerValue = .keyedContainer([:])
+            self.containerValue = .keyedContainer([:])
         }
-        
+
         let container = InternalKeyedEncodingContainer<Key>(enclosingContainer: self)
-        
+
         return KeyedEncodingContainer<Key>(container)
     }
-    
+
     func unkeyedContainer() -> UnkeyedEncodingContainer {
-        
         // if there container is already initialized
         if let currentContainerValue = containerValue {
             guard case .unkeyedContainer = currentContainerValue else {
                 fatalError("Trying to use an already initialized container as an unkeyed container.")
             }
         } else {
-            containerValue = .unkeyedContainer([])
+            self.containerValue = .unkeyedContainer([])
         }
-        
+
         let container = InternalUnkeyedEncodingContainer(enclosingContainer: self)
-        
+
         return container
     }
-    
+
     func singleValueContainer() -> SingleValueEncodingContainer {
-        return self
+        self
     }
 }

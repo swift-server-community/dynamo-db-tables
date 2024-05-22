@@ -24,32 +24,32 @@
 //  DynamoDBTables
 //
 
-import Foundation
-import Logging
-import ClientRuntime
-import AWSDynamoDB
 import AWSClientRuntime
 import AwsCommonRuntimeKit
+import AWSDynamoDB
+import ClientRuntime
+import Foundation
+import Logging
 import Metrics
 
 public struct AWSDynamoDBTableMetrics {
     // metric to record if the `TransactWrite` API is retried
     let transactWriteRetryCountRecorder: Metrics.Recorder?
-    
+
     public init(transactWriteRetryCountRecorder: Metrics.Recorder? = nil) {
         self.transactWriteRetryCountRecorder = transactWriteRetryCountRecorder
     }
 }
 
 public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable {
-    internal let dynamodb: AWSDynamoDB.DynamoDBClient
-    internal let targetTableName: String
+    let dynamodb: AWSDynamoDB.DynamoDBClient
+    let targetTableName: String
     public let consistentRead: Bool
     public let escapeSingleQuoteInPartiQL: Bool
     public let tableMetrics: AWSDynamoDBTableMetrics
-    internal let retryConfiguration: RetryConfiguration
-    internal let logger: Logging.Logger
-    
+    let retryConfiguration: RetryConfiguration
+    let logger: Logging.Logger
+
     public init(tableName: String, region: Swift.String,
                 awsCredentialIdentityResolver: (any AWSClientRuntime.AWSCredentialIdentityResolver)? = nil,
                 httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
@@ -57,10 +57,11 @@ public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTa
                 escapeSingleQuoteInPartiQL: Bool = false,
                 tableMetrics: AWSDynamoDBTableMetrics = .init(),
                 retryConfiguration: RetryConfiguration = .default,
-                logger: Logging.Logger? = nil) throws {
+                logger: Logging.Logger? = nil) throws
+    {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeyTable")
         let config = try DynamoDBClient.DynamoDBClientConfiguration(
-            awsCredentialIdentityResolver: awsCredentialIdentityResolver, 
+            awsCredentialIdentityResolver: awsCredentialIdentityResolver,
             region: region,
             httpClientConfiguration: httpClientConfiguration)
         self.dynamodb = AWSDynamoDB.DynamoDBClient(config: config)
@@ -72,14 +73,15 @@ public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTa
 
         self.logger.trace("AWSDynamoDBCompositePrimaryKeyTable created with region '\(region)'")
     }
-    
+
     public init(tableName: String,
                 client: AWSDynamoDB.DynamoDBClient,
                 consistentRead: Bool = true,
                 escapeSingleQuoteInPartiQL: Bool = false,
                 tableMetrics: AWSDynamoDBTableMetrics = .init(),
                 retryConfiguration: RetryConfiguration = .default,
-                logger: Logging.Logger? = nil) {
+                logger: Logging.Logger? = nil)
+    {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeyTable")
         self.dynamodb = client
         self.targetTableName = tableName
@@ -93,30 +95,34 @@ public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTa
 }
 
 extension AWSDynamoDBCompositePrimaryKeyTable {
-    internal func getInputForInsert<AttributesType, ItemType>(_ item: TypedDatabaseItem<AttributesType, ItemType>) throws
-        -> AWSDynamoDB.PutItemInput {
-            let attributes = try getAttributes(forItem: item)
+    func getInputForInsert<AttributesType>(_ item: TypedDatabaseItem<AttributesType, some Any>) throws
+        -> AWSDynamoDB.PutItemInput
+    {
+        let attributes = try getAttributes(forItem: item)
 
-            let expressionAttributeNames = ["#pk": AttributesType.partitionKeyAttributeName, "#sk": AttributesType.sortKeyAttributeName]
-            let conditionExpression = "attribute_not_exists (#pk) AND attribute_not_exists (#sk)"
+        let expressionAttributeNames = ["#pk": AttributesType.partitionKeyAttributeName, "#sk": AttributesType.sortKeyAttributeName]
+        let conditionExpression = "attribute_not_exists (#pk) AND attribute_not_exists (#sk)"
 
-            return AWSDynamoDB.PutItemInput(conditionExpression: conditionExpression,
-                                              expressionAttributeNames: expressionAttributeNames,
-                                              item: attributes,
-                                              tableName: targetTableName)
+        return AWSDynamoDB.PutItemInput(conditionExpression: conditionExpression,
+                                        expressionAttributeNames: expressionAttributeNames,
+                                        item: attributes,
+                                        tableName: self.targetTableName)
     }
 
-    internal func getInputForUpdateItem<AttributesType, ItemType>(
-            newItem: TypedDatabaseItem<AttributesType, ItemType>,
-            existingItem: TypedDatabaseItem<AttributesType, ItemType>) throws -> AWSDynamoDB.PutItemInput {
+    func getInputForUpdateItem<AttributesType, ItemType>(
+        newItem: TypedDatabaseItem<AttributesType, ItemType>,
+        existingItem: TypedDatabaseItem<AttributesType, ItemType>) throws -> AWSDynamoDB.PutItemInput
+    {
         let attributes = try getAttributes(forItem: newItem)
 
         let expressionAttributeNames = [
             "#rowversion": RowStatus.CodingKeys.rowVersion.stringValue,
-            "#createdate": TypedDatabaseItem<AttributesType, ItemType>.CodingKeys.createDate.stringValue]
+            "#createdate": TypedDatabaseItem<AttributesType, ItemType>.CodingKeys.createDate.stringValue,
+        ]
         let expressionAttributeValues = [
             ":versionnumber": DynamoDBClientTypes.AttributeValue.n(String(existingItem.rowStatus.rowVersion)),
-            ":creationdate": DynamoDBClientTypes.AttributeValue.s(existingItem.createDate.iso8601)]
+            ":creationdate": DynamoDBClientTypes.AttributeValue.s(existingItem.createDate.iso8601),
+        ]
 
         let conditionExpression = "#rowversion = :versionnumber AND #createdate = :creationdate"
 
@@ -124,28 +130,29 @@ extension AWSDynamoDBCompositePrimaryKeyTable {
                                         expressionAttributeNames: expressionAttributeNames,
                                         expressionAttributeValues: expressionAttributeValues,
                                         item: attributes,
-                                          tableName: targetTableName)
+                                        tableName: self.targetTableName)
     }
 
-    internal func getInputForGetItem<AttributesType>(forKey key: CompositePrimaryKey<AttributesType>) throws -> AWSDynamoDB.GetItemInput {
+    func getInputForGetItem(forKey key: CompositePrimaryKey<some Any>) throws -> AWSDynamoDB.GetItemInput {
         let attributeValue = try DynamoDBEncoder().encode(key)
 
-        if case .m(let keyAttributes) = attributeValue {
+        if case let .m(keyAttributes) = attributeValue {
             return AWSDynamoDB.GetItemInput(consistentRead: self.consistentRead,
-                                              key: keyAttributes,
-                                              tableName: targetTableName)
+                                            key: keyAttributes,
+                                            tableName: self.targetTableName)
         } else {
             throw DynamoDBTableError.unexpectedResponse(reason: "Expected a structure.")
         }
     }
-    
-    internal func getInputForBatchGetItem<AttributesType>(forKeys keys: [CompositePrimaryKey<AttributesType>]) throws
-    -> AWSDynamoDB.BatchGetItemInput {
+
+    func getInputForBatchGetItem(forKeys keys: [CompositePrimaryKey<some Any>]) throws
+        -> AWSDynamoDB.BatchGetItemInput
+    {
         let keys = try keys.map { key -> [String: DynamoDBClientTypes.AttributeValue] in
             let attributeValue = try DynamoDBEncoder().encode(key)
-            
-            if case .m(let keyAttributes) = attributeValue {
-               return keyAttributes
+
+            if case let .m(keyAttributes) = attributeValue {
+                return keyAttributes
             } else {
                 throw DynamoDBTableError.unexpectedResponse(reason: "Expected a structure.")
             }
@@ -153,50 +160,53 @@ extension AWSDynamoDBCompositePrimaryKeyTable {
 
         let keysAndAttributes = DynamoDBClientTypes.KeysAndAttributes(consistentRead: self.consistentRead,
                                                                       keys: keys)
-        
+
         return AWSDynamoDB.BatchGetItemInput(requestItems: [self.targetTableName: keysAndAttributes])
     }
 
-    internal func getInputForDeleteItem<AttributesType>(forKey key: CompositePrimaryKey<AttributesType>) throws -> AWSDynamoDB.DeleteItemInput {
+    func getInputForDeleteItem(forKey key: CompositePrimaryKey<some Any>) throws -> AWSDynamoDB.DeleteItemInput {
         let attributeValue = try DynamoDBEncoder().encode(key)
 
-        if case .m(let keyAttributes) = attributeValue {
+        if case let .m(keyAttributes) = attributeValue {
             return AWSDynamoDB.DeleteItemInput(key: keyAttributes,
-                                                 tableName: targetTableName)
+                                               tableName: self.targetTableName)
         } else {
             throw DynamoDBTableError.unexpectedResponse(reason: "Expected a structure.")
         }
     }
-    
-    internal func getInputForDeleteItem<AttributesType, ItemType>(
-            existingItem: TypedDatabaseItem<AttributesType, ItemType>) throws -> AWSDynamoDB.DeleteItemInput {
+
+    func getInputForDeleteItem<AttributesType, ItemType>(
+        existingItem: TypedDatabaseItem<AttributesType, ItemType>) throws -> AWSDynamoDB.DeleteItemInput
+    {
         let attributeValue = try DynamoDBEncoder().encode(existingItem.compositePrimaryKey)
-        
-        guard case .m(let keyAttributes) = attributeValue else {
+
+        guard case let .m(keyAttributes) = attributeValue else {
             throw DynamoDBTableError.unexpectedResponse(reason: "Expected a structure.")
         }
 
         let expressionAttributeNames = [
             "#rowversion": RowStatus.CodingKeys.rowVersion.stringValue,
-            "#createdate": TypedDatabaseItem<AttributesType, ItemType>.CodingKeys.createDate.stringValue]
+            "#createdate": TypedDatabaseItem<AttributesType, ItemType>.CodingKeys.createDate.stringValue,
+        ]
         let expressionAttributeValues = [
             ":versionnumber": DynamoDBClientTypes.AttributeValue.n(String(existingItem.rowStatus.rowVersion)),
-            ":creationdate": DynamoDBClientTypes.AttributeValue.s(existingItem.createDate.iso8601)]
+            ":creationdate": DynamoDBClientTypes.AttributeValue.s(existingItem.createDate.iso8601),
+        ]
 
         let conditionExpression = "#rowversion = :versionnumber AND #createdate = :creationdate"
 
         return AWSDynamoDB.DeleteItemInput(conditionExpression: conditionExpression,
-                                             expressionAttributeNames: expressionAttributeNames,
-                                             expressionAttributeValues: expressionAttributeValues,
-                                             key: keyAttributes,
-                                             tableName: targetTableName)
+                                           expressionAttributeNames: expressionAttributeNames,
+                                           expressionAttributeValues: expressionAttributeValues,
+                                           key: keyAttributes,
+                                           tableName: self.targetTableName)
     }
 }
 
 extension Array {
     func chunked(by chunkSize: Int) -> [[Element]] {
-        return stride(from: 0, to: self.count, by: chunkSize).map {
-            Array(self[$0..<Swift.min($0 + chunkSize, self.count)])
+        stride(from: 0, to: self.count, by: chunkSize).map {
+            Array(self[$0 ..< Swift.min($0 + chunkSize, self.count)])
         }
     }
 }
