@@ -446,6 +446,16 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
     }
 }
 
+extension DynamoDBClientTypes.BatchStatementError: Equatable {
+    public static func == (lhs: DynamoDBClientTypes.BatchStatementError, rhs: DynamoDBClientTypes.BatchStatementError) -> Bool {
+        guard lhs.code == rhs.code && lhs.item == rhs.item && lhs.message == rhs.message else {
+            return false
+        }
+        
+        return true
+    }
+}
+
 extension DynamoDBClientTypes.BatchStatementError: Hashable {
 
     public func hash(into hasher: inout Hasher) {
