@@ -24,8 +24,8 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 import Logging
 
 // BatchExecuteStatement has a maximum of 25 statements
@@ -33,46 +33,45 @@ private let maximumUpdatesPerExecuteStatement = 25
 
 /// DynamoDBTable conformance updateItems function
 public extension AWSDynamoDBCompositePrimaryKeyTable {
-
-    private func deleteChunkedItems<AttributesType>(_ keys: [CompositePrimaryKey<AttributesType>]) async throws {
+    private func deleteChunkedItems(_ keys: [CompositePrimaryKey<some Any>]) async throws {
         // if there are no keys, there is nothing to update
         guard keys.count > 0 else {
             return
         }
-        
+
         let statements = try keys.map { existingKey -> DynamoDBClientTypes.BatchStatementRequest in
             let statement = try getDeleteExpression(tableName: self.targetTableName,
                                                     existingKey: existingKey)
-                
+
             return DynamoDBClientTypes.BatchStatementRequest(consistentRead: true, statement: statement)
         }
-        
+
         let executeInput = BatchExecuteStatementInput(statements: statements)
-        
+
         let response = try await self.dynamodb.batchExecuteStatement(input: executeInput)
         try throwOnBatchExecuteStatementErrors(response: response)
     }
-    
-    private func deleteChunkedItems<ItemType: DatabaseItem>(_ existingItems: [ItemType]) async throws {
+
+    private func deleteChunkedItems(_ existingItems: [some DatabaseItem]) async throws {
         // if there are no items, there is nothing to update
         guard existingItems.count > 0 else {
             return
         }
-        
+
         let statements = try existingItems.map { existingItem -> DynamoDBClientTypes.BatchStatementRequest in
             let statement = try getDeleteExpression(tableName: self.targetTableName,
                                                     existingItem: existingItem)
-                
+
             return DynamoDBClientTypes.BatchStatementRequest(consistentRead: true, statement: statement)
         }
-        
+
         let executeInput = BatchExecuteStatementInput(statements: statements)
-        
+
         let response = try await self.dynamodb.batchExecuteStatement(input: executeInput)
         try throwOnBatchExecuteStatementErrors(response: response)
     }
-    
-    func deleteItems<AttributesType>(forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws {
+
+    func deleteItems(forKeys keys: [CompositePrimaryKey<some Any>]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedKeys = keys.chunked(by: maximumUpdatesPerExecuteStatement)
@@ -80,8 +79,8 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             try await self.deleteChunkedItems(chunk)
         }
     }
-    
-    func deleteItems<ItemType: DatabaseItem>(existingItems: [ItemType]) async throws {
+
+    func deleteItems(existingItems: [some DatabaseItem]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedItems = existingItems.chunked(by: maximumUpdatesPerExecuteStatement)

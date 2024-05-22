@@ -24,64 +24,68 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 
 public extension DynamoDBCompositePrimaryKeyTable {
-
     func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
                                                              sortKeyCondition: AttributeCondition?) async throws
-    -> [ReturnedType] {
-        return try await query(forPartitionKey: partitionKey,
-                               sortKeyCondition: sortKeyCondition,
-                               consistentRead: self.consistentRead)
+        -> [ReturnedType]
+    {
+        try await self.query(forPartitionKey: partitionKey,
+                             sortKeyCondition: sortKeyCondition,
+                             consistentRead: self.consistentRead)
     }
-    
+
     func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
                                                              sortKeyCondition: AttributeCondition?,
                                                              limit: Int?,
                                                              exclusiveStartKey: String?) async throws
-    -> ([ReturnedType], String?) {
-        return try await query(forPartitionKey: partitionKey,
-                               sortKeyCondition: sortKeyCondition,
-                               limit: limit,
-                               exclusiveStartKey: exclusiveStartKey,
-                               consistentRead: self.consistentRead)
+        -> ([ReturnedType], String?)
+    {
+        try await self.query(forPartitionKey: partitionKey,
+                             sortKeyCondition: sortKeyCondition,
+                             limit: limit,
+                             exclusiveStartKey: exclusiveStartKey,
+                             consistentRead: self.consistentRead)
     }
-    
+
     func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
                                                              sortKeyCondition: AttributeCondition?,
                                                              limit: Int?,
                                                              scanIndexForward: Bool,
                                                              exclusiveStartKey: String?) async throws
-    -> ([ReturnedType], String?) {
-        return try await query(forPartitionKey: partitionKey,
-                               sortKeyCondition: sortKeyCondition,
-                               limit: limit,
-                               scanIndexForward: scanIndexForward,
-                               exclusiveStartKey: exclusiveStartKey,
-                               consistentRead: self.consistentRead)
+        -> ([ReturnedType], String?)
+    {
+        try await self.query(forPartitionKey: partitionKey,
+                             sortKeyCondition: sortKeyCondition,
+                             limit: limit,
+                             scanIndexForward: scanIndexForward,
+                             exclusiveStartKey: exclusiveStartKey,
+                             consistentRead: self.consistentRead)
     }
-    
+
     func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
                                                     sortKeyCondition: AttributeCondition?) async throws
-    -> [TypedDatabaseItem<AttributesType, ItemType>] {
-        return try await monomorphicQuery(forPartitionKey: partitionKey,
-                                          sortKeyCondition: sortKeyCondition,
-                                          consistentRead: self.consistentRead)
+        -> [TypedDatabaseItem<AttributesType, ItemType>]
+    {
+        try await self.monomorphicQuery(forPartitionKey: partitionKey,
+                                        sortKeyCondition: sortKeyCondition,
+                                        consistentRead: self.consistentRead)
     }
-    
+
     func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
                                                     sortKeyCondition: AttributeCondition?,
                                                     limit: Int?,
                                                     scanIndexForward: Bool,
                                                     exclusiveStartKey: String?) async throws
-    -> ([TypedDatabaseItem<AttributesType, ItemType>], String?) {
-        return try await monomorphicQuery(forPartitionKey: partitionKey,
-                                          sortKeyCondition: sortKeyCondition,
-                                          limit: limit,
-                                          scanIndexForward: scanIndexForward,
-                                          exclusiveStartKey: exclusiveStartKey,
-                                          consistentRead: self.consistentRead)
+        -> ([TypedDatabaseItem<AttributesType, ItemType>], String?)
+    {
+        try await self.monomorphicQuery(forPartitionKey: partitionKey,
+                                        sortKeyCondition: sortKeyCondition,
+                                        limit: limit,
+                                        scanIndexForward: scanIndexForward,
+                                        exclusiveStartKey: exclusiveStartKey,
+                                        consistentRead: self.consistentRead)
     }
 }

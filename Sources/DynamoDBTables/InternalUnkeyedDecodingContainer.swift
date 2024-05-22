@@ -26,10 +26,10 @@
 
 import Foundation
 
-internal struct InternalUnkeyedDecodingContainer: UnkeyedDecodingContainer {
+struct InternalUnkeyedDecodingContainer: UnkeyedDecodingContainer {
     private let decodingContainer: InternalSingleValueDecodingContainer
-    internal private(set) var currentIndex: Int
-    
+    private(set) var currentIndex: Int
+
     init(decodingContainer: InternalSingleValueDecodingContainer) {
         self.decodingContainer = decodingContainer
         self.currentIndex = 0
@@ -38,147 +38,148 @@ internal struct InternalUnkeyedDecodingContainer: UnkeyedDecodingContainer {
     // MARK: - Swift.UnkeyedEncodingContainer Methods
 
     var codingPath: [CodingKey] {
-        return decodingContainer.codingPath
-    }
-    
-    mutating func decodeNil() throws -> Bool {
-        return try createNestedContainer().decodeNil()
+        self.decodingContainer.codingPath
     }
 
-    mutating func decode(_ type: Bool.Type)   throws -> Bool {
-        return try createNestedContainer().decode(Bool.self)
+    mutating func decodeNil() throws -> Bool {
+        try self.createNestedContainer().decodeNil()
     }
-    
-    mutating func decode(_ type: Int.Type)    throws -> Int {
-        return try createNestedContainer().decode(Int.self)
+
+    mutating func decode(_: Bool.Type) throws -> Bool {
+        try self.createNestedContainer().decode(Bool.self)
     }
-    
-    mutating func decode(_ type: Int8.Type)   throws -> Int8 {
-        return try createNestedContainer().decode(Int8.self)
+
+    mutating func decode(_: Int.Type) throws -> Int {
+        try self.createNestedContainer().decode(Int.self)
     }
-    
-    mutating func decode(_ type: Int16.Type)  throws -> Int16 {
-        return try createNestedContainer().decode(Int16.self)
+
+    mutating func decode(_: Int8.Type) throws -> Int8 {
+        try self.createNestedContainer().decode(Int8.self)
     }
-    
-    mutating func decode(_ type: Int32.Type)  throws -> Int32 {
-        return try createNestedContainer().decode(Int32.self)
+
+    mutating func decode(_: Int16.Type) throws -> Int16 {
+        try self.createNestedContainer().decode(Int16.self)
     }
-    
-    mutating func decode(_ type: Int64.Type)  throws -> Int64 {
-        return try createNestedContainer().decode(Int64.self)
+
+    mutating func decode(_: Int32.Type) throws -> Int32 {
+        try self.createNestedContainer().decode(Int32.self)
     }
-    
-    mutating func decode(_ type: UInt.Type)   throws -> UInt {
-        return try createNestedContainer().decode(UInt.self)
+
+    mutating func decode(_: Int64.Type) throws -> Int64 {
+        try self.createNestedContainer().decode(Int64.self)
     }
-    
-    mutating func decode(_ type: UInt8.Type)  throws -> UInt8 {
-        return try createNestedContainer().decode(UInt8.self)
+
+    mutating func decode(_: UInt.Type) throws -> UInt {
+        try self.createNestedContainer().decode(UInt.self)
     }
-    
-    mutating func decode(_ type: UInt16.Type) throws -> UInt16 {
-        return try createNestedContainer().decode(UInt16.self)
+
+    mutating func decode(_: UInt8.Type) throws -> UInt8 {
+        try self.createNestedContainer().decode(UInt8.self)
     }
-    
-    mutating func decode(_ type: UInt32.Type) throws -> UInt32 {
-        return try createNestedContainer().decode(UInt32.self)
+
+    mutating func decode(_: UInt16.Type) throws -> UInt16 {
+        try self.createNestedContainer().decode(UInt16.self)
     }
-    
-    mutating func decode(_ type: UInt64.Type) throws -> UInt64 {
-        return try createNestedContainer().decode(UInt64.self)
+
+    mutating func decode(_: UInt32.Type) throws -> UInt32 {
+        try self.createNestedContainer().decode(UInt32.self)
     }
-    
-    mutating func decode(_ type: Float.Type)  throws -> Float {
-        return try createNestedContainer().decode(Float.self)
+
+    mutating func decode(_: UInt64.Type) throws -> UInt64 {
+        try self.createNestedContainer().decode(UInt64.self)
     }
-    
-    mutating func decode(_ type: Double.Type) throws -> Double {
-        return try createNestedContainer().decode(Double.self)
+
+    mutating func decode(_: Float.Type) throws -> Float {
+        try self.createNestedContainer().decode(Float.self)
     }
-    
-    mutating func decode(_ type: String.Type) throws -> String {
-        return try createNestedContainer().decode(String.self)
+
+    mutating func decode(_: Double.Type) throws -> Double {
+        try self.createNestedContainer().decode(Double.self)
     }
-    
+
+    mutating func decode(_: String.Type) throws -> String {
+        try self.createNestedContainer().decode(String.self)
+    }
+
     mutating func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
-        return try createNestedContainer().decode(type)
+        try self.createNestedContainer().decode(type)
     }
-    
+
     var count: Int? {
-        guard case .l(let values) = decodingContainer.attributeValue else {
+        guard case let .l(values) = decodingContainer.attributeValue else {
             return nil
         }
-        
+
         return values.count
     }
-    
+
     var isAtEnd: Bool {
-        guard case .l(let values) = decodingContainer.attributeValue else {
+        guard case let .l(values) = decodingContainer.attributeValue else {
             return true
         }
-        
-        return currentIndex >= values.count
+
+        return self.currentIndex >= values.count
     }
-    
+
     mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws
-        -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
-        return try createNestedContainer().container(keyedBy: type)
+        -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey
+    {
+        try self.createNestedContainer().container(keyedBy: type)
     }
-    
+
     mutating func nestedUnkeyedContainer() throws -> UnkeyedDecodingContainer {
-        return try createNestedContainer().unkeyedContainer()
+        try self.createNestedContainer().unkeyedContainer()
     }
-    
+
     mutating func superDecoder() throws -> Decoder {
-        return try createNestedContainer()
+        try self.createNestedContainer()
     }
 
     // MARK: -
-    
+
     private mutating func createNestedContainer() throws -> InternalSingleValueDecodingContainer {
-        let index = currentIndex
-        currentIndex += 1
-        
-        guard case .l(let values) = decodingContainer.attributeValue else {
+        let index = self.currentIndex
+        self.currentIndex += 1
+
+        guard case let .l(values) = decodingContainer.attributeValue else {
             let description = "Expected to decode a list."
-            let context = DecodingError.Context(codingPath: codingPath, debugDescription: description)
+            let context = DecodingError.Context(codingPath: self.codingPath, debugDescription: description)
             throw DecodingError.dataCorrupted(context)
         }
-        
+
         guard index < values.count else {
             let description = "Could not find key for index \(index)."
-            let context = DecodingError.Context(codingPath: codingPath, debugDescription: description)
+            let context = DecodingError.Context(codingPath: self.codingPath, debugDescription: description)
             throw DecodingError.valueNotFound(Any.self, context)
         }
-        
+
         let value = values[index]
-        
+
         return InternalSingleValueDecodingContainer(attributeValue: value,
-                                                    codingPath: decodingContainer.codingPath
+                                                    codingPath: self.decodingContainer.codingPath
                                                         + [InternalDynamoDBCodingKey(index: index)],
-                                                    userInfo: decodingContainer.userInfo,
-                                                    attributeNameTransform: decodingContainer.attributeNameTransform)
+                                                    userInfo: self.decodingContainer.userInfo,
+                                                    attributeNameTransform: self.decodingContainer.attributeNameTransform)
     }
 }
 
 private let iso8601DateFormatter: DateFormatter = {
-     let formatter = DateFormatter()
-     formatter.calendar = Calendar(identifier: .iso8601)
-     formatter.locale = Locale(identifier: "en_US_POSIX")
-     formatter.timeZone = TimeZone(secondsFromGMT: 0)
-     formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX"
-     return formatter
- }()
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX"
+    return formatter
+}()
 
- extension Date {
-     var iso8601: String {
-         return iso8601DateFormatter.string(from: self)
-     }
- }
+extension Date {
+    var iso8601: String {
+        iso8601DateFormatter.string(from: self)
+    }
+}
 
- extension String {
-     var dateFromISO8601: Date? {
-         return iso8601DateFormatter.date(from: self)   // "Mar 22, 2017, 10:22 AM"
-     }
- }
+extension String {
+    var dateFromISO8601: Date? {
+        iso8601DateFormatter.date(from: self) // "Mar 22, 2017, 10:22 AM"
+    }
+}

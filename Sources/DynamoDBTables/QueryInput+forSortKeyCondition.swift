@@ -24,48 +24,50 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 
 extension QueryInput {
-        internal static func forSortKeyCondition<AttributesType>(partitionKey: String,
-                                                                 targetTableName: String,
-                                                                 primaryKeyType: AttributesType.Type,
-                                                                 sortKeyCondition: AttributeCondition?,
-                                                                 limit: Int?,
-                                                                 scanIndexForward: Bool,
-                                                                 exclusiveStartKey: String?,
-                                                                 consistentRead: Bool?) throws
-        -> AWSDynamoDB.QueryInput where AttributesType: PrimaryKeyAttributes {
+    static func forSortKeyCondition<AttributesType>(partitionKey: String,
+                                                    targetTableName: String,
+                                                    primaryKeyType: AttributesType.Type,
+                                                    sortKeyCondition: AttributeCondition?,
+                                                    limit: Int?,
+                                                    scanIndexForward: Bool,
+                                                    exclusiveStartKey: String?,
+                                                    consistentRead: Bool?) throws
+        -> AWSDynamoDB.QueryInput where AttributesType: PrimaryKeyAttributes
+    {
         let expressionAttributeValues: [String: DynamoDBClientTypes.AttributeValue]
         let expressionAttributeNames: [String: String]
         let keyConditionExpression: String
         if let currentSortKeyCondition = sortKeyCondition {
             var withSortConditionAttributeValues: [String: DynamoDBClientTypes.AttributeValue] = [
-                ":pk": DynamoDBClientTypes.AttributeValue.s(partitionKey)]
+                ":pk": DynamoDBClientTypes.AttributeValue.s(partitionKey),
+            ]
 
             let sortKeyExpression: String
             switch currentSortKeyCondition {
-            case .equals(let value):
+            case let .equals(value):
                 withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
                 sortKeyExpression = "#sk = :sortkeyval"
-            case .lessThan(let value):
+            case let .lessThan(value):
                 withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
                 sortKeyExpression = "#sk < :sortkeyval"
-            case .lessThanOrEqual(let value):
+            case let .lessThanOrEqual(value):
                 withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
                 sortKeyExpression = "#sk <= :sortkeyval"
-            case .greaterThan(let value):
+            case let .greaterThan(value):
                 withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
                 sortKeyExpression = "#sk > :sortkeyval"
-            case .greaterThanOrEqual(let value):
+            case let .greaterThanOrEqual(value):
                 withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
                 sortKeyExpression = "#sk >= :sortkeyval"
-            case .between(let value1, let value2):
+            case let .between(value1, value2):
                 withSortConditionAttributeValues[":sortkeyval1"] = DynamoDBClientTypes.AttributeValue.s(value1)
                 withSortConditionAttributeValues[":sortkeyval2"] = DynamoDBClientTypes.AttributeValue.s(value2)
                 sortKeyExpression = "#sk BETWEEN :sortkeyval1 AND :sortkeyval2"
-            case .beginsWith(let value):
+            case let .beginsWith(value):
                 withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
                 sortKeyExpression = "begins_with ( #sk, :sortkeyval )"
             }

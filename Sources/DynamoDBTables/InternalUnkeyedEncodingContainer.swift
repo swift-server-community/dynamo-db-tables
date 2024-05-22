@@ -26,7 +26,7 @@
 
 import AWSDynamoDB
 
-internal struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
+struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     private let enclosingContainer: InternalSingleValueEncodingContainer
 
     init(enclosingContainer: InternalSingleValueEncodingContainer) {
@@ -34,104 +34,108 @@ internal struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     }
 
     // MARK: - Swift.UnkeyedEncodingContainer Methods
+
     var codingPath: [CodingKey] {
-        return enclosingContainer.codingPath
-    }
-    
-    var count: Int { return enclosingContainer.unkeyedContainerCount }
-    
-    func encodeNil() throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.null(true)) }
-    
-    func encode(_ value: Bool) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.bool(value)) }
-    
-    func encode(_ value: Int) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Int8) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Int16) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Int32) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Int64) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: UInt) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: UInt8) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: UInt16) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: UInt32) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: UInt64) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Float) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: Double) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
-    }
-    
-    func encode(_ value: String) throws {
-        enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.s(value))
-    }
-    
-    func encode<T>(_ value: T) throws where T: Encodable {
-        try createNestedContainer().encode(value)
+        self.enclosingContainer.codingPath
     }
 
-    func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> {
-        let nestedContainer = createNestedContainer(defaultValue: .keyedContainer([:]))
-        
+    var count: Int { self.enclosingContainer.unkeyedContainerCount }
+
+    func encodeNil() throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.null(true))
+    }
+
+    func encode(_ value: Bool) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.bool(value))
+    }
+
+    func encode(_ value: Int) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Int8) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Int16) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Int32) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Int64) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: UInt) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: UInt8) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: UInt16) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: UInt32) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: UInt64) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Float) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: Double) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.n(String(value)))
+    }
+
+    func encode(_ value: String) throws {
+        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBClientTypes.AttributeValue.s(value))
+    }
+
+    func encode(_ value: some Encodable) throws {
+        try self.createNestedContainer().encode(value)
+    }
+
+    func nestedContainer<NestedKey>(keyedBy _: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> {
+        let nestedContainer = self.createNestedContainer(defaultValue: .keyedContainer([:]))
+
         let nestedKeyContainer = InternalKeyedEncodingContainer<NestedKey>(enclosingContainer: nestedContainer)
-        
+
         return KeyedEncodingContainer<NestedKey>(nestedKeyContainer)
     }
 
     func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
-        let nestedContainer = createNestedContainer(defaultValue: .unkeyedContainer([]))
-        
+        let nestedContainer = self.createNestedContainer(defaultValue: .unkeyedContainer([]))
+
         let nestedKeyContainer = InternalUnkeyedEncodingContainer(enclosingContainer: nestedContainer)
-        
+
         return nestedKeyContainer
     }
-    
-    func superEncoder() -> Encoder { return createNestedContainer() }
+
+    func superEncoder() -> Encoder { self.createNestedContainer() }
 
     // MARK: -
-    
+
     private func createNestedContainer(defaultValue: ContainerValueType? = nil)
-        -> InternalSingleValueEncodingContainer {
-        let index = enclosingContainer.unkeyedContainerCount
-        
+        -> InternalSingleValueEncodingContainer
+    {
+        let index = self.enclosingContainer.unkeyedContainerCount
+
         let nestedContainer = InternalSingleValueEncodingContainer(userInfo: enclosingContainer.userInfo,
-                                                    codingPath: enclosingContainer.codingPath + [InternalDynamoDBCodingKey(index: index)],
-                                                    attributeNameTransform: enclosingContainer.attributeNameTransform,
-                                                    defaultValue: defaultValue)
-        enclosingContainer.addToUnkeyedContainer(value: nestedContainer)
-        
+                                                                   codingPath: self.enclosingContainer.codingPath + [InternalDynamoDBCodingKey(index: index)],
+                                                                   attributeNameTransform: self.enclosingContainer.attributeNameTransform,
+                                                                   defaultValue: defaultValue)
+        self.enclosingContainer.addToUnkeyedContainer(value: nestedContainer)
+
         return nestedContainer
     }
 }

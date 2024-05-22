@@ -24,18 +24,17 @@
 //  DynamoDBTablesTests
 //
 
-import XCTest
 @testable import DynamoDBTables
+import XCTest
 
 class StringDynamoDBKeyTests: XCTestCase {
-
     func testDynamoDBKeyTests() {
         XCTAssertEqual([].dynamodbKey, "")
         XCTAssertEqual(["one"].dynamodbKey, "one")
         XCTAssertEqual(["one", "two"].dynamodbKey, "one.two")
         XCTAssertEqual(["one", "two", "three", "four", "five", "six"].dynamodbKey, "one.two.three.four.five.six")
     }
-    
+
     func testDropAsDynamoDBKeyPrefix() {
         XCTAssertEqual(["one", "two"].dropAsDynamoDBKeyPrefix(from: "one.two.three.four.five.six")!,
                        "three.four.five.six")
@@ -43,21 +42,21 @@ class StringDynamoDBKeyTests: XCTestCase {
                        "one.two.three.four.five.six")
         XCTAssertEqual(["four", "two"].dropAsDynamoDBKeyPrefix(from: "one.two.three.four.five.six"), nil)
     }
-    
+
     func testDynamoDBKeyPrefixTests() {
         XCTAssertEqual([].dynamodbKeyPrefix, "")
         XCTAssertEqual(["one"].dynamodbKeyPrefix, "one.")
         XCTAssertEqual(["one", "two"].dynamodbKeyPrefix, "one.two.")
         XCTAssertEqual(["one", "two", "three", "four", "five", "six"].dynamodbKeyPrefix, "one.two.three.four.five.six.")
     }
-    
+
     func testDynamoDBKeyWithPrefixedVersionTests() {
         XCTAssertEqual([].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5), "v00008")
         XCTAssertEqual(["one"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5), "v00008.one")
         XCTAssertEqual(["one", "two"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5), "v00008.one.two")
         XCTAssertEqual(["one", "two", "three", "four", "five", "six"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5),
                        "v00008.one.two.three.four.five.six")
-        
+
         XCTAssertEqual(["one", "two"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 2), "v08.one.two")
         XCTAssertEqual(["one", "two"].dynamodbKeyWithPrefixedVersion(4888, minimumFieldWidth: 2), "v4888.one.two")
     }

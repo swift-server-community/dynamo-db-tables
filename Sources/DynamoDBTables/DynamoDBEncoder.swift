@@ -24,8 +24,8 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 
 public class DynamoDBEncoder {
     private let attributeNameTransform: ((String) -> String)?
@@ -33,29 +33,29 @@ public class DynamoDBEncoder {
     public init(attributeNameTransform: ((String) -> String)? = nil) {
         self.attributeNameTransform = attributeNameTransform
     }
-    
-    public func encode<T: Swift.Encodable>(_ value: T, userInfo: [CodingUserInfoKey: Any] = [:]) throws -> DynamoDBClientTypes.AttributeValue {
+
+    public func encode(_ value: some Swift.Encodable, userInfo: [CodingUserInfoKey: Any] = [:]) throws -> DynamoDBClientTypes.AttributeValue {
         let container = InternalSingleValueEncodingContainer(userInfo: userInfo,
                                                              codingPath: [],
                                                              attributeNameTransform: attributeNameTransform,
                                                              defaultValue: nil)
         try value.encode(to: container)
-        
+
         return container.attributeValue
     }
 }
 
-internal protocol AttributeValueConvertable {
+protocol AttributeValueConvertable {
     var attributeValue: DynamoDBClientTypes.AttributeValue { get }
 }
 
 extension DynamoDBClientTypes.AttributeValue: AttributeValueConvertable {
     var attributeValue: DynamoDBClientTypes.AttributeValue {
-        return self
+        self
     }
 }
 
-internal enum ContainerValueType {
+enum ContainerValueType {
     case singleValue(AttributeValueConvertable)
     case unkeyedContainer([AttributeValueConvertable])
     case keyedContainer([String: AttributeValueConvertable])

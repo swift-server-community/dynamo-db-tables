@@ -24,12 +24,12 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 
 // Provide a default `PolymorphicWriteEntry` for the `DynamoDBCompositePrimaryKeyGSILogic` for backwards compatibility
 public struct NoOpPolymorphicWriteEntry: PolymorphicWriteEntry {
-    public func handle<Context>(context: Context) throws -> Context.WriteEntryTransformType where Context : PolymorphicWriteEntryContext {
+    public func handle<Context>(context _: Context) throws -> Context.WriteEntryTransformType where Context: PolymorphicWriteEntryContext {
         fatalError("Unimplemented")
     }
 }
@@ -59,7 +59,7 @@ public protocol DynamoDBCompositePrimaryKeyGSILogic {
     func onUpdateItem<AttributesType, ItemType>(newItem: TypedDatabaseItem<AttributesType, ItemType>,
                                                 existingItem: TypedDatabaseItem<AttributesType, ItemType>,
                                                 gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
- 
+
     /**
      * Called when an item is delete on the main table. Can be used to also delete the corresponding item on the GSI.
 

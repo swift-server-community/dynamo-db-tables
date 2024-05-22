@@ -25,39 +25,41 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 
 public struct InMemoryDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimaryKeysProjection {
-    internal let keysWrapper: InMemoryDynamoDBCompositePrimaryKeysProjectionStore
-    
+    let keysWrapper: InMemoryDynamoDBCompositePrimaryKeysProjectionStore
+
     public init(keys: [Any] = []) {
         self.keysWrapper = InMemoryDynamoDBCompositePrimaryKeysProjectionStore(keys: keys)
     }
-    
-    internal init(keysWrapper: InMemoryDynamoDBCompositePrimaryKeysProjectionStore) {
+
+    init(keysWrapper: InMemoryDynamoDBCompositePrimaryKeysProjectionStore) {
         self.keysWrapper = keysWrapper
     }
-    
+
     public var keys: [Any] {
         get async {
-            return await self.keysWrapper.keys
+            await self.keysWrapper.keys
         }
     }
 
     public func query<AttributesType>(forPartitionKey partitionKey: String,
                                       sortKeyCondition: AttributeCondition?) async throws
-    -> [CompositePrimaryKey<AttributesType>] {
-        return try await keysWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition)
+        -> [CompositePrimaryKey<AttributesType>]
+    {
+        try await self.keysWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition)
     }
-    
+
     public func query<AttributesType>(forPartitionKey partitionKey: String,
                                       sortKeyCondition: AttributeCondition?,
                                       limit: Int?,
                                       exclusiveStartKey: String?) async throws
-    -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?) {
-        return try await keysWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                           limit: limit, exclusiveStartKey: exclusiveStartKey)
+        -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
+    {
+        try await self.keysWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
+                                         limit: limit, exclusiveStartKey: exclusiveStartKey)
     }
 
     public func query<AttributesType>(forPartitionKey partitionKey: String,
@@ -65,9 +67,10 @@ public struct InMemoryDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositeP
                                       limit: Int?,
                                       scanIndexForward: Bool,
                                       exclusiveStartKey: String?) async throws
-    -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?) {
-        return try await keysWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                           limit: limit, scanIndexForward: scanIndexForward,
-                                           exclusiveStartKey: exclusiveStartKey)
+        -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
+    {
+        try await self.keysWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
+                                         limit: limit, scanIndexForward: scanIndexForward,
+                                         exclusiveStartKey: exclusiveStartKey)
     }
 }

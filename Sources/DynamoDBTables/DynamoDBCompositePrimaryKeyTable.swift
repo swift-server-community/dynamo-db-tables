@@ -24,9 +24,9 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
 import ClientRuntime
+import Foundation
 
 /**
  Enumeration of the errors that can be thrown by a DynamoDBTable.
@@ -85,16 +85,16 @@ public enum WriteEntry<AttributesType: PrimaryKeyAttributes, ItemType: Codable> 
     case insert(new: TypedDatabaseItem<AttributesType, ItemType>)
     case deleteAtKey(key: CompositePrimaryKey<AttributesType>)
     case deleteItem(existing: TypedDatabaseItem<AttributesType, ItemType>)
-    
+
     public var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
         switch self {
         case .update(new: let new, existing: _):
             return new.compositePrimaryKey
-        case .insert(new: let new):
+        case let .insert(new: new):
             return new.compositePrimaryKey
-        case .deleteAtKey(key: let key):
+        case let .deleteAtKey(key: key):
             return key
-        case .deleteItem(existing: let existing):
+        case let .deleteItem(existing: existing):
             return existing.compositePrimaryKey
         }
     }
@@ -112,7 +112,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      * This property controls if single quotes are escaped while formatting PartiQL statements.
      */
     var escapeSingleQuoteInPartiQL: Bool { get }
-    
+
     /**
      * Insert item is a non-destructive API. If an item already exists with the specified key this
      * API should fail.
@@ -131,7 +131,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      */
     func updateItem<AttributesType, ItemType>(newItem: TypedDatabaseItem<AttributesType, ItemType>,
                                               existingItem: TypedDatabaseItem<AttributesType, ItemType>) async throws
-    
+
     /**
      * Provides the ability to bulk write database rows in a transaction.
      * The transaction will comprise of the write entries specified in `entries`.
@@ -139,7 +139,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      */
     func transactWrite<WriteEntryType: PolymorphicWriteEntry>(
         _ entries: [WriteEntryType]) async throws
-    
+
     /**
      * Provides the ability to bulk write database rows in a transaction.
      * The transaction will comprise of the write entries specified in `entries`.
@@ -149,49 +149,49 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      */
     func transactWrite<WriteEntryType: PolymorphicWriteEntry, TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
         _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType]) async throws
-    
+
     func bulkWrite<WriteEntryType: PolymorphicWriteEntry>(_ entries: [WriteEntryType]) async throws
-    
+
     /**
      * Provides the ability to bulk write database rows
      */
     func monomorphicBulkWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
-    
+
     func monomorphicBulkWriteWithFallback<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
 
     func monomorphicBulkWriteWithoutThrowing<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
-    -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
+        -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
     /**
      * Retrieves an item from the database table. Returns nil if the item doesn't exist.
      */
     func getItem<AttributesType, ItemType>(forKey key: CompositePrimaryKey<AttributesType>) async throws -> TypedDatabaseItem<AttributesType, ItemType>?
-    
+
     /**
      * Retrieves items from the database table as a dictionary mapped to the provided key. Missing entries from the provided map indicate that item doesn't exist.
      */
     func getItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
         forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]) async throws
-    -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
+        -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
 
     /**
      * Removes an item from the database table. Is an idempotent operation; running it multiple times
      * on the same item or attribute does not result in an error response.
      */
     func deleteItem<AttributesType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
-    
+
     /**
      * Removes an item from the database table. Is an idempotent operation; running it multiple times
      * on the same item or attribute does not result in an error response. This operation will not modify the table
      * if the item at the specified key is not the existing item provided.
      */
     func deleteItem<AttributesType, ItemType>(existingItem: TypedDatabaseItem<AttributesType, ItemType>) async throws
-    
+
     /**
      * Removes items from the database table. Is an idempotent operation; running it multiple times
      * on the same item or attribute does not result in an error response.
      */
     func deleteItems<AttributesType>(forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
-    
+
     /**
      * Removes items from the database table. Is an idempotent operation; running it multiple times
      * on the same item or attribute does not result in an error response. This operation will not modify the table
@@ -221,7 +221,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
                                                              exclusiveStartKey: String?,
                                                              consistentRead: Bool) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
-    
+
     /**
      * Queries a partition in the database table and optionally a sort key condition. If the
        partition doesn't exist, this operation will return an empty list as a response. This
@@ -234,7 +234,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
                                                              exclusiveStartKey: String?,
                                                              consistentRead: Bool) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
-    
+
     /**
      * Uses the ExecuteStatement API to perform batch reads or writes on data stored in DynamoDB, using PartiQL.
      * ExecuteStatement API has a maximum limit on the number of decomposed read operations per request. This function handles pagination internally.
@@ -246,7 +246,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?) async throws -> [ReturnedType]
-    
+
     /**
      * Uses the ExecuteStatement API to to perform batch reads or writes on data stored in DynamoDB, using PartiQL.
      * ExecuteStatement API has a maximum limit on the number of decomposed read operations per request.
@@ -257,18 +257,18 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     func execute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?, nextToken: String?) async throws 
-    -> (items: [ReturnedType], lastEvaluatedKey: String?)
-    
+        additionalWhereClause: String?, nextToken: String?) async throws
+        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+
     // MARK: Monomorphic batch and queries
-    
+
     /**
      * Retrieves items from the database table as a dictionary mapped to the provided key. Missing entries from the provided map indicate that item doesn't exist.
      */
     func monomorphicGetItems<AttributesType, ItemType>(
         forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
-    -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
-    
+        -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
+
     /**
      * Queries a partition in the database table and optionally a sort key condition. If the
        partition doesn't exist, this operation will return an empty list as a response. This
@@ -279,20 +279,20 @@ public protocol DynamoDBCompositePrimaryKeyTable {
                                                     sortKeyCondition: AttributeCondition?,
                                                     consistentRead: Bool) async throws
         -> [TypedDatabaseItem<AttributesType, ItemType>]
-    
+
     /**
      * Queries a partition in the database table and optionally a sort key condition. If the
        partition doesn't exist, this operation will return an empty list as a response. This
        function will return paginated results based on the limit and exclusiveStartKey provided.
      */
     func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                        sortKeyCondition: AttributeCondition?,
-                                                        limit: Int?,
-                                                        scanIndexForward: Bool,
-                                                        exclusiveStartKey: String?,
-                                                        consistentRead: Bool) async throws
+                                                    sortKeyCondition: AttributeCondition?,
+                                                    limit: Int?,
+                                                    scanIndexForward: Bool,
+                                                    exclusiveStartKey: String?,
+                                                    consistentRead: Bool) async throws
         -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
-    
+
     /**
      * Uses the ExecuteStatement API to to perform batch reads or writes on data stored in DynamoDB, using PartiQL.
      * ExecuteStatement API has a maximum limit on the number of decomposed read operations per request. This function handles pagination internally.
@@ -304,7 +304,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?) async throws -> [TypedDatabaseItem<AttributesType, ItemType>]
-    
+
     /**
      * Uses the ExecuteStatement API to to perform batch reads or writes on data stored in DynamoDB, using PartiQL.
      * ExecuteStatement API has a maximum limit on the number of decomposed read operations per request.
@@ -315,20 +315,20 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     func monomorphicExecute<AttributesType, ItemType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?, nextToken: String?) async throws 
-    -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
+        additionalWhereClause: String?, nextToken: String?) async throws
+        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
 }
 
 public extension DynamoDBCompositePrimaryKeyTable {
     // provide a default value for the table's `consistentRead`
     // maintains backwards compatibility
     var consistentRead: Bool {
-        return true
+        true
     }
 
     // provide a default value for the table's `escapeSingleQuoteInPartiQL`
     // maintains backwards compatibility
     var escapeSingleQuoteInPartiQL: Bool {
-        return false
+        false
     }
 }

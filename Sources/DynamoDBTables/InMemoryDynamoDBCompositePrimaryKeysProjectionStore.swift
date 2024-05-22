@@ -25,12 +25,12 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 
 // MARK: - Store implementation
 
-internal actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
+actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
     public var keys: [Any] = []
 
     public init(keys: [Any] = []) {
@@ -39,54 +39,55 @@ internal actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
 
     public func query<AttributesType>(forPartitionKey partitionKey: String,
                                       sortKeyCondition: AttributeCondition?) async throws
-    -> [CompositePrimaryKey<AttributesType>] {
+        -> [CompositePrimaryKey<AttributesType>]
+    {
         var items: [CompositePrimaryKey<AttributesType>] = []
-            
-        let sortedKeys = self.keys.compactMap { $0 as? CompositePrimaryKey<AttributesType> }.sorted(by: { (left, right) -> Bool in
-            return left.sortKey < right.sortKey
+
+        let sortedKeys = self.keys.compactMap { $0 as? CompositePrimaryKey<AttributesType> }.sorted(by: { left, right -> Bool in
+            left.sortKey < right.sortKey
         })
-            
+
         sortKeyIteration: for key in sortedKeys {
             if key.partitionKey != partitionKey {
                 // don't include this in the results
                 continue sortKeyIteration
             }
-            
+
             let sortKey = key.sortKey
 
             if let currentSortKeyCondition = sortKeyCondition {
                 switch currentSortKeyCondition {
-                case .equals(let value):
+                case let .equals(value):
                     if !(value == sortKey) {
                         // don't include this in the results
                         continue sortKeyIteration
                     }
-                case .lessThan(let value):
+                case let .lessThan(value):
                     if !(sortKey < value) {
                         // don't include this in the results
                         continue sortKeyIteration
                     }
-                case .lessThanOrEqual(let value):
+                case let .lessThanOrEqual(value):
                     if !(sortKey <= value) {
                         // don't include this in the results
                         continue sortKeyIteration
                     }
-                case .greaterThan(let value):
+                case let .greaterThan(value):
                     if !(sortKey > value) {
                         // don't include this in the results
                         continue sortKeyIteration
                     }
-                case .greaterThanOrEqual(let value):
+                case let .greaterThanOrEqual(value):
                     if !(sortKey >= value) {
                         // don't include this in the results
                         continue sortKeyIteration
                     }
-                case .between(let value1, let value2):
+                case let .between(value1, value2):
                     if !(sortKey > value1 && sortKey < value2) {
                         // don't include this in the results
                         continue sortKeyIteration
                     }
-                case .beginsWith(let value):
+                case let .beginsWith(value):
                     if !(sortKey.hasPrefix(value)) {
                         // don't include this in the results
                         continue sortKeyIteration
@@ -99,17 +100,18 @@ internal actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
 
         return items
     }
-    
+
     public func query<AttributesType>(forPartitionKey partitionKey: String,
                                       sortKeyCondition: AttributeCondition?,
                                       limit: Int?,
                                       exclusiveStartKey: String?) async throws
-    -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?) {
-        return try await query(forPartitionKey: partitionKey,
-                     sortKeyCondition: sortKeyCondition,
-                     limit: limit,
-                     scanIndexForward: true,
-                     exclusiveStartKey: exclusiveStartKey)
+        -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
+    {
+        try await self.query(forPartitionKey: partitionKey,
+                             sortKeyCondition: sortKeyCondition,
+                             limit: limit,
+                             scanIndexForward: true,
+                             exclusiveStartKey: exclusiveStartKey)
     }
 
     public func query<AttributesType>(forPartitionKey partitionKey: String,
@@ -117,7 +119,8 @@ internal actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
                                       limit: Int?,
                                       scanIndexForward: Bool,
                                       exclusiveStartKey: String?) async throws
-    -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?) {
+        -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
+    {
         // get all the results
         let rawItems: [CompositePrimaryKey<AttributesType>] = try await query(forPartitionKey: partitionKey,
                                                                               sortKeyCondition: sortKeyCondition)
@@ -130,7 +133,7 @@ internal actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
 
         let startIndex: Int
         // if there is an exclusiveStartKey
-        if let exclusiveStartKey = exclusiveStartKey {
+        if let exclusiveStartKey {
             guard let storedStartIndex = Int(exclusiveStartKey) else {
                 fatalError("Unexpectedly encoded exclusiveStartKey '\(exclusiveStartKey)'")
             }
@@ -142,7 +145,7 @@ internal actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
 
         let endIndex: Int
         let lastEvaluatedKey: String?
-        if let limit = limit, startIndex + limit < items.count {
+        if let limit, startIndex + limit < items.count {
             endIndex = startIndex + limit
             lastEvaluatedKey = String(endIndex)
         } else {
@@ -150,6 +153,6 @@ internal actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
             lastEvaluatedKey = nil
         }
 
-        return (Array(items[startIndex..<endIndex]), lastEvaluatedKey)
+        return (Array(items[startIndex ..< endIndex]), lastEvaluatedKey)
     }
 }

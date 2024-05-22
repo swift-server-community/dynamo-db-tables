@@ -24,8 +24,8 @@
 //  DynamoDBTablesTests
 //
 
-import Foundation
 @testable import DynamoDBTables
+import Foundation
 
 struct TestTypeA: Codable, Equatable {
     let firstly: String
@@ -34,7 +34,7 @@ struct TestTypeA: Codable, Equatable {
 
 struct TestTypeB: Codable, Equatable, CustomRowTypeIdentifier {
     static var rowTypeIdentifier: String? = "TypeBCustom"
-    
+
     let thirdly: String
     let fourthly: String
 }
@@ -44,7 +44,7 @@ struct TestTypeC: Codable {
     let theNumber: Int?
     let theStruct: TestTypeA?
     let theList: [String]?
-    
+
     init(theString: String?, theNumber: Int?, theStruct: TestTypeA?, theList: [String]?) {
         self.theString = theString
         self.theNumber = theNumber
@@ -55,12 +55,12 @@ struct TestTypeC: Codable {
 
 enum TestQueryableTypes: PolymorphicOperationReturnType {
     typealias AttributesType = StandardPrimaryKeyAttributes
-    
+
     static var types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
-        (TestTypeA.self, .init( {.testTypeA($0)} )),
-        (TestTypeB.self, .init( {.testTypeB($0)} )),
-        ]
-    
+        (TestTypeA.self, .init { .testTypeA($0) }),
+        (TestTypeB.self, .init { .testTypeB($0) }),
+    ]
+
     case testTypeA(StandardTypedDatabaseItem<TestTypeA>)
     case testTypeB(StandardTypedDatabaseItem<TestTypeB>)
 }
@@ -68,9 +68,9 @@ enum TestQueryableTypes: PolymorphicOperationReturnType {
 extension TestQueryableTypes: BatchCapableReturnType {
     func getItemKey() -> CompositePrimaryKey<StandardPrimaryKeyAttributes> {
         switch self {
-        case .testTypeA(let databaseItem):
+        case let .testTypeA(databaseItem):
             return databaseItem.compositePrimaryKey
-        case .testTypeB(let databaseItem):
+        case let .testTypeB(databaseItem):
             return databaseItem.compositePrimaryKey
         }
     }
@@ -87,9 +87,9 @@ enum TestPolymorphicWriteEntry: PolymorphicWriteEntry {
 
     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteEntryTransformType {
         switch self {
-        case .testTypeA(let writeEntry):
+        case let .testTypeA(writeEntry):
             return try context.transform(writeEntry)
-        case .testTypeB(let writeEntry):
+        case let .testTypeB(writeEntry):
             return try context.transform(writeEntry)
         }
     }
@@ -101,9 +101,9 @@ enum TestPolymorphicTransactionConstraintEntry: PolymorphicTransactionConstraint
 
     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteTransactionConstraintType {
         switch self {
-        case .testTypeA(let writeEntry):
+        case let .testTypeA(writeEntry):
             return try context.transform(writeEntry)
-        case .testTypeB(let writeEntry):
+        case let .testTypeB(writeEntry):
             return try context.transform(writeEntry)
         }
     }

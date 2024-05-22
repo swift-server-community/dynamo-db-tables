@@ -2,8 +2,8 @@
 // swiftlint:disable identifier_name cyclomatic_complexity function_body_length
 
 import AWSClientRuntime
-import ClientRuntime
 import AWSDynamoDB
+import ClientRuntime
 
 public struct Key: CodingKey {
     public let stringValue: String
@@ -18,8 +18,8 @@ public struct Key: CodingKey {
     }
 
     public let intValue: Int?
-    public init?(intValue: Int) {
-        return nil
+    public init?(intValue _: Int) {
+        nil
     }
 }
 
@@ -41,43 +41,43 @@ extension DynamoDBClientTypes.AttributeValue: Swift.Codable {
     public func encode(to encoder: Swift.Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
-            case let .b(b):
-                try container.encode(b.base64EncodedString(), forKey: .b)
-            case let .bool(bool):
-                try container.encode(bool, forKey: .bool)
-            case let .bs(bs):
-                var bsContainer = container.nestedUnkeyedContainer(forKey: .bs)
-                for binaryattributevalue0 in bs {
-                    try bsContainer.encode(binaryattributevalue0.base64EncodedString())
-                }
-            case let .l(l):
-                var lContainer = container.nestedUnkeyedContainer(forKey: .l)
-                for attributevalue0 in l {
-                    try lContainer.encode(attributevalue0)
-                }
-            case let .m(m):
-                var mContainer = container.nestedContainer(keyedBy: Key.self, forKey: .m)
-                for (dictKey0, mapAttributeValue0) in m {
-                    try mContainer.encode(mapAttributeValue0, forKey: Key(stringValue: dictKey0))
-                }
-            case let .n(n):
-                try container.encode(n, forKey: .n)
-            case let .ns(ns):
-                var nsContainer = container.nestedUnkeyedContainer(forKey: .ns)
-                for numberattributevalue0 in ns {
-                    try nsContainer.encode(numberattributevalue0)
-                }
-            case let .null(null):
-                try container.encode(null, forKey: .null)
-            case let .s(s):
-                try container.encode(s, forKey: .s)
-            case let .ss(ss):
-                var ssContainer = container.nestedUnkeyedContainer(forKey: .ss)
-                for stringattributevalue0 in ss {
-                    try ssContainer.encode(stringattributevalue0)
-                }
-            case let .sdkUnknown(sdkUnknown):
-                try container.encode(sdkUnknown, forKey: .sdkUnknown)
+        case let .b(b):
+            try container.encode(b.base64EncodedString(), forKey: .b)
+        case let .bool(bool):
+            try container.encode(bool, forKey: .bool)
+        case let .bs(bs):
+            var bsContainer = container.nestedUnkeyedContainer(forKey: .bs)
+            for binaryattributevalue0 in bs {
+                try bsContainer.encode(binaryattributevalue0.base64EncodedString())
+            }
+        case let .l(l):
+            var lContainer = container.nestedUnkeyedContainer(forKey: .l)
+            for attributevalue0 in l {
+                try lContainer.encode(attributevalue0)
+            }
+        case let .m(m):
+            var mContainer = container.nestedContainer(keyedBy: Key.self, forKey: .m)
+            for (dictKey0, mapAttributeValue0) in m {
+                try mContainer.encode(mapAttributeValue0, forKey: Key(stringValue: dictKey0))
+            }
+        case let .n(n):
+            try container.encode(n, forKey: .n)
+        case let .ns(ns):
+            var nsContainer = container.nestedUnkeyedContainer(forKey: .ns)
+            for numberattributevalue0 in ns {
+                try nsContainer.encode(numberattributevalue0)
+            }
+        case let .null(null):
+            try container.encode(null, forKey: .null)
+        case let .s(s):
+            try container.encode(s, forKey: .s)
+        case let .ss(ss):
+            var ssContainer = container.nestedUnkeyedContainer(forKey: .ss)
+            for stringattributevalue0 in ss {
+                try ssContainer.encode(stringattributevalue0)
+            }
+        case let .sdkUnknown(sdkUnknown):
+            try container.encode(sdkUnknown, forKey: .sdkUnknown)
         }
     }
 
@@ -99,11 +99,11 @@ extension DynamoDBClientTypes.AttributeValue: Swift.Codable {
             return
         }
         let ssContainer = try values.decodeIfPresent([Swift.String?].self, forKey: .ss)
-        var ssDecoded0:[Swift.String]? = nil
-        if let ssContainer = ssContainer {
+        var ssDecoded0: [Swift.String]? = nil
+        if let ssContainer {
             ssDecoded0 = [Swift.String]()
             for string0 in ssContainer {
-                if let string0 = string0 {
+                if let string0 {
                     ssDecoded0?.append(string0)
                 }
             }
@@ -113,11 +113,11 @@ extension DynamoDBClientTypes.AttributeValue: Swift.Codable {
             return
         }
         let nsContainer = try values.decodeIfPresent([Swift.String?].self, forKey: .ns)
-        var nsDecoded0:[Swift.String]? = nil
-        if let nsContainer = nsContainer {
+        var nsDecoded0: [Swift.String]? = nil
+        if let nsContainer {
             nsDecoded0 = [Swift.String]()
             for string0 in nsContainer {
-                if let string0 = string0 {
+                if let string0 {
                     nsDecoded0?.append(string0)
                 }
             }
@@ -127,11 +127,11 @@ extension DynamoDBClientTypes.AttributeValue: Swift.Codable {
             return
         }
         let bsContainer = try values.decodeIfPresent([ClientRuntime.Data?].self, forKey: .bs)
-        var bsDecoded0:[ClientRuntime.Data]? = nil
-        if let bsContainer = bsContainer {
+        var bsDecoded0: [ClientRuntime.Data]? = nil
+        if let bsContainer {
             bsDecoded0 = [ClientRuntime.Data]()
             for blob0 in bsContainer {
-                if let blob0 = blob0 {
+                if let blob0 {
                     bsDecoded0?.append(blob0)
                 }
             }
@@ -141,11 +141,11 @@ extension DynamoDBClientTypes.AttributeValue: Swift.Codable {
             return
         }
         let mContainer = try values.decodeIfPresent([Swift.String: DynamoDBClientTypes.AttributeValue?].self, forKey: .m)
-        var mDecoded0: [Swift.String:DynamoDBClientTypes.AttributeValue]? = nil
-        if let mContainer = mContainer {
-            mDecoded0 = [Swift.String:DynamoDBClientTypes.AttributeValue]()
+        var mDecoded0: [Swift.String: DynamoDBClientTypes.AttributeValue]? = nil
+        if let mContainer {
+            mDecoded0 = [Swift.String: DynamoDBClientTypes.AttributeValue]()
             for (key0, attributevalue0) in mContainer {
-                if let attributevalue0 = attributevalue0 {
+                if let attributevalue0 {
                     mDecoded0?[key0] = attributevalue0
                 }
             }
@@ -155,11 +155,11 @@ extension DynamoDBClientTypes.AttributeValue: Swift.Codable {
             return
         }
         let lContainer = try values.decodeIfPresent([DynamoDBClientTypes.AttributeValue?].self, forKey: .l)
-        var lDecoded0:[DynamoDBClientTypes.AttributeValue]? = nil
-        if let lContainer = lContainer {
+        var lDecoded0: [DynamoDBClientTypes.AttributeValue]? = nil
+        if let lContainer {
             lDecoded0 = [DynamoDBClientTypes.AttributeValue]()
             for union0 in lContainer {
-                if let union0 = union0 {
+                if let union0 {
                     lDecoded0?.append(union0)
                 }
             }

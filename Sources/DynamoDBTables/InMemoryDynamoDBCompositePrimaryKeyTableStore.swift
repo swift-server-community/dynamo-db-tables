@@ -25,51 +25,52 @@
 //  DynamoDBTables
 //
 
-import Foundation
 import AWSDynamoDB
+import Foundation
 
 private let itemAlreadyExistsMessage = "Row already exists."
 
 // MARK: - Transforms
 
-internal struct InMemoryPolymorphicWriteEntryTransform: PolymorphicWriteEntryTransform {
+struct InMemoryPolymorphicWriteEntryTransform: PolymorphicWriteEntryTransform {
     typealias TableType = InMemoryDynamoDBCompositePrimaryKeyTableStore
 
-    let operation: (inout TableType.StoreType) throws -> ()
+    let operation: (inout TableType.StoreType) throws -> Void
 
-    init<AttributesType: PrimaryKeyAttributes, ItemType: Codable>(_ entry: WriteEntry<AttributesType, ItemType>, table: TableType) throws {
+    init(_ entry: WriteEntry<some PrimaryKeyAttributes, some Codable>, table _: TableType) throws {
         switch entry {
-        case .update(new: let new, existing: let existing):
-            operation = { store in
+        case let .update(new: new, existing: existing):
+            self.operation = { store in
                 try updateItem(newItem: new, existingItem: existing, store: &store)
             }
-        case .insert(new: let new):
-            operation = { store in
+        case let .insert(new: new):
+            self.operation = { store in
                 try insertItem(new, store: &store)
             }
-        case .deleteAtKey(key: let key):
-            operation = { store in
+        case let .deleteAtKey(key: key):
+            self.operation = { store in
                 try deleteItem(forKey: key, store: &store)
             }
-        case .deleteItem(existing: let existing):
-            operation = { store in
+        case let .deleteItem(existing: existing):
+            self.operation = { store in
                 try deleteItem(existingItem: existing, store: &store)
             }
         }
     }
 }
 
-internal struct InMemoryPolymorphicTransactionConstraintTransform: PolymorphicTransactionConstraintTransform {
+struct InMemoryPolymorphicTransactionConstraintTransform: PolymorphicTransactionConstraintTransform {
     typealias TableType = InMemoryDynamoDBCompositePrimaryKeyTableStore
 
     let partitionKey: String
     let sortKey: String
     let rowVersion: Int
-    
-    init<AttributesType: PrimaryKeyAttributes, ItemType: Codable>(_ entry: TransactionConstraintEntry<AttributesType, ItemType>,
-                                                                  table: TableType) throws {
+
+    init(_ entry: TransactionConstraintEntry<some PrimaryKeyAttributes, some Codable>,
+         table _: TableType) throws
+    {
         switch entry {
-        case .required(existing: let existing):
+        case let .required(existing: existing):
             self.partitionKey = existing.compositePrimaryKey.partitionKey
             self.sortKey = existing.compositePrimaryKey.sortKey
             self.rowVersion = existing.rowStatus.rowVersion
@@ -78,22 +79,25 @@ internal struct InMemoryPolymorphicTransactionConstraintTransform: PolymorphicTr
 }
 
 // MARK: - Shared implementations
+
 // Can be used directly by `InMemoryPolymorphicTransactionConstraintTransform` or through the `InMemoryPolymorphicWriteEntryTransform`
 
 private func updateItem<AttributesType, ItemType>(newItem: TypedDatabaseItem<AttributesType, ItemType>,
                                                   existingItem: TypedDatabaseItem<AttributesType, ItemType>,
-                                                  store: inout [String: [String: PolymorphicOperationReturnTypeConvertable]]) throws {
+                                                  store: inout [String: [String: PolymorphicOperationReturnTypeConvertable]]) throws
+{
     let partition = store[newItem.compositePrimaryKey.partitionKey]
 
     // if there is already a partition
     var updatedPartition: [String: PolymorphicOperationReturnTypeConvertable]
-    if let partition = partition {
+    if let partition {
         updatedPartition = partition
 
         // if the row already exists
         if let actuallyExistingItem = partition[newItem.compositePrimaryKey.sortKey] {
             if existingItem.rowStatus.rowVersion != actuallyExistingItem.rowStatus.rowVersion ||
-                existingItem.createDate.iso8601 != actuallyExistingItem.createDate.iso8601 {
+                existingItem.createDate.iso8601 != actuallyExistingItem.createDate.iso8601
+            {
                 throw DynamoDBTableError.conditionalCheckFailed(partitionKey: newItem.compositePrimaryKey.partitionKey,
                                                                 sortKey: newItem.compositePrimaryKey.sortKey,
                                                                 message: "Trying to overwrite incorrect version.")
@@ -114,13 +118,14 @@ private func updateItem<AttributesType, ItemType>(newItem: TypedDatabaseItem<Att
     store[newItem.compositePrimaryKey.partitionKey] = updatedPartition
 }
 
-private func insertItem<AttributesType, ItemType>(_ item: TypedDatabaseItem<AttributesType, ItemType>,
-                                                  store: inout [String: [String: PolymorphicOperationReturnTypeConvertable]]) throws {
+private func insertItem(_ item: TypedDatabaseItem<some Any, some Any>,
+                        store: inout [String: [String: PolymorphicOperationReturnTypeConvertable]]) throws
+{
     let partition = store[item.compositePrimaryKey.partitionKey]
 
     // if there is already a partition
     var updatedPartition: [String: PolymorphicOperationReturnTypeConvertable]
-    if let partition = partition {
+    if let partition {
         updatedPartition = partition
 
         // if the row already exists
@@ -138,24 +143,27 @@ private func insertItem<AttributesType, ItemType>(_ item: TypedDatabaseItem<Attr
     store[item.compositePrimaryKey.partitionKey] = updatedPartition
 }
 
-private func deleteItem<AttributesType>(forKey key: CompositePrimaryKey<AttributesType>,
-                                        store: inout [String: [String: PolymorphicOperationReturnTypeConvertable]]) throws {
+private func deleteItem(forKey key: CompositePrimaryKey<some Any>,
+                        store: inout [String: [String: PolymorphicOperationReturnTypeConvertable]]) throws
+{
     store[key.partitionKey]?[key.sortKey] = nil
 }
 
-private func deleteItem<ItemType: DatabaseItem>(existingItem: ItemType,
-                                                store: inout [String: [String: PolymorphicOperationReturnTypeConvertable]]) throws {
+private func deleteItem(existingItem: some DatabaseItem,
+                        store: inout [String: [String: PolymorphicOperationReturnTypeConvertable]]) throws
+{
     let partition = store[existingItem.compositePrimaryKey.partitionKey]
 
     // if there is already a partition
     var updatedPartition: [String: PolymorphicOperationReturnTypeConvertable]
-    if let partition = partition {
+    if let partition {
         updatedPartition = partition
 
         // if the row already exists
         if let actuallyExistingItem = partition[existingItem.compositePrimaryKey.sortKey] {
             if existingItem.rowStatus.rowVersion != actuallyExistingItem.rowStatus.rowVersion ||
-            existingItem.createDate.iso8601 != actuallyExistingItem.createDate.iso8601 {
+                existingItem.createDate.iso8601 != actuallyExistingItem.createDate.iso8601
+            {
                 throw DynamoDBTableError.conditionalCheckFailed(partitionKey: existingItem.compositePrimaryKey.partitionKey,
                                                                 sortKey: existingItem.compositePrimaryKey.sortKey,
                                                                 message: "Trying to delete incorrect version.")
@@ -178,17 +186,17 @@ private func deleteItem<ItemType: DatabaseItem>(existingItem: ItemType,
 
 // MARK: - Store implementation
 
-internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
+actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
     typealias StoreType = [String: [String: PolymorphicOperationReturnTypeConvertable]]
-    
-    internal var store: StoreType = [:]
-    internal let executeItemFilter: ExecuteItemFilterType?
+
+    var store: StoreType = [:]
+    let executeItemFilter: ExecuteItemFilterType?
 
     init(executeItemFilter: ExecuteItemFilterType? = nil) {
         self.executeItemFilter = executeItemFilter
     }
-    
-    nonisolated func validateEntry<AttributesType, ItemType>(entry: WriteEntry<AttributesType, ItemType>) throws {
+
+    nonisolated func validateEntry(entry: WriteEntry<some Any, some Any>) throws {
         let entryString = "\(entry)"
         if entryString.count > AWSDynamoDBLimits.maxStatementLength {
             throw DynamoDBTableError.statementLengthExceeded(
@@ -197,16 +205,16 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
         }
     }
 
-    func insertItem<AttributesType, ItemType>(_ item: TypedDatabaseItem<AttributesType, ItemType>) throws {
+    func insertItem(_ item: TypedDatabaseItem<some Any, some Any>) throws {
         try DynamoDBTables.insertItem(item, store: &self.store)
     }
 
-    func clobberItem<AttributesType, ItemType>(_ item: TypedDatabaseItem<AttributesType, ItemType>) throws {
+    func clobberItem(_ item: TypedDatabaseItem<some Any, some Any>) throws {
         let partition = self.store[item.compositePrimaryKey.partitionKey]
 
         // if there is already a partition
         var updatedPartition: [String: PolymorphicOperationReturnTypeConvertable]
-        if let partition = partition {
+        if let partition {
             updatedPartition = partition
 
             updatedPartition[item.compositePrimaryKey.sortKey] = item
@@ -218,59 +226,59 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
     }
 
     func updateItem<AttributesType, ItemType>(newItem: TypedDatabaseItem<AttributesType, ItemType>,
-                                              existingItem: TypedDatabaseItem<AttributesType, ItemType>) throws {
+                                              existingItem: TypedDatabaseItem<AttributesType, ItemType>) throws
+    {
         try DynamoDBTables.updateItem(newItem: newItem, existingItem: existingItem, store: &self.store)
     }
-    
-    func bulkWrite<WriteEntryType: PolymorphicWriteEntry,
-                   TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
-                    _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType],
-                    isTransaction: Bool) throws
+
+    func bulkWrite(
+        _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry],
+        isTransaction: Bool) throws
     {
         let entryCount = entries.count + constraints.count
         let context = StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
-                                                           InMemoryPolymorphicTransactionConstraintTransform>(table: self)
-            
+            InMemoryPolymorphicTransactionConstraintTransform>(table: self)
+
         if entryCount > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
             throw DynamoDBTableError.transactionSizeExceeded(attemptedSize: entryCount,
                                                              maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
         }
-        
+
         let store = self.store
-        
+
         if let error = self.handleConstraints(constraints: constraints, isTransaction: isTransaction, context: context) {
             throw error
         }
-                                    
+
         if let error = self.handleEntries(entries: entries, isTransaction: isTransaction, context: context) {
             if isTransaction {
                 // restore the state prior to the transaction
                 self.store = store
             }
-            
+
             throw error
         }
     }
-    
-    func monomorphicBulkWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) throws {
+
+    func monomorphicBulkWrite(_ entries: [WriteEntry<some Any, some Any>]) throws {
         try entries.forEach { entry in
             switch entry {
-            case .update(new: let new, existing: let existing):
+            case let .update(new: new, existing: existing):
                 return try self.updateItem(newItem: new, existingItem: existing)
-            case .insert(new: let new):
+            case let .insert(new: new):
                 return try self.insertItem(new)
-            case .deleteAtKey(key: let key):
-                return try deleteItem(forKey: key)
-            case .deleteItem(existing: let existing):
-                return try deleteItem(existingItem: existing)
+            case let .deleteAtKey(key: key):
+                return try self.deleteItem(forKey: key)
+            case let .deleteItem(existing: existing):
+                return try self.deleteItem(existingItem: existing)
             }
         }
     }
-    
+
     func monomorphicBulkWriteWithFallback<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) throws {
         // fall back to single operation if the write entry exceeds the statement length limitation
         var nonBulkWriteEntries: [WriteEntry<AttributesType, ItemType>] = []
-        
+
         let bulkWriteEntries = try entries.compactMap { entry in
             do {
                 try self.validateEntry(entry: entry)
@@ -280,65 +288,66 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
                 return nil
             }
         }
-        
+
         try self.monomorphicBulkWrite(bulkWriteEntries)
-            
+
         try nonBulkWriteEntries.forEach { nonBulkWriteEntry in
             switch nonBulkWriteEntry {
-            case .update(new: let new, existing: let existing):
+            case let .update(new: new, existing: existing):
                 try self.updateItem(newItem: new, existingItem: existing)
-            case .insert(new: let new):
+            case let .insert(new: new):
                 try self.insertItem(new)
-            case .deleteAtKey(key: let key):
+            case let .deleteAtKey(key: key):
                 try self.deleteItem(forKey: key)
-            case .deleteItem(existing: let existing):
+            case let .deleteItem(existing: existing):
                 try self.deleteItem(existingItem: existing)
             }
         }
     }
-    
-    func monomorphicBulkWriteWithoutThrowing<AttributesType, ItemType>(
-        _ entries: [WriteEntry<AttributesType, ItemType>]) throws
-    -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum> {
+
+    func monomorphicBulkWriteWithoutThrowing(
+        _ entries: [WriteEntry<some Any, some Any>]) throws
+        -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
+    {
         let results = entries.map { entry -> DynamoDBClientTypes.BatchStatementErrorCodeEnum? in
             switch entry {
-            case .update(new: let new, existing: let existing):
+            case let .update(new: new, existing: existing):
                 do {
-                    try updateItem(newItem: new, existingItem: existing)
-                    
+                    try self.updateItem(newItem: new, existingItem: existing)
+
                     return nil
                 } catch {
                     return .duplicateitem
                 }
-            case .insert(new: let new):
+            case let .insert(new: new):
                 do {
-                    try insertItem(new)
-                    
+                    try self.insertItem(new)
+
                     return nil
                 } catch {
                     return .duplicateitem
                 }
-            case .deleteAtKey(key: let key):
+            case let .deleteAtKey(key: key):
                 do {
-                    try deleteItem(forKey: key)
-                    
+                    try self.deleteItem(forKey: key)
+
                     return nil
                 } catch {
                     return .duplicateitem
                 }
-            case .deleteItem(existing: let existing):
+            case let .deleteItem(existing: existing):
                 do {
-                    try deleteItem(existingItem: existing)
-                    
+                    try self.deleteItem(existingItem: existing)
+
                     return nil
                 } catch {
                     return .duplicateitem
                 }
             }
         }
-        
+
         var errors: Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum> = Set()
-        results.forEach { result in
+        for result in results {
             if let result {
                 errors.insert(result)
             }
@@ -347,9 +356,9 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
     }
 
     func getItem<AttributesType, ItemType>(forKey key: CompositePrimaryKey<AttributesType>) throws
-    -> TypedDatabaseItem<AttributesType, ItemType>? {
+        -> TypedDatabaseItem<AttributesType, ItemType>?
+    {
         if let partition = self.store[key.partitionKey] {
-
             guard let value = partition[key.sortKey] else {
                 return nil
             }
@@ -358,7 +367,7 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
                 let foundType = type(of: value)
                 let description = "Expected to decode \(TypedDatabaseItem<AttributesType, ItemType>.self). Instead found \(foundType)."
                 let context = DecodingError.Context(codingPath: [], debugDescription: description)
-                
+
                 throw DecodingError.typeMismatch(TypedDatabaseItem<AttributesType, ItemType>.self, context)
             }
 
@@ -367,94 +376,94 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
 
         return nil
     }
-    
+
     func getItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
         forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]) throws
-    -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType] {
+        -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
+    {
         var map: [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType] = [:]
-        
+
         try keys.forEach { key in
             if let partition = self.store[key.partitionKey] {
-
                 guard let value = partition[key.sortKey] else {
                     return
                 }
-                
+
                 let itemAsReturnedType: ReturnedType = try self.convertToQueryableType(input: value)
-                
+
                 map[key] = itemAsReturnedType
             }
         }
-        
+
         return map
     }
 
-    func deleteItem<AttributesType>(forKey key: CompositePrimaryKey<AttributesType>) throws {
+    func deleteItem(forKey key: CompositePrimaryKey<some Any>) throws {
         try DynamoDBTables.deleteItem(forKey: key, store: &self.store)
     }
-    
-    func deleteItem<ItemType: DatabaseItem>(existingItem: ItemType) throws {
+
+    func deleteItem(existingItem: some DatabaseItem) throws {
         try DynamoDBTables.deleteItem(existingItem: existingItem, store: &self.store)
     }
-    
-    func deleteItems<AttributesType>(forKeys keys: [CompositePrimaryKey<AttributesType>]) throws {
+
+    func deleteItems(forKeys keys: [CompositePrimaryKey<some Any>]) throws {
         try keys.forEach { key in
-            try deleteItem(forKey: key)
+            try self.deleteItem(forKey: key)
         }
     }
-    
+
     func deleteItems<ItemType: DatabaseItem>(existingItems: [ItemType]) throws {
         try existingItems.forEach { (existingItem: ItemType) in
-            try deleteItem(existingItem: existingItem)
+            try self.deleteItem(existingItem: existingItem)
         }
     }
 
     func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
                                                              sortKeyCondition: AttributeCondition?,
-                                                             consistentRead: Bool) throws
-    -> [ReturnedType] {
+                                                             consistentRead _: Bool) throws
+        -> [ReturnedType]
+    {
         var items: [ReturnedType] = []
 
         if let partition = self.store[partitionKey] {
-            let sortedPartition = partition.sorted(by: { (left, right) -> Bool in
-                return left.key < right.key
+            let sortedPartition = partition.sorted(by: { left, right -> Bool in
+                left.key < right.key
             })
-            
-            sortKeyIteration: for (sortKey, value) in sortedPartition {
 
+            sortKeyIteration: for (sortKey, value) in sortedPartition {
                 if let currentSortKeyCondition = sortKeyCondition {
                     switch currentSortKeyCondition {
-                    case .equals(let value):
+                    case let .equals(value):
                         if !(value == sortKey) {
                             // don't include this in the results
                             continue sortKeyIteration
                         }
-                    case .lessThan(let value):
+                    case let .lessThan(value):
                         if !(sortKey < value) {
                             // don't include this in the results
                             continue sortKeyIteration
                         }
-                    case .lessThanOrEqual(let value):
+                    case let .lessThanOrEqual(value):
                         if !(sortKey <= value) {
                             // don't include this in the results
                             continue sortKeyIteration
                         }
-                    case .greaterThan(let value):
+                    case let .greaterThan(value):
                         if !(sortKey > value) {
                             // don't include this in the results
                             continue sortKeyIteration
                         }
-                    case .greaterThanOrEqual(let value):
+                    case let .greaterThanOrEqual(value):
                         if !(sortKey >= value) {
                             // don't include this in the results
                             continue sortKeyIteration
                         }
-                    case .between(let value1, let value2):
+                    case let .between(value1, value2):
                         if !(sortKey > value1 && sortKey < value2) {
                             // don't include this in the results
                             continue sortKeyIteration
                         }
-                    case .beginsWith(let value):
+                    case let .beginsWith(value):
                         if !(sortKey.hasPrefix(value)) {
                             // don't include this in the results
                             continue sortKeyIteration
@@ -462,7 +471,7 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
                     }
                 }
 
-                items.append(try self.convertToQueryableType(input: value))
+                try items.append(self.convertToQueryableType(input: value))
             }
         }
 
@@ -475,12 +484,13 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
                                                              scanIndexForward: Bool,
                                                              exclusiveStartKey: String?,
                                                              consistentRead: Bool) throws
-    -> (items: [ReturnedType], lastEvaluatedKey: String?) {
+        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+    {
         // get all the results
         let rawItems: [ReturnedType] = try query(forPartitionKey: partitionKey,
                                                  sortKeyCondition: sortKeyCondition,
                                                  consistentRead: consistentRead)
-        
+
         let items: [ReturnedType]
         if !scanIndexForward {
             items = rawItems.reversed()
@@ -490,7 +500,7 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
 
         let startIndex: Int
         // if there is an exclusiveStartKey
-        if let exclusiveStartKey = exclusiveStartKey {
+        if let exclusiveStartKey {
             guard let storedStartIndex = Int(exclusiveStartKey) else {
                 fatalError("Unexpectedly encoded exclusiveStartKey '\(exclusiveStartKey)'")
             }
@@ -502,7 +512,7 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
 
         let endIndex: Int
         let lastEvaluatedKey: String?
-        if let limit = limit, startIndex + limit < items.count {
+        if let limit, startIndex + limit < items.count {
             endIndex = startIndex + limit
             lastEvaluatedKey = String(endIndex)
         } else {
@@ -510,18 +520,19 @@ internal actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
             lastEvaluatedKey = nil
         }
 
-        return (Array(items[startIndex..<endIndex]), lastEvaluatedKey)
+        return (Array(items[startIndex ..< endIndex]), lastEvaluatedKey)
     }
 }
 
 // MARK: - Internal helper functions
 
 extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
-    func handleConstraints<TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
-        constraints: [TransactionConstraintEntryType], isTransaction: Bool,
+    func handleConstraints(
+        constraints: [some PolymorphicTransactionConstraintEntry], isTransaction: Bool,
         context: StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
-                                                      InMemoryPolymorphicTransactionConstraintTransform>)
-    -> DynamoDBTableError? {
+            InMemoryPolymorphicTransactionConstraintTransform>)
+        -> DynamoDBTableError?
+    {
         let errors = constraints.compactMap { entry -> DynamoDBTableError? in
             let transform: InMemoryPolymorphicTransactionConstraintTransform
             do {
@@ -529,10 +540,11 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
             } catch {
                 return DynamoDBTableError.unexpectedError(cause: error)
             }
-            
+
             guard let partition = store[transform.partitionKey],
-                    let item = partition[transform.sortKey],
-                        item.rowStatus.rowVersion == transform.rowVersion else {
+                  let item = partition[transform.sortKey],
+                  item.rowStatus.rowVersion == transform.rowVersion
+            else {
                 if isTransaction {
                     return DynamoDBTableError.transactionConditionalCheckFailed(partitionKey: transform.partitionKey,
                                                                                 sortKey: transform.sortKey,
@@ -543,22 +555,23 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
                                                                      message: "Item doesn't exist or doesn't have correct version")
                 }
             }
-            
+
             return nil
         }
-        
+
         if !errors.isEmpty {
             return DynamoDBTableError.transactionCanceled(reasons: errors)
         }
-        
+
         return nil
     }
-    
-    func handleEntries<WriteEntryType: PolymorphicWriteEntry>(
-        entries: [WriteEntryType], isTransaction: Bool,
+
+    func handleEntries(
+        entries: [some PolymorphicWriteEntry], isTransaction: Bool,
         context: StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
-                                                      InMemoryPolymorphicTransactionConstraintTransform>)
-    -> DynamoDBTableError? {
+            InMemoryPolymorphicTransactionConstraintTransform>)
+        -> DynamoDBTableError?
+    {
         let writeErrors = entries.compactMap { entry -> DynamoDBTableError? in
             let transform: InMemoryPolymorphicWriteEntryTransform
             do {
@@ -566,12 +579,12 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
             } catch {
                 return DynamoDBTableError.unexpectedError(cause: error)
             }
-            
+
             do {
                 try transform.operation(&self.store)
-            } catch let error {
+            } catch {
                 if let typedError = error as? DynamoDBTableError {
-                    if case .conditionalCheckFailed(let partitionKey, let sortKey, let message) = typedError, isTransaction {
+                    if case let .conditionalCheckFailed(partitionKey, sortKey, message) = typedError, isTransaction {
                         if message == itemAlreadyExistsMessage {
                             return .duplicateItem(partitionKey: partitionKey, sortKey: sortKey, message: message)
                         } else {
@@ -581,14 +594,14 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
                     }
                     return typedError
                 }
-                
+
                 // return unexpected error
                 return DynamoDBTableError.unexpectedError(cause: error)
             }
-            
+
             return nil
         }
-                                    
+
         if writeErrors.count > 0 {
             if isTransaction {
                 return DynamoDBTableError.transactionCanceled(reasons: writeErrors)
@@ -596,15 +609,15 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
                 return DynamoDBTableError.batchErrorsReturned(errorCount: writeErrors.count, messageMap: [:])
             }
         }
-        
+
         return nil
     }
-    
+
     func convertToQueryableType<ReturnedType: PolymorphicOperationReturnType>(input: PolymorphicOperationReturnTypeConvertable) throws -> ReturnedType {
         let storedRowTypeName = input.rowTypeIdentifier
-        
+
         var queryableTypeProviders: [String: PolymorphicOperationReturnOption<ReturnedType.AttributesType, ReturnedType>] = [:]
-        ReturnedType.types.forEach { (type, provider) in
+        for (type, provider) in ReturnedType.types {
             queryableTypeProviders[getTypeRowIdentifier(type: type)] = provider
         }
 
@@ -615,18 +628,19 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
             throw DynamoDBTableError.unexpectedType(provided: storedRowTypeName)
         }
     }
-    
+
     func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
                                                              sortKeyCondition: AttributeCondition?,
                                                              limit: Int?,
                                                              exclusiveStartKey: String?,
                                                              consistentRead: Bool) throws
-    -> (items: [ReturnedType], lastEvaluatedKey: String?) {
-        return try query(forPartitionKey: partitionKey,
-                         sortKeyCondition: sortKeyCondition,
-                         limit: limit,
-                         scanIndexForward: true,
-                         exclusiveStartKey: exclusiveStartKey,
-                         consistentRead: consistentRead)
+        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+    {
+        try self.query(forPartitionKey: partitionKey,
+                       sortKeyCondition: sortKeyCondition,
+                       limit: limit,
+                       scanIndexForward: true,
+                       exclusiveStartKey: exclusiveStartKey,
+                       consistentRead: consistentRead)
     }
 }
