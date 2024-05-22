@@ -53,6 +53,15 @@
         "revision" : "ce594e71e92a1610015017f83f402894df540e51",
         "version" : "2.4.4"
       }
+    },
+    {
+      "identity" : "swiftformat",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/nicklockwood/SwiftFormat",
+      "state" : {
+        "revision" : "4bf475154c1c98dcdf751037f930f8e5c72597a4",
+        "version" : "0.53.10"
+      }
     }
   ],
   "version" : 2
