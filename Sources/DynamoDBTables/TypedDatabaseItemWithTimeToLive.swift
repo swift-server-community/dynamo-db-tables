@@ -26,7 +26,7 @@
 
 import Foundation
 
-public struct RowStatus: Codable {
+public struct RowStatus: Sendable, Codable {
     public let rowVersion: Int
     public let lastUpdatedDate: Date
 
@@ -41,7 +41,7 @@ public struct RowStatus: Codable {
     }
 }
 
-public protocol DatabaseItem {
+public protocol DatabaseItem: Sendable {
     associatedtype AttributesType: PrimaryKeyAttributes
     // Default to StandardTimeToLiveAttributes for backwards compatibility
     associatedtype TimeToLiveAttributesType: TimeToLiveAttributes = StandardTimeToLiveAttributes
@@ -61,11 +61,11 @@ public extension DatabaseItem {
 public protocol StandardDatabaseItem: DatabaseItem where AttributesType == StandardPrimaryKeyAttributes {}
 
 // Default to StandardTimeToLiveAttributes for backwards compatibility
-public typealias TypedDatabaseItem<AttributesType: PrimaryKeyAttributes, RowType: Codable> = TypedDatabaseItemWithTimeToLive<AttributesType, RowType, StandardTimeToLiveAttributes>
+public typealias TypedDatabaseItem<AttributesType: PrimaryKeyAttributes, RowType: Sendable & Codable> = TypedDatabaseItemWithTimeToLive<AttributesType, RowType, StandardTimeToLiveAttributes>
 
 public struct TypedDatabaseItemWithTimeToLive<AttributesType: PrimaryKeyAttributes,
-    RowType: Codable,
-    TimeToLiveAttributesType: TimeToLiveAttributes>: DatabaseItem, Codable
+    RowType: Sendable & Codable,
+    TimeToLiveAttributesType: TimeToLiveAttributes>: DatabaseItem, Sendable, Codable
 {
     public let compositePrimaryKey: CompositePrimaryKey<AttributesType>
     public let createDate: Date

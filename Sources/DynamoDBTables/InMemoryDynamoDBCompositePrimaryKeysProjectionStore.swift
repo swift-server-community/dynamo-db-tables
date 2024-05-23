@@ -31,9 +31,9 @@ import Foundation
 // MARK: - Store implementation
 
 actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
-    public var keys: [Any] = []
+    public var keys: [Sendable] = []
 
-    public init(keys: [Any] = []) {
+    public init(keys: [Sendable] = []) {
         self.keys = keys
     }
 

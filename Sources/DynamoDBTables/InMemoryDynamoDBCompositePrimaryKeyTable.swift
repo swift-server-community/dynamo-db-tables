@@ -25,10 +25,10 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
+@preconcurrency import AWSDynamoDB
 import Foundation
 
-public protocol PolymorphicOperationReturnTypeConvertable {
+public protocol PolymorphicOperationReturnTypeConvertable: Sendable {
     var createDate: Foundation.Date { get }
     var rowStatus: RowStatus { get }
 
@@ -41,7 +41,7 @@ extension TypedDatabaseItem: PolymorphicOperationReturnTypeConvertable {
     }
 }
 
-public typealias ExecuteItemFilterType = (String, String, String, PolymorphicOperationReturnTypeConvertable)
+public typealias ExecuteItemFilterType = @Sendable (String, String, String, PolymorphicOperationReturnTypeConvertable)
     -> Bool
 
 public protocol InMemoryTransactionDelegate {
