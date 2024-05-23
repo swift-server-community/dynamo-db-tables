@@ -58,7 +58,7 @@ public extension PolymorphicWriteEntry {
 
 public typealias StandardTransactionConstraintEntry<ItemType: Codable> = TransactionConstraintEntry<StandardPrimaryKeyAttributes, ItemType>
 
-public enum TransactionConstraintEntry<AttributesType: PrimaryKeyAttributes, ItemType: Sendable & Codable> {
+public enum TransactionConstraintEntry<AttributesType: PrimaryKeyAttributes, ItemType: Sendable & Codable>: Sendable {
     case required(existing: TypedDatabaseItem<AttributesType, ItemType>)
 }
 

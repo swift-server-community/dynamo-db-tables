@@ -33,7 +33,7 @@ private typealias DatabaseRowType = StandardTypedDatabaseItem<TestTypeA>
 enum ExpectedQueryableTypes: PolymorphicOperationReturnType {
     typealias AttributesType = StandardPrimaryKeyAttributes
 
-    static var types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
+    static let types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
         (TestTypeA.self, .init { .testTypeA($0) }),
     ]
 
@@ -67,7 +67,7 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         var errorCount = 0
 
         for _ in 0 ..< 10 {
-            guard let item: DatabaseRowType = try! await table.getItem(forKey: key) else {
+            guard let item: DatabaseRowType = try await table.getItem(forKey: key) else {
                 return XCTFail("Expected to retrieve item and there was none")
             }
 
@@ -83,7 +83,7 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         try await table.deleteItem(forKey: key)
 
-        let nowDeletedItem: DatabaseRowType? = try! await table.getItem(forKey: key)
+        let nowDeletedItem: DatabaseRowType? = try await table.getItem(forKey: key)
         XCTAssertNil(nowDeletedItem)
     }
 
@@ -128,7 +128,7 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         var errorCount = 0
 
         for _ in 0 ..< 10 {
-            let query: [ExpectedQueryableTypes] = try! await table.query(forPartitionKey: "partitionId",
+            let query: [ExpectedQueryableTypes] = try await table.query(forPartitionKey: "partitionId",
                                                                          sortKeyCondition: .equals("sortId"))
 
             guard query.count == 1, case let .testTypeA(firstDatabaseItem) = query[0] else {
@@ -155,7 +155,7 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         try await table.deleteItem(forKey: key)
 
-        let nowDeletedItem: DatabaseRowType? = try! await table.getItem(forKey: key)
+        let nowDeletedItem: DatabaseRowType? = try await table.getItem(forKey: key)
         XCTAssertNil(nowDeletedItem)
     }
 
@@ -173,7 +173,7 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         var errorCount = 0
 
         for _ in 0 ..< 10 {
-            let query: [DatabaseRowType] = try! await table.monomorphicQuery(forPartitionKey: "partitionId",
+            let query: [DatabaseRowType] = try await table.monomorphicQuery(forPartitionKey: "partitionId",
                                                                              sortKeyCondition: .equals("sortId"))
 
             guard query.count == 1, let firstQuery = query.first else {
@@ -198,7 +198,7 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         try await table.deleteItem(forKey: key)
 
-        let nowDeletedItem: DatabaseRowType? = try! await table.getItem(forKey: key)
+        let nowDeletedItem: DatabaseRowType? = try await table.getItem(forKey: key)
         XCTAssertNil(nowDeletedItem)
     }
 
@@ -227,7 +227,7 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         try await table.deleteItem(forKey: key)
 
-        let nowDeletedItem: DatabaseRowType? = try! await table.getItem(forKey: key)
+        let nowDeletedItem: DatabaseRowType? = try await table.getItem(forKey: key)
         XCTAssertNil(nowDeletedItem)
     }
 }

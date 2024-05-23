@@ -29,7 +29,7 @@ import Foundation
 enum AllQueryableTypes: PolymorphicOperationReturnType {
     typealias AttributesType = StandardPrimaryKeyAttributes
 
-    static var types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
+    static let types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
         (TypeA.self, .init { .typeA($0) }),
         (TypeB.self, .init { .typeB($0) }),
     ]
@@ -41,22 +41,22 @@ enum AllQueryableTypes: PolymorphicOperationReturnType {
 enum SomeQueryableTypes: PolymorphicOperationReturnType {
     typealias AttributesType = StandardPrimaryKeyAttributes
 
-    static var types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
+    static let types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
         (TypeA.self, .init { .typeA($0) }),
     ]
 
     case typeA(StandardTypedDatabaseItem<TypeA>)
 }
 
-struct GSI1PKIndexIdentity: IndexIdentity {
-    static var codingKey = createRowWithIndexCodingKey(stringValue: "GSI-1-PK")
-    static var identity = "GSI1PK"
+struct GSI1PKIndexIdentity: IndexIdentity, Sendable {
+    static let codingKey = createRowWithIndexCodingKey(stringValue: "GSI-1-PK")
+    static let identity = "GSI1PK"
 }
 
 enum AllQueryableTypesWithIndex: PolymorphicOperationReturnType {
     typealias AttributesType = StandardPrimaryKeyAttributes
 
-    static var types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
+    static let types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
         (RowWithIndex<TypeA, GSI1PKIndexIdentity>.self, .init { .typeAWithIndex($0) }),
         (TypeB.self, .init { .typeB($0) }),
     ]
@@ -65,7 +65,7 @@ enum AllQueryableTypesWithIndex: PolymorphicOperationReturnType {
     case typeB(StandardTypedDatabaseItem<TestTypeB>)
 }
 
-struct TypeA: Codable {
+struct TypeA: Codable, Sendable {
     let firstly: String
     let secondly: String
 
@@ -76,7 +76,7 @@ struct TypeA: Codable {
 }
 
 struct TypeB: Codable, CustomRowTypeIdentifier {
-    static var rowTypeIdentifier: String? = "TypeBCustom"
+    static let rowTypeIdentifier: String? = "TypeBCustom"
 
     let thirdly: String
     let fourthly: String

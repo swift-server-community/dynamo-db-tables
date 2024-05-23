@@ -27,9 +27,6 @@
 @testable import DynamoDBTables
 import XCTest
 
-private let dynamodbEncoder = DynamoDBEncoder()
-private let dynamodbDecoder = DynamoDBDecoder()
-
 struct CoreAccountAttributes: Codable {
     var description: String
     var mappedValues: [String: String]
@@ -64,14 +61,14 @@ class DynamoDBEncoderDecoderTests: XCTestCase {
         mappedValues: ["A": "one", "B": "two"],
         notificationTargets: NotificationTargets(currentIDs: [], maximum: 20))
 
-    func testEncoderDecoder() {
+    func testEncoderDecoder() throws {
         // create key and database item to create
         let key = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: sortKey)
         let newDatabaseItem: DatabaseItemType = StandardTypedDatabaseItem.newItem(withKey: key, andValue: self.attributes)
 
-        let encodedAttributeValue = try! dynamodbEncoder.encode(newDatabaseItem)
+        let encodedAttributeValue = try DynamoDBEncoder().encode(newDatabaseItem)
 
-        let output: DatabaseItemType = try! dynamodbDecoder.decode(encodedAttributeValue)
+        let output: DatabaseItemType = try DynamoDBDecoder().decode(encodedAttributeValue)
 
         XCTAssertEqual(newDatabaseItem.rowValue, output.rowValue)
         XCTAssertEqual(self.partitionKey, output.compositePrimaryKey.partitionKey)
@@ -80,7 +77,7 @@ class DynamoDBEncoderDecoderTests: XCTestCase {
         XCTAssertNil(output.timeToLive)
     }
 
-    func testEncoderDecoderWithTimeToLive() {
+    func testEncoderDecoderWithTimeToLive() throws {
         let timeToLiveTimestamp: Int64 = 123_456_789
         let timeToLive = StandardTimeToLive(timeToLiveTimestamp: timeToLiveTimestamp)
 
@@ -91,9 +88,9 @@ class DynamoDBEncoderDecoderTests: XCTestCase {
             andValue: self.attributes,
             andTimeToLive: timeToLive)
 
-        let encodedAttributeValue = try! dynamodbEncoder.encode(newDatabaseItem)
+        let encodedAttributeValue = try DynamoDBEncoder().encode(newDatabaseItem)
 
-        let output: DatabaseItemType = try! dynamodbDecoder.decode(encodedAttributeValue)
+        let output: DatabaseItemType = try DynamoDBDecoder().decode(encodedAttributeValue)
 
         XCTAssertEqual(newDatabaseItem.rowValue, output.rowValue)
         XCTAssertEqual(self.partitionKey, output.compositePrimaryKey.partitionKey)
