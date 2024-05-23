@@ -176,7 +176,7 @@ All or a subset of the rows from a partition can be retrieved using a query-
 enum TestPolymorphicOperationReturnType: PolymorphicOperationReturnType {
     typealias AttributesType = StandardPrimaryKeyAttributes
     
-    static var types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
+    static let types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
         (TypeA.self, .init( {.typeA($0)} )),
         (TypeB.self, .init( {.typeB($0)} )),
         ]
@@ -728,8 +728,8 @@ public struct MyTimeToLiveAttributes: TimeToLiveAttributes {
 If the `Codable` type is used for a row type also conforms to the `CustomRowTypeIdentifier`, the *rowTypeIdentifier* property of this type will be used as the RowType recorded in the database row.
 
 ```swift
-struct TypeB: Codable, CustomRowTypeIdentifier {
-    static var rowTypeIdentifier: String? = "TypeBCustom"
+struct TypeB: SCodable, CustomRowTypeIdentifier {
+    static let rowTypeIdentifier: String? = "TypeBCustom"
     
     let thirdly: String
     let fourthly: String

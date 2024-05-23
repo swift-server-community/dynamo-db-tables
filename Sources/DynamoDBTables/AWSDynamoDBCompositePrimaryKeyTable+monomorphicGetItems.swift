@@ -42,7 +42,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
      monitors the unprocessed items returned in the response from DynamoDB and uses an exponential backoff algorithm to retry those items using
      the same retry configuration as the underlying DynamoDB client.
      */
-    private class MonomorphicGetItemsRetriable<AttributesType: PrimaryKeyAttributes, ItemType: Codable> {
+    private class MonomorphicGetItemsRetriable<AttributesType: PrimaryKeyAttributes, ItemType: Sendable & Codable> {
         typealias OutputType = [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
 
         let dynamodb: AWSDynamoDB.DynamoDBClient

@@ -38,7 +38,7 @@ public struct StandardTimeToLiveAttributes: TimeToLiveAttributes {
 
 public typealias StandardTimeToLive = TimeToLive<StandardTimeToLiveAttributes>
 
-public struct TimeToLive<AttributesType: TimeToLiveAttributes>: Codable, CustomStringConvertible, Hashable {
+public struct TimeToLive<AttributesType: TimeToLiveAttributes>: Sendable, Codable, CustomStringConvertible, Hashable {
     public var description: String {
         "TimeToLive(timeToLiveTimestamp: \(self.timeToLiveTimestamp)"
     }

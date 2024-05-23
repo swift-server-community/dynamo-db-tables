@@ -32,7 +32,7 @@ public typealias RetryInterval = UInt32
 /**
  Retry configuration for the requests made by a table..
  */
-public struct RetryConfiguration {
+public struct RetryConfiguration: Sendable {
     // Number of retries to be attempted
     public let numRetries: Int
     // First interval of retry in millis
@@ -80,10 +80,10 @@ public struct RetryConfiguration {
     }
 
     /// Default try configuration with 5 retries starting at 500 ms interval.
-    public static var `default` = RetryConfiguration(numRetries: 5, baseRetryInterval: 500,
+    public static let `default` = RetryConfiguration(numRetries: 5, baseRetryInterval: 500,
                                                      maxRetryInterval: 10000, exponentialBackoff: 2)
 
     /// Retry Configuration with no retries.
-    public static var noRetries = RetryConfiguration(numRetries: 0, baseRetryInterval: 0,
+    public static let noRetries = RetryConfiguration(numRetries: 0, baseRetryInterval: 0,
                                                      maxRetryInterval: 0, exponentialBackoff: 0)
 }

@@ -43,7 +43,7 @@ public extension DynamoDBCompositePrimaryKeyTable {
          withRetries: the number of times to attempt to retry the update before failing.
          updatedPayloadProvider: the provider that will return updated payloads.
      */
-    func conditionallyUpdateItem<AttributesType, ItemType: Codable>(
+    func conditionallyUpdateItem<AttributesType, ItemType: Sendable & Codable>(
         forKey key: CompositePrimaryKey<AttributesType>,
         withRetries retries: Int = 10,
         updatedPayloadProvider: @escaping (ItemType) async throws -> ItemType) async throws
@@ -60,7 +60,7 @@ public extension DynamoDBCompositePrimaryKeyTable {
 
     // Explicitly specify an overload with sync updatedPayloadProvider
     // to avoid the compiler matching a call site with such a provider with the EventLoopFuture-returning overload.
-    func conditionallyUpdateItem<AttributesType, ItemType: Codable>(
+    func conditionallyUpdateItem<AttributesType, ItemType: Sendable & Codable>(
         forKey key: CompositePrimaryKey<AttributesType>,
         withRetries retries: Int = 10,
         updatedPayloadProvider: @escaping (ItemType) throws -> ItemType) async throws

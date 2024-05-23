@@ -70,7 +70,7 @@ public extension Swift.Error {
 /**
  Enumeration of the types of conditions that can be specified for an attribute.
  */
-public enum AttributeCondition {
+public enum AttributeCondition: Sendable {
     case equals(String)
     case lessThan(String)
     case lessThanOrEqual(String)
@@ -80,7 +80,7 @@ public enum AttributeCondition {
     case beginsWith(String)
 }
 
-public enum WriteEntry<AttributesType: PrimaryKeyAttributes, ItemType: Codable> {
+public enum WriteEntry<AttributesType: PrimaryKeyAttributes, ItemType: Sendable & Codable>: Sendable {
     case update(new: TypedDatabaseItem<AttributesType, ItemType>, existing: TypedDatabaseItem<AttributesType, ItemType>)
     case insert(new: TypedDatabaseItem<AttributesType, ItemType>)
     case deleteAtKey(key: CompositePrimaryKey<AttributesType>)

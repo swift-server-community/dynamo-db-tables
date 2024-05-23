@@ -33,7 +33,7 @@ struct TestTypeA: Codable, Equatable {
 }
 
 struct TestTypeB: Codable, Equatable, CustomRowTypeIdentifier {
-    static var rowTypeIdentifier: String? = "TypeBCustom"
+    static let rowTypeIdentifier: String? = "TypeBCustom"
 
     let thirdly: String
     let fourthly: String
@@ -56,7 +56,7 @@ struct TestTypeC: Codable {
 enum TestQueryableTypes: PolymorphicOperationReturnType {
     typealias AttributesType = StandardPrimaryKeyAttributes
 
-    static var types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
+    static let types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
         (TestTypeA.self, .init { .testTypeA($0) }),
         (TestTypeB.self, .init { .testTypeB($0) }),
     ]

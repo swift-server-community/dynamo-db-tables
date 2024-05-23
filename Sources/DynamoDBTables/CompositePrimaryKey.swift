@@ -26,7 +26,7 @@
 
 import Foundation
 
-public protocol PrimaryKeyAttributes {
+public protocol PrimaryKeyAttributes: Sendable {
     static var partitionKeyAttributeName: String { get }
     static var sortKeyAttributeName: String { get }
     static var indexName: String? { get }
@@ -66,7 +66,7 @@ struct DynamoDBAttributesTypeCodingKey: CodingKey {
     }
 }
 
-public struct CompositePrimaryKey<AttributesType: PrimaryKeyAttributes>: Codable, CustomStringConvertible, Hashable {
+public struct CompositePrimaryKey<AttributesType: PrimaryKeyAttributes>: Sendable, Codable, CustomStringConvertible, Hashable {
     public var description: String {
         "CompositePrimaryKey(partitionKey: \(self.partitionKey), sortKey: \(self.sortKey))"
     }

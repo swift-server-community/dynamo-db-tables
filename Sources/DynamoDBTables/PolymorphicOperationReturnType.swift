@@ -33,25 +33,27 @@ public protocol BatchCapableReturnType {
     func getItemKey() -> CompositePrimaryKey<AttributesType>
 }
 
-public protocol PolymorphicOperationReturnType {
+public protocol PolymorphicOperationReturnType: Sendable {
     associatedtype AttributesType: PrimaryKeyAttributes
 
     static var types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self>)] { get }
 }
 
-public struct PolymorphicOperationReturnOption<AttributesType: PrimaryKeyAttributes, ReturnType> {
-    private let decodingPayloadHandler: (Decoder) throws -> ReturnType
-    private let typeConvertingPayloadHander: (Any) throws -> ReturnType
+public struct PolymorphicOperationReturnOption<AttributesType: PrimaryKeyAttributes, ReturnType>: Sendable {
+    private let decodingPayloadHandler: @Sendable (Decoder) throws -> ReturnType
+    private let typeConvertingPayloadHander: @Sendable (Any) throws -> ReturnType
 
     public init<RowType: Codable>(
-        _ payloadHandler: @escaping (TypedDatabaseItem<AttributesType, RowType>) -> ReturnType)
+        _ payloadHandler: @escaping @Sendable (TypedDatabaseItem<AttributesType, RowType>) -> ReturnType)
     {
+        @Sendable
         func newDecodingPayloadHandler(decoder: Decoder) throws -> ReturnType {
             let typedDatabaseItem: TypedDatabaseItem<AttributesType, RowType> = try TypedDatabaseItem(from: decoder)
 
             return payloadHandler(typedDatabaseItem)
         }
 
+        @Sendable
         func newTypeConvertingPayloadHandler(input: Any) throws -> ReturnType {
             guard let typedDatabaseItem = input as? TypedDatabaseItem<AttributesType, RowType> else {
                 let description = "Expected to use item type \(TypedDatabaseItem<AttributesType, RowType>.self)."

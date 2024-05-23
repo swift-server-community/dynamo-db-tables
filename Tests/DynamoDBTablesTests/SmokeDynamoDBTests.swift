@@ -28,9 +28,6 @@ import AWSDynamoDB
 @testable import DynamoDBTables
 import XCTest
 
-private let dynamodbEncoder = DynamoDBEncoder()
-private let dynamodbDecoder = DynamoDBDecoder()
-
 private func createDecoder() -> JSONDecoder {
     let jsonDecoder = JSONDecoder()
     #if os(Linux)
@@ -67,13 +64,13 @@ class DynamoDBTablesTests: XCTestCase {
         }
 
         guard let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
-            dynamodbDecoder.decode(jsonAttributeValue))
+            DynamoDBDecoder().decode(jsonAttributeValue))
         else {
             return
         }
 
         guard let decodeAttributeValue = try assertNoThrow(
-            dynamodbEncoder.encode(databaseItem))
+            DynamoDBEncoder().encode(databaseItem))
         else {
             return
         }
@@ -96,13 +93,13 @@ class DynamoDBTablesTests: XCTestCase {
         }
 
         guard let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
-            dynamodbDecoder.decode(jsonAttributeValue))
+            DynamoDBDecoder().decode(jsonAttributeValue))
         else {
             return
         }
 
         guard let decodeAttributeValue = try assertNoThrow(
-            dynamodbEncoder.encode(databaseItem))
+            DynamoDBEncoder().encode(databaseItem))
         else {
             return
         }
@@ -125,7 +122,7 @@ class DynamoDBTablesTests: XCTestCase {
         }
 
         guard let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
-            dynamodbDecoder.decode(attributeValue))
+            DynamoDBDecoder().decode(attributeValue))
         else {
             return
         }
@@ -151,7 +148,7 @@ class DynamoDBTablesTests: XCTestCase {
         }
 
         guard let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
-            dynamodbDecoder.decode(attributeValue))
+            DynamoDBDecoder().decode(attributeValue))
         else {
             return
         }
@@ -182,7 +179,7 @@ class DynamoDBTablesTests: XCTestCase {
 
         let itemsOptional: [ReturnTypeDecodable<AllQueryableTypes>]? = try assertNoThrow(
             attributeValues.map { value in
-                try dynamodbDecoder.decode(value)
+                try DynamoDBDecoder().decode(value)
             })
 
         guard let items = itemsOptional else {
@@ -233,7 +230,7 @@ class DynamoDBTablesTests: XCTestCase {
 
         do {
             let _: [ReturnTypeDecodable<SomeQueryableTypes>] = try attributeValues.map { value in
-                try dynamodbDecoder.decode(value)
+                try DynamoDBDecoder().decode(value)
             }
         } catch let DynamoDBTableError.unexpectedType(provided: provided) {
             XCTAssertEqual(provided, "TypeBCustom")
@@ -257,7 +254,7 @@ class DynamoDBTablesTests: XCTestCase {
 
         let itemsOptional: [ReturnTypeDecodable<AllQueryableTypesWithIndex>]? = try assertNoThrow(
             attributeValues.map { value in
-                try dynamodbDecoder.decode(value)
+                try DynamoDBDecoder().decode(value)
             })
 
         guard let items = itemsOptional else {

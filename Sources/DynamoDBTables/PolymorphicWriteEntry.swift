@@ -44,7 +44,7 @@ public protocol PolymorphicTransactionConstraintTransform {
 
 // Conforming types are provided by the application to express the different possible write entries
 // and how they can be converted to the table-provided transform type.
-public protocol PolymorphicWriteEntry {
+public protocol PolymorphicWriteEntry: Sendable {
     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteEntryTransformType
 
     var compositePrimaryKey: StandardCompositePrimaryKey? { get }
@@ -58,13 +58,13 @@ public extension PolymorphicWriteEntry {
 
 public typealias StandardTransactionConstraintEntry<ItemType: Codable> = TransactionConstraintEntry<StandardPrimaryKeyAttributes, ItemType>
 
-public enum TransactionConstraintEntry<AttributesType: PrimaryKeyAttributes, ItemType: Codable> {
+public enum TransactionConstraintEntry<AttributesType: PrimaryKeyAttributes, ItemType: Sendable & Codable>: Sendable {
     case required(existing: TypedDatabaseItem<AttributesType, ItemType>)
 }
 
 // Conforming types are provided by the application to express the different possible constraint entries
 // and how they can be converted to the table-provided transform type.
-public protocol PolymorphicTransactionConstraintEntry {
+public protocol PolymorphicTransactionConstraintEntry: Sendable {
     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteTransactionConstraintType
 
     var compositePrimaryKey: StandardCompositePrimaryKey? { get }

@@ -36,8 +36,9 @@ private typealias DatabaseRowType =
  * For these tests, a primary item Provider should always return a default value for nil arguments. The Provider Provider requires a non-nil default in order to initialize a Provider.
  */
 private func primaryItemProviderProvider(_ defaultItem: DatabaseRowType) ->
-    (DatabaseRowType?) -> DatabaseRowType
+    @Sendable (DatabaseRowType?) -> DatabaseRowType
 {
+    @Sendable
     func primaryItemProvider(_ item: DatabaseRowType?) ->
         DatabaseRowType
     {
