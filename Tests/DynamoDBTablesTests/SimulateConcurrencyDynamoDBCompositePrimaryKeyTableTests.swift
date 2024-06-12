@@ -129,7 +129,7 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         for _ in 0 ..< 10 {
             let query: [ExpectedQueryableTypes] = try await table.query(forPartitionKey: "partitionId",
-                                                                         sortKeyCondition: .equals("sortId"))
+                                                                        sortKeyCondition: .equals("sortId"))
 
             guard query.count == 1, case let .testTypeA(firstDatabaseItem) = query[0] else {
                 return XCTFail("Expected to retrieve item and there wasn't the correct number or type.")
@@ -174,7 +174,7 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         for _ in 0 ..< 10 {
             let query: [DatabaseRowType] = try await table.monomorphicQuery(forPartitionKey: "partitionId",
-                                                                             sortKeyCondition: .equals("sortId"))
+                                                                            sortKeyCondition: .equals("sortId"))
 
             guard query.count == 1, let firstQuery = query.first else {
                 return XCTFail("Expected to retrieve item and there wasn't the correct number or type.")
