@@ -163,23 +163,23 @@ struct InternalUnkeyedDecodingContainer: UnkeyedDecodingContainer {
     }
 }
 
-private let iso8601DateFormatter: DateFormatter = {
+private func createISO8601DateFormatter() -> DateFormatter {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
     formatter.timeZone = TimeZone(secondsFromGMT: 0)
     formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX"
     return formatter
-}()
+}
 
 extension Date {
     var iso8601: String {
-        iso8601DateFormatter.string(from: self)
+        createISO8601DateFormatter().string(from: self)
     }
 }
 
 extension String {
     var dateFromISO8601: Date? {
-        iso8601DateFormatter.date(from: self) // "Mar 22, 2017, 10:22 AM"
+        createISO8601DateFormatter().date(from: self) // "Mar 22, 2017, 10:22 AM"
     }
 }
