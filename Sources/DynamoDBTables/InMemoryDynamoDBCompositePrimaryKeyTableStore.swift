@@ -231,7 +231,7 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
         try DynamoDBTables.updateItem(newItem: newItem, existingItem: existingItem, store: &self.store)
     }
 
-    func bulkWrite(
+    func polymorphicBulkWrite(
         _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry],
         isTransaction: Bool) throws
     {
@@ -260,7 +260,7 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
         }
     }
 
-    func monomorphicBulkWrite(_ entries: [WriteEntry<some Any, some Any>]) throws {
+    func bulkWrite(_ entries: [WriteEntry<some Any, some Any>]) throws {
         try entries.forEach { entry in
             switch entry {
             case let .update(new: new, existing: existing):
@@ -275,7 +275,7 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
         }
     }
 
-    func monomorphicBulkWriteWithFallback<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) throws {
+    func bulkWriteWithFallback<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) throws {
         // fall back to single operation if the write entry exceeds the statement length limitation
         var nonBulkWriteEntries: [WriteEntry<AttributesType, ItemType>] = []
 
@@ -289,7 +289,7 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
             }
         }
 
-        try self.monomorphicBulkWrite(bulkWriteEntries)
+        try self.bulkWrite(bulkWriteEntries)
 
         try nonBulkWriteEntries.forEach { nonBulkWriteEntry in
             switch nonBulkWriteEntry {
@@ -305,7 +305,7 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
         }
     }
 
-    func monomorphicBulkWriteWithoutThrowing(
+    func bulkWriteWithoutThrowing(
         _ entries: [WriteEntry<some Any, some Any>]) throws
         -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
     {
@@ -377,7 +377,7 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
         return nil
     }
 
-    func getItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
+    func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
         forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]) throws
         -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
     {
@@ -418,9 +418,9 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
         }
     }
 
-    func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                             sortKeyCondition: AttributeCondition?,
-                                                             consistentRead _: Bool) throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                        sortKeyCondition: AttributeCondition?,
+                                                                        consistentRead _: Bool) throws
         -> [ReturnedType]
     {
         var items: [ReturnedType] = []
@@ -478,18 +478,18 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
         return items
     }
 
-    func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                             sortKeyCondition: AttributeCondition?,
-                                                             limit: Int?,
-                                                             scanIndexForward: Bool,
-                                                             exclusiveStartKey: String?,
-                                                             consistentRead: Bool) throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                        sortKeyCondition: AttributeCondition?,
+                                                                        limit: Int?,
+                                                                        scanIndexForward: Bool,
+                                                                        exclusiveStartKey: String?,
+                                                                        consistentRead: Bool) throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
         // get all the results
-        let rawItems: [ReturnedType] = try query(forPartitionKey: partitionKey,
-                                                 sortKeyCondition: sortKeyCondition,
-                                                 consistentRead: consistentRead)
+        let rawItems: [ReturnedType] = try polymorphicQuery(forPartitionKey: partitionKey,
+                                                            sortKeyCondition: sortKeyCondition,
+                                                            consistentRead: consistentRead)
 
         let items: [ReturnedType]
         if !scanIndexForward {
@@ -629,18 +629,18 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
         }
     }
 
-    func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                             sortKeyCondition: AttributeCondition?,
-                                                             limit: Int?,
-                                                             exclusiveStartKey: String?,
-                                                             consistentRead: Bool) throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                        sortKeyCondition: AttributeCondition?,
+                                                                        limit: Int?,
+                                                                        exclusiveStartKey: String?,
+                                                                        consistentRead: Bool) throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
-        try self.query(forPartitionKey: partitionKey,
-                       sortKeyCondition: sortKeyCondition,
-                       limit: limit,
-                       scanIndexForward: true,
-                       exclusiveStartKey: exclusiveStartKey,
-                       consistentRead: consistentRead)
+        try self.polymorphicQuery(forPartitionKey: partitionKey,
+                                  sortKeyCondition: sortKeyCondition,
+                                  limit: limit,
+                                  scanIndexForward: true,
+                                  exclusiveStartKey: exclusiveStartKey,
+                                  consistentRead: consistentRead)
     }
 }

@@ -76,21 +76,21 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         try await self.gsiLogic.onUpdateItem(newItem: newItem, existingItem: existingItem, gsiDataStore: self.gsiDataStore)
     }
 
-    public func transactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
-        try await self.primaryTable.transactWrite(entries)
+    public func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+        try await self.primaryTable.polymorphicTransactWrite(entries)
     }
 
-    public func transactWrite(
+    public func polymorphicTransactWrite(
         _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
     {
-        try await self.primaryTable.transactWrite(entries, constraints: constraints)
+        try await self.primaryTable.polymorphicTransactWrite(entries, constraints: constraints)
     }
 
-    public func bulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
-        try await self.primaryTable.bulkWrite(entries)
+    public func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+        try await self.primaryTable.polymorphicBulkWrite(entries)
     }
 
-    public func monomorphicBulkWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+    public func bulkWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
         try await entries.asyncForEach { entry in
             switch entry {
             case let .update(new: new, existing: existing):
@@ -105,7 +105,7 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         }
     }
 
-    public func monomorphicBulkWriteWithFallback<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws {
+    public func bulkWriteWithFallback<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws {
         // fall back to single operation if the write entry exceeds the statement length limitation
         var nonBulkWriteEntries: [WriteEntry<AttributesType, ItemType>] = []
 
@@ -119,7 +119,7 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
             }
         }
 
-        try await self.monomorphicBulkWrite(bulkWriteEntries)
+        try await self.bulkWrite(bulkWriteEntries)
 
         try await nonBulkWriteEntries.asyncForEach { nonBulkWriteEntry in
             switch nonBulkWriteEntry {
@@ -135,7 +135,7 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         }
     }
 
-    public func monomorphicBulkWriteWithoutThrowing(
+    public func bulkWriteWithoutThrowing(
         _ entries: [WriteEntry<some Any, some Any>]) async throws
         -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
     {
@@ -191,11 +191,11 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         try await self.primaryTable.getItem(forKey: key)
     }
 
-    public func getItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
+    public func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
         forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]) async throws
         -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
     {
-        try await self.primaryTable.getItems(forKeys: keys)
+        try await self.primaryTable.polymorphicGetItems(forKeys: keys)
     }
 
     public func deleteItem(forKey key: CompositePrimaryKey<some Any>) async throws {
@@ -224,13 +224,141 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         }
     }
 
-    public func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                    sortKeyCondition: AttributeCondition?,
-                                                                    consistentRead: Bool) async throws
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                               sortKeyCondition: AttributeCondition?,
+                                                                               consistentRead: Bool) async throws
         -> [ReturnedType]
     {
         // if this is querying an index
         if let indexName = ReturnedType.AttributesType.indexName {
+            // fail if it isn't the index we know about
+            guard indexName == self.gsiName else {
+                throw GSIError.unknownIndex(name: indexName)
+            }
+
+            // query on the index
+            return try await self.gsiDataStore.polymorphicQuery(forPartitionKey: partitionKey,
+                                                                sortKeyCondition: sortKeyCondition,
+                                                                consistentRead: consistentRead)
+        }
+
+        // query on the main table
+        return try await self.primaryTable.polymorphicQuery(forPartitionKey: partitionKey,
+                                                            sortKeyCondition: sortKeyCondition,
+                                                            consistentRead: consistentRead)
+    }
+
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                               sortKeyCondition: AttributeCondition?,
+                                                                               limit: Int?,
+                                                                               exclusiveStartKey: String?,
+                                                                               consistentRead: Bool) async throws
+        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+    {
+        // if this is querying an index
+        if let indexName = ReturnedType.AttributesType.indexName {
+            // fail if it isn't the index we know about
+            guard indexName == self.gsiName else {
+                throw GSIError.unknownIndex(name: indexName)
+            }
+
+            // query on the index
+            return try await self.gsiDataStore.polymorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
+                                                                limit: limit, exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
+        }
+
+        // query on the main table
+        return try await self.primaryTable.polymorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
+                                                            limit: limit, exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
+    }
+
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                               sortKeyCondition: AttributeCondition?,
+                                                                               limit: Int?,
+                                                                               scanIndexForward: Bool,
+                                                                               exclusiveStartKey: String?,
+                                                                               consistentRead: Bool) async throws
+        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+    {
+        // if this is querying an index
+        if let indexName = ReturnedType.AttributesType.indexName {
+            // fail if it isn't the index we know about
+            guard indexName == self.gsiName else {
+                throw GSIError.unknownIndex(name: indexName)
+            }
+
+            // query on the index
+            return try await self.gsiDataStore.polymorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
+                                                                limit: limit, scanIndexForward: scanIndexForward, exclusiveStartKey: exclusiveStartKey,
+                                                                consistentRead: consistentRead)
+        }
+
+        // query on the main table
+        return try await self.primaryTable.polymorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
+                                                            limit: limit, scanIndexForward: scanIndexForward, exclusiveStartKey: exclusiveStartKey,
+                                                            consistentRead: consistentRead)
+    }
+
+    public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
+        partitionKeys: [String],
+        attributesFilter: [String]?,
+        additionalWhereClause: String?) async throws
+        -> [ReturnedType]
+    {
+        // if this is executing on index
+        if let indexName = ReturnedType.AttributesType.indexName {
+            // fail if it isn't the index we know about
+            guard indexName == self.gsiName else {
+                throw GSIError.unknownIndex(name: indexName)
+            }
+
+            // execute on the index
+            return try await self.gsiDataStore.polymorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
+                                                                  additionalWhereClause: additionalWhereClause)
+        }
+
+        // execute on the main table
+        return try await self.primaryTable.polymorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
+                                                              additionalWhereClause: additionalWhereClause)
+    }
+
+    public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
+        partitionKeys: [String],
+        attributesFilter: [String]?,
+        additionalWhereClause: String?, nextToken: String?) async throws
+        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+    {
+        // if this is executing on index
+        if let indexName = ReturnedType.AttributesType.indexName {
+            // fail if it isn't the index we know about
+            guard indexName == self.gsiName else {
+                throw GSIError.unknownIndex(name: indexName)
+            }
+
+            // execute on the index
+            return try await self.gsiDataStore.polymorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
+                                                                  additionalWhereClause: additionalWhereClause, nextToken: nextToken)
+        }
+
+        // execute on the main table
+        return try await self.primaryTable.polymorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
+                                                              additionalWhereClause: additionalWhereClause, nextToken: nextToken)
+    }
+
+    public func getItems<AttributesType, ItemType>(
+        forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
+        -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
+    {
+        try await self.primaryTable.getItems(forKeys: keys)
+    }
+
+    public func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
+                                                sortKeyCondition: AttributeCondition?,
+                                                consistentRead: Bool) async throws
+        -> [TypedDatabaseItem<AttributesType, ItemType>]
+    {
+        // if this is querying an index
+        if let indexName = AttributesType.indexName {
             // fail if it isn't the index we know about
             guard indexName == self.gsiName else {
                 throw GSIError.unknownIndex(name: indexName)
@@ -248,40 +376,16 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
                                                  consistentRead: consistentRead)
     }
 
-    public func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                    sortKeyCondition: AttributeCondition?,
-                                                                    limit: Int?,
-                                                                    exclusiveStartKey: String?,
-                                                                    consistentRead: Bool) async throws
-        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+    public func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
+                                                sortKeyCondition: AttributeCondition?,
+                                                limit: Int?,
+                                                scanIndexForward: Bool,
+                                                exclusiveStartKey: String?,
+                                                consistentRead: Bool) async throws
+        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
     {
         // if this is querying an index
-        if let indexName = ReturnedType.AttributesType.indexName {
-            // fail if it isn't the index we know about
-            guard indexName == self.gsiName else {
-                throw GSIError.unknownIndex(name: indexName)
-            }
-
-            // query on the index
-            return try await self.gsiDataStore.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                                     limit: limit, exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
-        }
-
-        // query on the main table
-        return try await self.primaryTable.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                                 limit: limit, exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
-    }
-
-    public func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                    sortKeyCondition: AttributeCondition?,
-                                                                    limit: Int?,
-                                                                    scanIndexForward: Bool,
-                                                                    exclusiveStartKey: String?,
-                                                                    consistentRead: Bool) async throws
-        -> (items: [ReturnedType], lastEvaluatedKey: String?)
-    {
-        // if this is querying an index
-        if let indexName = ReturnedType.AttributesType.indexName {
+        if let indexName = AttributesType.indexName {
             // fail if it isn't the index we know about
             guard indexName == self.gsiName else {
                 throw GSIError.unknownIndex(name: indexName)
@@ -299,14 +403,14 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
                                                  consistentRead: consistentRead)
     }
 
-    public func execute<ReturnedType: PolymorphicOperationReturnType>(
+    public func execute<AttributesType, ItemType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?) async throws
-        -> [ReturnedType]
+        -> [TypedDatabaseItem<AttributesType, ItemType>]
     {
         // if this is executing on index
-        if let indexName = ReturnedType.AttributesType.indexName {
+        if let indexName = AttributesType.indexName {
             // fail if it isn't the index we know about
             guard indexName == self.gsiName else {
                 throw GSIError.unknownIndex(name: indexName)
@@ -322,14 +426,14 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
                                                    additionalWhereClause: additionalWhereClause)
     }
 
-    public func execute<ReturnedType: PolymorphicOperationReturnType>(
+    public func execute<AttributesType, ItemType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?, nextToken: String?) async throws
-        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
     {
         // if this is executing on index
-        if let indexName = ReturnedType.AttributesType.indexName {
+        if let indexName = AttributesType.indexName {
             // fail if it isn't the index we know about
             guard indexName == self.gsiName else {
                 throw GSIError.unknownIndex(name: indexName)
@@ -343,109 +447,5 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         // execute on the main table
         return try await self.primaryTable.execute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
                                                    additionalWhereClause: additionalWhereClause, nextToken: nextToken)
-    }
-
-    public func monomorphicGetItems<AttributesType, ItemType>(
-        forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
-        -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
-    {
-        try await self.primaryTable.monomorphicGetItems(forKeys: keys)
-    }
-
-    public func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                           sortKeyCondition: AttributeCondition?,
-                                                           consistentRead: Bool) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
-    {
-        // if this is querying an index
-        if let indexName = AttributesType.indexName {
-            // fail if it isn't the index we know about
-            guard indexName == self.gsiName else {
-                throw GSIError.unknownIndex(name: indexName)
-            }
-
-            // query on the index
-            return try await self.gsiDataStore.monomorphicQuery(forPartitionKey: partitionKey,
-                                                                sortKeyCondition: sortKeyCondition,
-                                                                consistentRead: consistentRead)
-        }
-
-        // query on the main table
-        return try await self.primaryTable.monomorphicQuery(forPartitionKey: partitionKey,
-                                                            sortKeyCondition: sortKeyCondition,
-                                                            consistentRead: consistentRead)
-    }
-
-    public func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                           sortKeyCondition: AttributeCondition?,
-                                                           limit: Int?,
-                                                           scanIndexForward: Bool,
-                                                           exclusiveStartKey: String?,
-                                                           consistentRead: Bool) async throws
-        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
-    {
-        // if this is querying an index
-        if let indexName = AttributesType.indexName {
-            // fail if it isn't the index we know about
-            guard indexName == self.gsiName else {
-                throw GSIError.unknownIndex(name: indexName)
-            }
-
-            // query on the index
-            return try await self.gsiDataStore.monomorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                                                limit: limit, scanIndexForward: scanIndexForward, exclusiveStartKey: exclusiveStartKey,
-                                                                consistentRead: consistentRead)
-        }
-
-        // query on the main table
-        return try await self.primaryTable.monomorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                                            limit: limit, scanIndexForward: scanIndexForward, exclusiveStartKey: exclusiveStartKey,
-                                                            consistentRead: consistentRead)
-    }
-
-    public func monomorphicExecute<AttributesType, ItemType>(
-        partitionKeys: [String],
-        attributesFilter: [String]?,
-        additionalWhereClause: String?) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
-    {
-        // if this is executing on index
-        if let indexName = AttributesType.indexName {
-            // fail if it isn't the index we know about
-            guard indexName == self.gsiName else {
-                throw GSIError.unknownIndex(name: indexName)
-            }
-
-            // execute on the index
-            return try await self.gsiDataStore.monomorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
-                                                                  additionalWhereClause: additionalWhereClause)
-        }
-
-        // execute on the main table
-        return try await self.primaryTable.monomorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
-                                                              additionalWhereClause: additionalWhereClause)
-    }
-
-    public func monomorphicExecute<AttributesType, ItemType>(
-        partitionKeys: [String],
-        attributesFilter: [String]?,
-        additionalWhereClause: String?, nextToken: String?) async throws
-        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
-    {
-        // if this is executing on index
-        if let indexName = AttributesType.indexName {
-            // fail if it isn't the index we know about
-            guard indexName == self.gsiName else {
-                throw GSIError.unknownIndex(name: indexName)
-            }
-
-            // execute on the index
-            return try await self.gsiDataStore.monomorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
-                                                                  additionalWhereClause: additionalWhereClause, nextToken: nextToken)
-        }
-
-        // execute on the main table
-        return try await self.primaryTable.monomorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
-                                                              additionalWhereClause: additionalWhereClause, nextToken: nextToken)
     }
 }

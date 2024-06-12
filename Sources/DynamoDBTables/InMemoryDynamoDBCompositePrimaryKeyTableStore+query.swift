@@ -21,7 +21,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  InMemoryDynamoDBCompositePrimaryKeyTableStore+monomorphicQuery.swift
+//  InMemoryDynamoDBCompositePrimaryKeyTableStore+query.swift
 //  DynamoDBTables
 //
 
@@ -29,7 +29,7 @@ import AWSDynamoDB
 import Foundation
 
 extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
-    func monomorphicGetItems<AttributesType, ItemType>(
+    func getItems<AttributesType, ItemType>(
         forKeys keys: [CompositePrimaryKey<AttributesType>]) throws
         -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
     {
@@ -56,9 +56,9 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
         return map
     }
 
-    func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                    sortKeyCondition: AttributeCondition?,
-                                                    consistentRead _: Bool) throws
+    func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
+                                         sortKeyCondition: AttributeCondition?,
+                                         consistentRead _: Bool) throws
         -> [TypedDatabaseItem<AttributesType, ItemType>]
     {
         var items: [TypedDatabaseItem<AttributesType, ItemType>] = []
@@ -124,18 +124,18 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
         return items
     }
 
-    func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                    sortKeyCondition: AttributeCondition?,
-                                                    limit: Int?,
-                                                    scanIndexForward: Bool,
-                                                    exclusiveStartKey: String?,
-                                                    consistentRead: Bool) throws
+    func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
+                                         sortKeyCondition: AttributeCondition?,
+                                         limit: Int?,
+                                         scanIndexForward: Bool,
+                                         exclusiveStartKey: String?,
+                                         consistentRead: Bool) throws
         -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
     {
         // get all the results
-        let rawItems: [TypedDatabaseItem<AttributesType, ItemType>] = try monomorphicQuery(forPartitionKey: partitionKey,
-                                                                                           sortKeyCondition: sortKeyCondition,
-                                                                                           consistentRead: consistentRead)
+        let rawItems: [TypedDatabaseItem<AttributesType, ItemType>] = try query(forPartitionKey: partitionKey,
+                                                                                sortKeyCondition: sortKeyCondition,
+                                                                                consistentRead: consistentRead)
 
         let items: [TypedDatabaseItem<AttributesType, ItemType>]
         if !scanIndexForward {

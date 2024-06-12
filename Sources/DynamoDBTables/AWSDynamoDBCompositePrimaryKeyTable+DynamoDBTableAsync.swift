@@ -96,36 +96,36 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         _ = try await self.dynamodb.deleteItem(input: deleteItemInput)
     }
 
-    func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                             sortKeyCondition: AttributeCondition?,
-                                                             consistentRead: Bool) async throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                        sortKeyCondition: AttributeCondition?,
+                                                                        consistentRead: Bool) async throws
         -> [ReturnedType]
     {
-        try await self.partialQuery(forPartitionKey: partitionKey,
-                                    sortKeyCondition: sortKeyCondition,
-                                    exclusiveStartKey: nil,
-                                    consistentRead: consistentRead)
+        try await self.polymorphicPartialQuery(forPartitionKey: partitionKey,
+                                               sortKeyCondition: sortKeyCondition,
+                                               exclusiveStartKey: nil,
+                                               consistentRead: consistentRead)
     }
 
     // function to return a future with the results of a query call and all future paginated calls
-    private func partialQuery<ReturnedType: PolymorphicOperationReturnType>(
+    private func polymorphicPartialQuery<ReturnedType: PolymorphicOperationReturnType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?,
         exclusiveStartKey: String?,
         consistentRead: Bool) async throws -> [ReturnedType]
     {
         let paginatedItems: ([ReturnedType], String?) =
-            try await query(forPartitionKey: partitionKey,
-                            sortKeyCondition: sortKeyCondition,
-                            limit: nil,
-                            scanIndexForward: true,
-                            exclusiveStartKey: exclusiveStartKey,
-                            consistentRead: consistentRead)
+            try await polymorphicQuery(forPartitionKey: partitionKey,
+                                       sortKeyCondition: sortKeyCondition,
+                                       limit: nil,
+                                       scanIndexForward: true,
+                                       exclusiveStartKey: exclusiveStartKey,
+                                       consistentRead: consistentRead)
 
         // if there are more items
         if let lastEvaluatedKey = paginatedItems.1 {
             // returns a future with all the results from all later paginated calls
-            let partialResult: [ReturnedType] = try await self.partialQuery(
+            let partialResult: [ReturnedType] = try await self.polymorphicPartialQuery(
                 forPartitionKey: partitionKey,
                 sortKeyCondition: sortKeyCondition,
                 exclusiveStartKey: lastEvaluatedKey,
@@ -139,27 +139,27 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                             sortKeyCondition: AttributeCondition?,
-                                                             limit: Int?,
-                                                             exclusiveStartKey: String?,
-                                                             consistentRead: Bool) async throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                        sortKeyCondition: AttributeCondition?,
+                                                                        limit: Int?,
+                                                                        exclusiveStartKey: String?,
+                                                                        consistentRead: Bool) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
-        try await self.query(forPartitionKey: partitionKey,
-                             sortKeyCondition: sortKeyCondition,
-                             limit: limit,
-                             scanIndexForward: true,
-                             exclusiveStartKey: exclusiveStartKey,
-                             consistentRead: consistentRead)
+        try await self.polymorphicQuery(forPartitionKey: partitionKey,
+                                        sortKeyCondition: sortKeyCondition,
+                                        limit: limit,
+                                        scanIndexForward: true,
+                                        exclusiveStartKey: exclusiveStartKey,
+                                        consistentRead: consistentRead)
     }
 
-    func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                             sortKeyCondition: AttributeCondition?,
-                                                             limit: Int?,
-                                                             scanIndexForward: Bool,
-                                                             exclusiveStartKey: String?,
-                                                             consistentRead: Bool) async throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                        sortKeyCondition: AttributeCondition?,
+                                                                        limit: Int?,
+                                                                        scanIndexForward: Bool,
+                                                                        exclusiveStartKey: String?,
+                                                                        consistentRead: Bool) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
         let queryInput = try AWSDynamoDB.QueryInput.forSortKeyCondition(partitionKey: partitionKey, targetTableName: targetTableName,
@@ -230,36 +230,36 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                    sortKeyCondition: AttributeCondition?,
-                                                    consistentRead: Bool) async throws
+    func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
+                                         sortKeyCondition: AttributeCondition?,
+                                         consistentRead: Bool) async throws
         -> [TypedDatabaseItem<AttributesType, ItemType>]
     {
-        try await self.monomorphicPartialQuery(forPartitionKey: partitionKey,
-                                               sortKeyCondition: sortKeyCondition,
-                                               exclusiveStartKey: nil,
-                                               consistentRead: consistentRead)
+        try await self.partialQuery(forPartitionKey: partitionKey,
+                                    sortKeyCondition: sortKeyCondition,
+                                    exclusiveStartKey: nil,
+                                    consistentRead: consistentRead)
     }
 
     // function to return a future with the results of a query call and all future paginated calls
-    private func monomorphicPartialQuery<AttributesType, ItemType>(
+    private func partialQuery<AttributesType, ItemType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?,
         exclusiveStartKey: String?,
         consistentRead: Bool) async throws -> [TypedDatabaseItem<AttributesType, ItemType>]
     {
         let paginatedItems: ([TypedDatabaseItem<AttributesType, ItemType>], String?) =
-            try await monomorphicQuery(forPartitionKey: partitionKey,
-                                       sortKeyCondition: sortKeyCondition,
-                                       limit: nil,
-                                       scanIndexForward: true,
-                                       exclusiveStartKey: nil,
-                                       consistentRead: consistentRead)
+            try await query(forPartitionKey: partitionKey,
+                            sortKeyCondition: sortKeyCondition,
+                            limit: nil,
+                            scanIndexForward: true,
+                            exclusiveStartKey: nil,
+                            consistentRead: consistentRead)
 
         // if there are more items
         if let lastEvaluatedKey = paginatedItems.1 {
             // returns a future with all the results from all later paginated calls
-            let partialResult: [TypedDatabaseItem<AttributesType, ItemType>] = try await self.monomorphicPartialQuery(
+            let partialResult: [TypedDatabaseItem<AttributesType, ItemType>] = try await self.partialQuery(
                 forPartitionKey: partitionKey,
                 sortKeyCondition: sortKeyCondition,
                 exclusiveStartKey: lastEvaluatedKey,
@@ -273,12 +273,12 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                    sortKeyCondition: AttributeCondition?,
-                                                    limit: Int?,
-                                                    scanIndexForward: Bool,
-                                                    exclusiveStartKey: String?,
-                                                    consistentRead: Bool) async throws
+    func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
+                                         sortKeyCondition: AttributeCondition?,
+                                         limit: Int?,
+                                         scanIndexForward: Bool,
+                                         exclusiveStartKey: String?,
+                                         consistentRead: Bool) async throws
         -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
     {
         let queryInput = try AWSDynamoDB.QueryInput.forSortKeyCondition(

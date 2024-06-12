@@ -98,12 +98,12 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
         try await self.storeWrapper.updateItem(newItem: newItem, existingItem: existingItem)
     }
 
-    public func transactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+    public func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         let noConstraints: [EmptyPolymorphicTransactionConstraintEntry] = []
-        return try await self.transactWrite(entries, constraints: noConstraints)
+        return try await self.polymorphicTransactWrite(entries, constraints: noConstraints)
     }
 
-    public func transactWrite(
+    public func polymorphicTransactWrite(
         _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
     {
         // if there is a transaction delegate and it wants to inject errors
@@ -111,26 +111,26 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
             throw DynamoDBTableError.transactionCanceled(reasons: errors)
         }
 
-        return try await self.storeWrapper.bulkWrite(entries, constraints: constraints, isTransaction: true)
+        return try await self.storeWrapper.polymorphicBulkWrite(entries, constraints: constraints, isTransaction: true)
     }
 
-    public func bulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+    public func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         let noConstraints: [EmptyPolymorphicTransactionConstraintEntry] = []
-        return try await self.storeWrapper.bulkWrite(entries, constraints: noConstraints, isTransaction: false)
+        return try await self.storeWrapper.polymorphicBulkWrite(entries, constraints: noConstraints, isTransaction: false)
     }
 
-    public func monomorphicBulkWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
-        try await self.storeWrapper.monomorphicBulkWrite(entries)
+    public func bulkWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+        try await self.storeWrapper.bulkWrite(entries)
     }
 
-    public func monomorphicBulkWriteWithFallback(_ entries: [WriteEntry<some Any, some Any>]) async throws {
-        try await self.storeWrapper.monomorphicBulkWriteWithFallback(entries)
+    public func bulkWriteWithFallback(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+        try await self.storeWrapper.bulkWriteWithFallback(entries)
     }
 
-    public func monomorphicBulkWriteWithoutThrowing(_ entries: [WriteEntry<some Any, some Any>]) async throws
+    public func bulkWriteWithoutThrowing(_ entries: [WriteEntry<some Any, some Any>]) async throws
         -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
     {
-        try await self.storeWrapper.monomorphicBulkWriteWithoutThrowing(entries)
+        try await self.storeWrapper.bulkWriteWithoutThrowing(entries)
     }
 
     public func getItem<AttributesType, ItemType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
@@ -139,11 +139,11 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
         try await self.storeWrapper.getItem(forKey: key)
     }
 
-    public func getItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
+    public func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
         forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]) async throws
         -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
     {
-        try await self.storeWrapper.getItems(forKeys: keys)
+        try await self.storeWrapper.polymorphicGetItems(forKeys: keys)
     }
 
     public func deleteItem(forKey key: CompositePrimaryKey<some Any>) async throws {
@@ -162,105 +162,105 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
         try await self.storeWrapper.deleteItem(existingItem: existingItem)
     }
 
-    public func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                    sortKeyCondition: AttributeCondition?,
-                                                                    consistentRead: Bool) async throws
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                               sortKeyCondition: AttributeCondition?,
+                                                                               consistentRead: Bool) async throws
         -> [ReturnedType]
     {
-        try await self.storeWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                          consistentRead: consistentRead)
+        try await self.storeWrapper.polymorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
+                                                     consistentRead: consistentRead)
     }
 
-    public func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                    sortKeyCondition: AttributeCondition?,
-                                                                    limit: Int?,
-                                                                    exclusiveStartKey: String?,
-                                                                    consistentRead: Bool) async throws
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                               sortKeyCondition: AttributeCondition?,
+                                                                               limit: Int?,
+                                                                               exclusiveStartKey: String?,
+                                                                               consistentRead: Bool) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
-        try await self.storeWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                          limit: limit, exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
+        try await self.storeWrapper.polymorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
+                                                     limit: limit, exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
     }
 
-    public func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                    sortKeyCondition: AttributeCondition?,
-                                                                    limit: Int?,
-                                                                    scanIndexForward: Bool,
-                                                                    exclusiveStartKey: String?,
-                                                                    consistentRead: Bool) async throws
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                               sortKeyCondition: AttributeCondition?,
+                                                                               limit: Int?,
+                                                                               scanIndexForward: Bool,
+                                                                               exclusiveStartKey: String?,
+                                                                               consistentRead: Bool) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
-        try await self.storeWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                          limit: limit, scanIndexForward: scanIndexForward,
-                                          exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
+        try await self.storeWrapper.polymorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
+                                                     limit: limit, scanIndexForward: scanIndexForward,
+                                                     exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
     }
 
-    public func execute<ReturnedType: PolymorphicOperationReturnType>(
+    public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?) async throws
         -> [ReturnedType]
+    {
+        try await self.storeWrapper.polymorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
+                                                       additionalWhereClause: additionalWhereClause)
+    }
+
+    public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
+        partitionKeys: [String],
+        attributesFilter: [String]?,
+        additionalWhereClause: String?, nextToken: String?) async throws
+        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+    {
+        try await self.storeWrapper.polymorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
+                                                       additionalWhereClause: additionalWhereClause, nextToken: nextToken)
+    }
+
+    public func execute<AttributesType, ItemType>(
+        partitionKeys: [String],
+        attributesFilter: [String]?,
+        additionalWhereClause: String?) async throws
+        -> [TypedDatabaseItem<AttributesType, ItemType>]
     {
         try await self.storeWrapper.execute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
                                             additionalWhereClause: additionalWhereClause)
     }
 
-    public func execute<ReturnedType: PolymorphicOperationReturnType>(
+    public func execute<AttributesType, ItemType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?, nextToken: String?) async throws
-        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
     {
         try await self.storeWrapper.execute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
                                             additionalWhereClause: additionalWhereClause, nextToken: nextToken)
     }
 
-    public func monomorphicExecute<AttributesType, ItemType>(
-        partitionKeys: [String],
-        attributesFilter: [String]?,
-        additionalWhereClause: String?) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
-    {
-        try await self.storeWrapper.monomorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
-                                                       additionalWhereClause: additionalWhereClause)
-    }
-
-    public func monomorphicExecute<AttributesType, ItemType>(
-        partitionKeys: [String],
-        attributesFilter: [String]?,
-        additionalWhereClause: String?, nextToken: String?) async throws
-        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
-    {
-        try await self.storeWrapper.monomorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
-                                                       additionalWhereClause: additionalWhereClause, nextToken: nextToken)
-    }
-
-    public func monomorphicGetItems<AttributesType, ItemType>(
+    public func getItems<AttributesType, ItemType>(
         forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
         -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
     {
-        try await self.storeWrapper.monomorphicGetItems(forKeys: keys)
+        try await self.storeWrapper.getItems(forKeys: keys)
     }
 
-    public func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                           sortKeyCondition: AttributeCondition?,
-                                                           consistentRead: Bool) async throws
+    public func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
+                                                sortKeyCondition: AttributeCondition?,
+                                                consistentRead: Bool) async throws
         -> [TypedDatabaseItem<AttributesType, ItemType>]
     {
-        try await self.storeWrapper.monomorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                                     consistentRead: consistentRead)
+        try await self.storeWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
+                                          consistentRead: consistentRead)
     }
 
-    public func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                           sortKeyCondition: AttributeCondition?,
-                                                           limit: Int?,
-                                                           scanIndexForward: Bool,
-                                                           exclusiveStartKey: String?,
-                                                           consistentRead: Bool) async throws
+    public func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
+                                                sortKeyCondition: AttributeCondition?,
+                                                limit: Int?,
+                                                scanIndexForward: Bool,
+                                                exclusiveStartKey: String?,
+                                                consistentRead: Bool) async throws
         -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
     {
-        try await self.storeWrapper.monomorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                                     limit: limit, scanIndexForward: scanIndexForward,
-                                                     exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
+        try await self.storeWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
+                                          limit: limit, scanIndexForward: scanIndexForward,
+                                          exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
     }
 }

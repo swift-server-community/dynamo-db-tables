@@ -3,7 +3,7 @@
 // This source file is part of the DynamoDBTables open source project
 //
 // This file is forked from
-// https://github.com/amzn/smoke-dynamodb/tree/smoke-dynamodb-3.x/Sources/SmokeDynamoDB/AWSDynamoDBCompositePrimaryKeyTable+monomorphicGetItems.swift
+// https://github.com/amzn/smoke-dynamodb/tree/smoke-dynamodb-3.x/Sources/SmokeDynamoDB/AWSDynamoDBCompositePrimaryKeyTable+getItems.swift
 // Copyright 2018-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // Licensed under Apache License v2.0
 //
@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeyTable+monomorphicGetItems.swift
+//  AWSDynamoDBCompositePrimaryKeyTable+polymorphicGetItems.swift
 //  DynamoDBTables
 //
 
@@ -33,17 +33,17 @@ import Logging
 private let maximumKeysPerGetItemBatch = 100
 private let millisecondsToNanoSeconds: UInt64 = 1_000_000
 
-/// DynamoDBTable conformance monomorphicGetItems function
+/// DynamoDBTable conformance polymorphicGetItems function
 public extension AWSDynamoDBCompositePrimaryKeyTable {
     /**
-     Helper type that manages the state of a monomorphicGetItems request.
+     Helper type that manages the state of a polymorphicGetItems request.
 
      As suggested here - https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html - this helper type
      monitors the unprocessed items returned in the response from DynamoDB and uses an exponential backoff algorithm to retry those items using
      the same retry configuration as the underlying DynamoDB client.
      */
-    private class MonomorphicGetItemsRetriable<AttributesType: PrimaryKeyAttributes, ItemType: Sendable & Codable> {
-        typealias OutputType = [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
+    private class PolymorphicGetItemsRetriable<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType> {
+        typealias OutputType = [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
 
         let dynamodb: AWSDynamoDB.DynamoDBClient
         let retryConfiguration: RetryConfiguration
@@ -74,8 +74,9 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                     do {
                         let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
 
-                        let decodedValue: TypedDatabaseItem<AttributesType, ItemType> = try DynamoDBDecoder().decode(attributeValue)
-                        let key = decodedValue.compositePrimaryKey
+                        let decodedItem: ReturnTypeDecodable<ReturnedType> = try DynamoDBDecoder().decode(attributeValue)
+                        let decodedValue = decodedItem.decodedValue
+                        let key = decodedValue.getItemKey()
 
                         self.outputItems[key] = decodedValue
                         return nil
@@ -121,16 +122,16 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func monomorphicGetItems<AttributesType, ItemType>(
-        forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
-        -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
+    func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
+        forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]) async throws
+        -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
     {
         let chunkedList = keys.chunked(by: maximumKeysPerGetItemBatch)
 
-        let maps = try await chunkedList.concurrentMap { chunk -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>] in
+        let maps = try await chunkedList.concurrentMap { chunk -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType] in
             let input = try self.getInputForBatchGetItem(forKeys: chunk)
 
-            let retriable = MonomorphicGetItemsRetriable<AttributesType, ItemType>(
+            let retriable = PolymorphicGetItemsRetriable<ReturnedType>(
                 initialInput: input,
                 dynamodb: self.dynamodb,
                 retryConfiguration: self.retryConfiguration,
@@ -139,7 +140,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             return try await retriable.batchGetItem()
         }
 
-        // maps is of type [[CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]]
+        // maps is of type [[CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]]
         // with each map coming from each chunk of the original key list
         return maps.reduce([:]) { partialMap, chunkMap in
             // reduce the maps from the chunks into a single map
