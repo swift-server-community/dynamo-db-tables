@@ -245,7 +245,6 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                     isTransactionConflict = true
 
                     return DynamoDBTableError.transactionConflict(message: cancellationReason.message)
-
                 case "ProvisionedThroughputExceeded":
                     return DynamoDBTableError.transactionProvisionedThroughputExceeded(message: cancellationReason.message)
                 case "ThrottlingError":

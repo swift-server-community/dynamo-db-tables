@@ -23,6 +23,9 @@
 
 import PackageDescription
 
+let swiftSettings: [SwiftSetting] = [.enableExperimentalFeature("StrictConcurrency=complete"),
+                                    ]
+
 let package = Package(
     name: "dynamo-db-tables",
     platforms: [
@@ -34,7 +37,7 @@ let package = Package(
             targets: ["DynamoDBTables"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "0.40.0"),
+        .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "0.45.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
         .package(url: "https://github.com/JohnSundell/CollectionConcurrencyKit", from :"0.2.0"),
@@ -47,11 +50,13 @@ let package = Package(
                 .product(name: "Metrics", package: "swift-metrics"),
                 .product(name: "AWSDynamoDB", package: "aws-sdk-swift"),
                 .product(name: "CollectionConcurrencyKit", package: "CollectionConcurrencyKit"),
-            ]),
+            ],
+            swiftSettings: swiftSettings),
         .testTarget(
             name: "DynamoDBTablesTests", dependencies: [
                 .target(name: "DynamoDBTables"),
-            ]),
+            ],
+            swiftSettings: swiftSettings),
     ],
     swiftLanguageVersions: [.v5]
 )

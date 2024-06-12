@@ -24,12 +24,12 @@
 //  DynamoDBTables
 //
 
-import AWSClientRuntime
 import AwsCommonRuntimeKit
 import AWSDynamoDB
 import ClientRuntime
 import Foundation
 import Logging
+import SmithyIdentityAPI
 
 public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimaryKeysProjection {
     let dynamodb: AWSDynamoDB.DynamoDBClient
@@ -42,7 +42,7 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
     }
 
     public init(tableName: String, region: Swift.String,
-                awsCredentialIdentityResolver: (any AWSClientRuntime.AWSCredentialIdentityResolver)? = nil,
+                awsCredentialIdentityResolver: (any SmithyIdentityAPI.AWSCredentialIdentityResolver)? = nil,
                 httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
                 logger: Logging.Logger? = nil) throws
     {
