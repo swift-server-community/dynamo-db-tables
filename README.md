@@ -170,7 +170,43 @@ The `deleteItem` operation will succeed even if the specified row doesn't exist 
 
 ## Queries and Batch
 
-All or a subset of the rows from a partition can be retrieved using a query-
+All or a subset of the rows from a partition can be retrieved using a query.
+
+```swift
+let (queryItems, nextPageToken): ([StandardTypedDatabaseItem<TestTypeA>], String?) =
+    try await table.query(forPartitionKey: "partitionId",
+                          sortKeyCondition: nil,
+                          limit: 100,
+                          exclusiveStartKey: exclusiveStartKey)
+                                 
+for databaseItem in queryItems {                         
+    ...
+}
+```
+
+1. The sort key condition can restrict the query to a subset of the partition rows. A nil condition will return all rows in the partition. 
+2. The `query` operation will fail if any of the rows being returned are not of type `TestTypeA`.
+3. The optional String returned by the `query` operation can be used as the `exclusiveStartKey` in another request to retrieve the next "page" of results from DynamoDB.
+4. There is an overload of the `query` operation that doesn't accept a `limit` or `exclusiveStartKey`. This overload will internally handle the API pagination, making multiple calls to DynamoDB if necessary.
+
+There is also an equivalent `getItems` call that uses DynamoDB's BatchGetItem API-
+
+```swift
+let batch: [StandardCompositePrimaryKey: StandardTypedDatabaseItem<TestTypeA>]
+    = try await table.getItems(forKeys: [key1, key2])
+    
+guard let retrievedDatabaseItem1 = batch[key1] else {
+    ...
+}
+        
+guard let retrievedDatabaseItem2 = batch[key2] else {
+    ...
+}
+```
+
+## Polymorphic Queries and Batch
+
+In addition to the `query` operation, there is a more complex API that allows retrieval of multiple rows that have different types.
 
 ```swift
 enum TestPolymorphicOperationReturnType: PolymorphicOperationReturnType {
@@ -186,10 +222,10 @@ enum TestPolymorphicOperationReturnType: PolymorphicOperationReturnType {
 }
 
 let (queryItems, nextPageToken): ([TestPolymorphicOperationReturnType], String?) =
-    try await table.query(forPartitionKey: partitionId,
-                          sortKeyCondition: nil,
-                          limit: 100,
-                          exclusiveStartKey: exclusiveStartKey)
+    try await table.polymorphicQuery(forPartitionKey: partitionId,
+                                     sortKeyCondition: nil,
+                                     limit: 100,
+                                     exclusiveStartKey: exclusiveStartKey)
                                  
 for item in queryItems {                         
     switch item {
@@ -200,15 +236,12 @@ for item in queryItems {
 }
 ```
 
-1. The sort key condition can restrict the query to a subset of the partition rows. A nil condition will return all rows in the partition. 
-2. The `query` operation will fail if the partition contains rows that are not specified in the output `PolymorphicOperationReturnType` type.
-3. The optional String returned by the `query` operation can be used as the `exclusiveStartKey` in another request to retrieve the next "page" of results from DynamoDB.
-4. There is an overload of the `query` operation that doesn't accept a `limit` or `exclusiveStartKey`. This overload will internally handle the API pagination, making multiple calls to DynamoDB if necessary.
+1. The `polymorphicQuery` operation will fail if any of the rows being returned are not specified in the output `PolymorphicOperationReturnType` type.
 
 A similar operation utilises DynamoDB's BatchGetItem API, returning items in a dictionary keyed by the provided `CompositePrimaryKey` instance-
 
 ```swift
-let batch: [StandardCompositePrimaryKey: TestPolymorphicOperationReturnType] = try await table.getItems(forKeys: [key1, key2])
+let batch: [StandardCompositePrimaryKey: TestPolymorphicOperationReturnType] = try await table.polymorphicGetItems(forKeys: [key1, key2])
 
 guard case .testTypeA(let retrievedDatabaseItem1) = batch[key1] else {
     ...
@@ -220,37 +253,6 @@ guard case .testTypeB(let retrievedDatabaseItem2) = batch[key2] else {
 ```
 
 This operation will automatically handle retrying unprocessed items (with exponential backoff) if the table doesn't have the capacity during the initial request.
-
-## Monomorphic Queries
-
-In addition to the `query` operation, there is a seperate set of operations that provide a simpler API when a query will only retrieve rows of the same type.
-
-```swift
-let (queryItems, nextPageToken): ([StandardTypedDatabaseItem<TestTypeA>], String?) =
-    try await table.monomorphicQuery(forPartitionKey: "partitionId",
-                                     sortKeyCondition: nil,
-                                     limit: 100,
-                                     exclusiveStartKey: exclusiveStartKey)
-                                 
-for databaseItem in queryItems {                         
-    ...
-}
-```
-
-There is also an equivalent `monomorphicGetItems` DynamoDB's BatchGetItem API-
-
-```swift
-let batch: [StandardCompositePrimaryKey: StandardTypedDatabaseItem<TestTypeA>]
-    = try await table.monomorphicGetItems(forKeys: [key1, key2])
-    
-guard let retrievedDatabaseItem1 = batch[key1] else {
-    ...
-}
-        
-guard let retrievedDatabaseItem2 = batch[key2] else {
-    ...
-}
-```
 
 ## Queries on Indices
 
@@ -273,6 +275,20 @@ public struct GSI1PrimaryKeyAttributes: PrimaryKeyAttributes {
     }
 }
 
+let (queryItems, nextPageToken): ([TypedDatabaseItem<GSI1PrimaryKeyAttributes, TestTypeA>], String?) =
+    try await table.query(forPartitionKey: "partitionId",
+                          sortKeyCondition: nil,
+                          limit: 100,
+                          exclusiveStartKey: exclusiveStartKey)
+                                 
+for databaseItem in queryItems {                         
+    ...
+}
+```
+
+and similarly for polymorphic queries-
+
+```swift
 enum TestPolymorphicOperationReturnType: PolymorphicOperationReturnType {
     typealias AttributesType = GSI1PrimaryKeyAttributes
     
@@ -286,7 +302,7 @@ enum TestPolymorphicOperationReturnType: PolymorphicOperationReturnType {
 }
 
 let (queryItems, nextPageToken): ([TestPolymorphicOperationReturnType], String?) =
-    try await table.query(forPartitionKey: partitionId,
+    try await table.polymorphicQuery(forPartitionKey: partitionId,
                           sortKeyCondition: nil,
                           limit: 100,
                           exclusiveStartKey: exclusiveStartKey)
@@ -297,20 +313,6 @@ for item in queryItems {
         ...
     case .typeB(let databaseItem):
     }
-}
-```
-
-and similarly for monomorphic queries-
-
-```swift
-let (queryItems, nextPageToken): ([TypedDatabaseItem<GSI1PrimaryKeyAttributes, TestTypeA>], String?) =
-    try await table.monomorphicQuery(forPartitionKey: "partitionId",
-                                     sortKeyCondition: nil,
-                                     limit: 100,
-                                     exclusiveStartKey: exclusiveStartKey)
-                                 
-for databaseItem in queryItems {                         
-    ...
 }
 ```
 
@@ -347,6 +349,19 @@ You can write multiple database rows using either a bulk or [transaction](https:
 
 ```swift
 typealias TestTypeAWriteEntry = StandardWriteEntry<TestTypeA>
+
+let entryList: [TestTypeAWriteEntry] = [
+    .insert(new: databaseItem1),
+    .insert(new: databaseItem2)
+]
+        
+try await table.bulkWrite(entryList)
+//try await table.transactWrite(entryList)  <<-- When implemented
+```
+
+and similarly for polymorphic queries-
+
+```swift
 typealias TestTypeBWriteEntry = StandardWriteEntry<TestTypeB>
 
 enum TestPolymorphicWriteEntry: PolymorphicWriteEntry {
@@ -365,17 +380,24 @@ enum TestPolymorphicWriteEntry: PolymorphicWriteEntry {
 
 let entryList: [TestPolymorphicWriteEntry] = [
     .testTypeA(.insert(new: databaseItem1)),
-    .testTypeB(.insert(new: databaseItem2))
+    .testTypeB(.insert(new: databaseItem3))
 ]
         
-try await table.bulkWrite(entryList)
-try await table.transactWrite(entryList)
+try await table.polymorphicBulkWrite(entryList)
+try await table.polymorphicTransactWrite(entryList)
 ```
 
 For transactions, you can additionally specify a set of constraints to be part of the transaction-
 
 ```swift
 typealias TestTypeAStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeA>
+
+// Update when `transactWrite` API implemented
+```
+
+and similarly for polymorphic queries-
+
+```swift
 typealias TestTypeBStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeB>
 
 enum TestPolymorphicTransactionConstraintEntry: PolymorphicTransactionConstraintEntry {
@@ -397,7 +419,7 @@ let constraintList: [TestPolymorphicTransactionConstraintEntry] = [
     .testTypeB(.required(existing: databaseItem4))
     ]
          
-try await table.transactWrite(entryList, constraints: constraintList)
+try await table.polymorphicTransactWrite(entryList, constraints: constraintList)
 ```
 
 Both the `PolymorphicWriteEntry` and `PolymorphicTransactionConstraintEntry` conforming types can

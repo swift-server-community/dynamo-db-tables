@@ -137,7 +137,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      * The transaction will comprise of the write entries specified in `entries`.
      * The transaction will fail if the number of entries is greater than 100.
      */
-    func transactWrite<WriteEntryType: PolymorphicWriteEntry>(
+    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry>(
         _ entries: [WriteEntryType]) async throws
 
     /**
@@ -147,20 +147,21 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      * with a specified version must exist regardless of if it will be written to by the transaction).
      * The transaction will fail if the number of entries and constraints combined is greater than 100.
      */
-    func transactWrite<WriteEntryType: PolymorphicWriteEntry, TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
+    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry, TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
         _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType]) async throws
-
-    func bulkWrite<WriteEntryType: PolymorphicWriteEntry>(_ entries: [WriteEntryType]) async throws
 
     /**
      * Provides the ability to bulk write database rows
      */
-    func monomorphicBulkWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
+    func bulkWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
 
-    func monomorphicBulkWriteWithFallback<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
+    func bulkWriteWithFallback<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
 
-    func monomorphicBulkWriteWithoutThrowing<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
+    func bulkWriteWithoutThrowing<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
         -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
+
+    func polymorphicBulkWrite<WriteEntryType: PolymorphicWriteEntry>(_ entries: [WriteEntryType]) async throws
+
     /**
      * Retrieves an item from the database table. Returns nil if the item doesn't exist.
      */
@@ -169,7 +170,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     /**
      * Retrieves items from the database table as a dictionary mapped to the provided key. Missing entries from the provided map indicate that item doesn't exist.
      */
-    func getItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
+    func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
         forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]) async throws
         -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
 
@@ -205,9 +206,9 @@ public protocol DynamoDBCompositePrimaryKeyTable {
        function will potentially make multiple calls to DynamoDB to retrieve all results for
        the query.
      */
-    func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                             sortKeyCondition: AttributeCondition?,
-                                                             consistentRead: Bool) async throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                        sortKeyCondition: AttributeCondition?,
+                                                                        consistentRead: Bool) async throws
         -> [ReturnedType]
 
     /**
@@ -215,11 +216,11 @@ public protocol DynamoDBCompositePrimaryKeyTable {
        partition doesn't exist, this operation will return an empty list as a response. This
        function will return paginated results based on the limit and exclusiveStartKey provided.
      */
-    func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                             sortKeyCondition: AttributeCondition?,
-                                                             limit: Int?,
-                                                             exclusiveStartKey: String?,
-                                                             consistentRead: Bool) async throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                        sortKeyCondition: AttributeCondition?,
+                                                                        limit: Int?,
+                                                                        exclusiveStartKey: String?,
+                                                                        consistentRead: Bool) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
 
     /**
@@ -227,12 +228,12 @@ public protocol DynamoDBCompositePrimaryKeyTable {
        partition doesn't exist, this operation will return an empty list as a response. This
        function will return paginated results based on the limit and exclusiveStartKey provided.
      */
-    func query<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                             sortKeyCondition: AttributeCondition?,
-                                                             limit: Int?,
-                                                             scanIndexForward: Bool,
-                                                             exclusiveStartKey: String?,
-                                                             consistentRead: Bool) async throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
+                                                                        sortKeyCondition: AttributeCondition?,
+                                                                        limit: Int?,
+                                                                        scanIndexForward: Bool,
+                                                                        exclusiveStartKey: String?,
+                                                                        consistentRead: Bool) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
 
     /**
@@ -242,7 +243,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      *
      * https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ExecuteStatement.html
      */
-    func execute<ReturnedType: PolymorphicOperationReturnType>(
+    func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?) async throws -> [ReturnedType]
@@ -254,7 +255,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      *
      * https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ExecuteStatement.html
      */
-    func execute<ReturnedType: PolymorphicOperationReturnType>(
+    func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?, nextToken: String?) async throws
@@ -265,7 +266,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     /**
      * Retrieves items from the database table as a dictionary mapped to the provided key. Missing entries from the provided map indicate that item doesn't exist.
      */
-    func monomorphicGetItems<AttributesType, ItemType>(
+    func getItems<AttributesType, ItemType>(
         forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
         -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
 
@@ -275,9 +276,9 @@ public protocol DynamoDBCompositePrimaryKeyTable {
        function will potentially make multiple calls to DynamoDB to retrieve all results for
        the query.
      */
-    func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                    sortKeyCondition: AttributeCondition?,
-                                                    consistentRead: Bool) async throws
+    func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
+                                         sortKeyCondition: AttributeCondition?,
+                                         consistentRead: Bool) async throws
         -> [TypedDatabaseItem<AttributesType, ItemType>]
 
     /**
@@ -285,12 +286,12 @@ public protocol DynamoDBCompositePrimaryKeyTable {
        partition doesn't exist, this operation will return an empty list as a response. This
        function will return paginated results based on the limit and exclusiveStartKey provided.
      */
-    func monomorphicQuery<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                    sortKeyCondition: AttributeCondition?,
-                                                    limit: Int?,
-                                                    scanIndexForward: Bool,
-                                                    exclusiveStartKey: String?,
-                                                    consistentRead: Bool) async throws
+    func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
+                                         sortKeyCondition: AttributeCondition?,
+                                         limit: Int?,
+                                         scanIndexForward: Bool,
+                                         exclusiveStartKey: String?,
+                                         consistentRead: Bool) async throws
         -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
 
     /**
@@ -300,7 +301,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      *
      * https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ExecuteStatement.html
      */
-    func monomorphicExecute<AttributesType, ItemType>(
+    func execute<AttributesType, ItemType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?) async throws -> [TypedDatabaseItem<AttributesType, ItemType>]
@@ -312,7 +313,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      *
      * https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ExecuteStatement.html
      */
-    func monomorphicExecute<AttributesType, ItemType>(
+    func execute<AttributesType, ItemType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?, nextToken: String?) async throws

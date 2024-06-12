@@ -106,7 +106,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
     }
 
-    func testPaginatedQuery() async throws {
+    func testPaginatedPolymorphicQuery() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         var items: [StandardTypedDatabaseItem<TestTypeA>] = []
@@ -129,10 +129,10 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         // get everything back from the database
         while true {
             let paginatedItems: ([TestPolymorphicOperationReturnType], String?) =
-                try await table.query(forPartitionKey: "partitionId",
-                                      sortKeyCondition: nil,
-                                      limit: 100,
-                                      exclusiveStartKey: exclusiveStartKey)
+                try await table.polymorphicQuery(forPartitionKey: "partitionId",
+                                                 sortKeyCondition: nil,
+                                                 limit: 100,
+                                                 exclusiveStartKey: exclusiveStartKey)
 
             retrievedItems += paginatedItems.0
 
@@ -165,7 +165,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
     }
 
-    func testReversedPaginatedQuery() async throws {
+    func testReversedPaginatedPolymorphicQuery() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         var items: [StandardTypedDatabaseItem<TestTypeA>] = []
@@ -188,11 +188,11 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         // get everything back from the database
         while true {
             let paginatedItems: ([TestPolymorphicOperationReturnType], String?) =
-                try await table.query(forPartitionKey: "partitionId",
-                                      sortKeyCondition: nil,
-                                      limit: 100,
-                                      scanIndexForward: false,
-                                      exclusiveStartKey: exclusiveStartKey)
+                try await table.polymorphicQuery(forPartitionKey: "partitionId",
+                                                 sortKeyCondition: nil,
+                                                 limit: 100,
+                                                 scanIndexForward: false,
+                                                 exclusiveStartKey: exclusiveStartKey)
 
             retrievedItems += paginatedItems.0
 
@@ -225,7 +225,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
     }
 
-    func testQuery() async throws {
+    func testPolymorphicQuery() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         var items: [StandardTypedDatabaseItem<TestTypeA>] = []
@@ -242,8 +242,8 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
 
         let retrievedItems: [TestPolymorphicOperationReturnType] =
-            try await table.query(forPartitionKey: "partitionId",
-                                  sortKeyCondition: nil)
+            try await table.polymorphicQuery(forPartitionKey: "partitionId",
+                                             sortKeyCondition: nil)
 
         XCTAssertEqual(items.count, retrievedItems.count)
 
@@ -274,8 +274,8 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
 
         let retrievedItems: [StandardTypedDatabaseItem<TestTypeA>] =
-            try await table.monomorphicQuery(forPartitionKey: "partitionId",
-                                             sortKeyCondition: nil)
+            try await table.query(forPartitionKey: "partitionId",
+                                  sortKeyCondition: nil)
 
         XCTAssertEqual(items.count, retrievedItems.count)
 
@@ -384,7 +384,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         XCTAssertNotNil(retrievedItem2)
     }
 
-    func testGetItems() async throws {
+    func testPolymorphicGetItems() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -400,7 +400,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         _ = try await table.insertItem(databaseItem1)
         _ = try await table.insertItem(databaseItem2)
 
-        let batch: [StandardCompositePrimaryKey: TestQueryableTypes] = try await table.getItems(forKeys: [key1, key2])
+        let batch: [StandardCompositePrimaryKey: TestQueryableTypes] = try await table.polymorphicGetItems(forKeys: [key1, key2])
 
         guard case let .testTypeA(retrievedDatabaseItem1) = batch[key1] else {
             XCTFail()
@@ -416,7 +416,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         XCTAssertEqual(payload2, retrievedDatabaseItem2.rowValue)
     }
 
-    func testMonomorphicGetItems() async throws {
+    func testGetItems() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -433,7 +433,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         _ = try await table.insertItem(databaseItem2)
 
         let batch: [StandardCompositePrimaryKey: StandardTypedDatabaseItem<TestTypeA>]
-            = try await table.monomorphicGetItems(forKeys: [key1, key2])
+            = try await table.getItems(forKeys: [key1, key2])
 
         guard let retrievedDatabaseItem1 = batch[key1] else {
             XCTFail()
@@ -449,7 +449,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         XCTAssertEqual(payload2, retrievedDatabaseItem2.rowValue)
     }
 
-    func testMonomorphicBulkWriteWithoutThrowing() async throws {
+    func testBulkWriteWithoutThrowing() async throws {
         typealias TestObject = TestTypeA
         typealias TestObjectDatabaseItem = StandardTypedDatabaseItem<TestObject>
         typealias TestObjectWriteEntry = StandardWriteEntry<TestObject>
@@ -466,7 +466,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
             index += 1
         }
 
-        let result1 = try await table.monomorphicBulkWriteWithoutThrowing(entryList)
+        let result1 = try await table.bulkWriteWithoutThrowing(entryList)
         XCTAssertEqual(result1.count, 1)
         if result1.contains(DynamoDBClientTypes.BatchStatementErrorCodeEnum.duplicateitem) {
             return
@@ -475,7 +475,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
     }
 
-    func testTransactWrite() async throws {
+    func testPolymorphicTransactWrite() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -493,7 +493,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
             .testTypeB(.insert(new: databaseItem2)),
         ]
 
-        try await table.transactWrite(entryList)
+        try await table.polymorphicTransactWrite(entryList)
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key1)!
 
@@ -508,7 +508,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         XCTAssertEqual(databaseItem2.rowValue.fourthly, secondRetrievedItem.rowValue.fourthly)
     }
 
-    func testTransactWriteWithMissingRequired() async throws {
+    func testPolymorphicTransactWriteWithMissingRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -542,7 +542,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         ]
 
         do {
-            try await table.transactWrite(entryList, constraints: constraintList)
+            try await table.polymorphicTransactWrite(entryList, constraints: constraintList)
 
             XCTFail()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
@@ -553,7 +553,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
     }
 
-    func testTransactWriteWithExistingRequired() async throws {
+    func testPolymorphicTransactWriteTransactWriteWithExistingRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -589,7 +589,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         try await table.insertItem(databaseItem3)
         try await table.insertItem(databaseItem4)
 
-        try await table.transactWrite(entryList, constraints: constraintList)
+        try await table.polymorphicTransactWrite(entryList, constraints: constraintList)
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key1)!
 
@@ -604,7 +604,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         XCTAssertEqual(databaseItem2.rowValue.fourthly, secondRetrievedItem.rowValue.fourthly)
     }
 
-    func testTransactWriteWithIncorrectVersionForRequired() async throws {
+    func testPolymorphicTransactWriteWithIncorrectVersionForRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -645,7 +645,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         try await table.updateItem(newItem: databaseItem5, existingItem: databaseItem4)
 
         do {
-            try await table.transactWrite(entryList, constraints: constraintList)
+            try await table.polymorphicTransactWrite(entryList, constraints: constraintList)
 
             XCTFail()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
@@ -663,7 +663,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
     }
 
-    func testTransactWriteWithIncorrectVersionForUpdate() async throws {
+    func testPolymorphicTransactWriteWithIncorrectVersionForUpdate() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -690,7 +690,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         ]
 
         do {
-            try await table.transactWrite(entryList)
+            try await table.polymorphicTransactWrite(entryList)
 
             XCTFail()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
@@ -723,7 +723,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
     }
 
-    func testTransactWriteWithInjectedErrors() async throws {
+    func testPolymorphicTransactWriteWithInjectedErrors() async throws {
         let errors = [DynamoDBTableError.transactionConflict(message: "There is a Conflict!!")]
         let transactionDelegate = TestInMemoryTransactionDelegate(errors: errors)
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable(transactionDelegate: transactionDelegate)
@@ -759,7 +759,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         ]
 
         do {
-            try await table.transactWrite(entryList, constraints: constraintList)
+            try await table.polymorphicTransactWrite(entryList, constraints: constraintList)
 
             XCTFail()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
@@ -779,7 +779,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
     }
 
-    func testTransactWriteWithExistingItem() async throws {
+    func testPolymorphicTransactWriteWithExistingItem() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -800,7 +800,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         try await table.insertItem(databaseItem1)
 
         do {
-            try await table.transactWrite(entryList)
+            try await table.polymorphicTransactWrite(entryList)
 
             XCTFail()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
@@ -818,7 +818,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
     }
 
-    func testBulkWrite() async throws {
+    func testPolymorphicBulkWrite() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -836,7 +836,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
             .testTypeB(.insert(new: databaseItem2)),
         ]
 
-        try await table.bulkWrite(entryList)
+        try await table.polymorphicBulkWrite(entryList)
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key1)!
 
@@ -872,7 +872,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         try await table.insertItem(databaseItem1)
 
         do {
-            try await table.bulkWrite(entryList)
+            try await table.polymorphicBulkWrite(entryList)
 
             XCTFail()
         } catch let DynamoDBTableError.batchErrorsReturned(errorCount, _) {

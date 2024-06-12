@@ -114,7 +114,7 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         try await verifyWithUpdate(table: table, databaseItem: databaseItem, key: key, expectedFailureCount: 0)
     }
 
-    func testSimulateConcurrencyWithQuery() async throws {
+    func testSimulateConcurrencyWithPolymorphicQuery() async throws {
         let key = StandardCompositePrimaryKey(partitionKey: "partitionId", sortKey: "sortId")
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
 
@@ -128,8 +128,8 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         var errorCount = 0
 
         for _ in 0 ..< 10 {
-            let query: [ExpectedQueryableTypes] = try await table.query(forPartitionKey: "partitionId",
-                                                                        sortKeyCondition: .equals("sortId"))
+            let query: [ExpectedQueryableTypes] = try await table.polymorphicQuery(forPartitionKey: "partitionId",
+                                                                                   sortKeyCondition: .equals("sortId"))
 
             guard query.count == 1, case let .testTypeA(firstDatabaseItem) = query[0] else {
                 return XCTFail("Expected to retrieve item and there wasn't the correct number or type.")
@@ -173,8 +173,8 @@ class SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         var errorCount = 0
 
         for _ in 0 ..< 10 {
-            let query: [DatabaseRowType] = try await table.monomorphicQuery(forPartitionKey: "partitionId",
-                                                                            sortKeyCondition: .equals("sortId"))
+            let query: [DatabaseRowType] = try await table.query(forPartitionKey: "partitionId",
+                                                                 sortKeyCondition: .equals("sortId"))
 
             guard query.count == 1, let firstQuery = query.first else {
                 return XCTFail("Expected to retrieve item and there wasn't the correct number or type.")

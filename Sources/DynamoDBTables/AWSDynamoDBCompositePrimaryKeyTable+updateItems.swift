@@ -179,20 +179,20 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         _ = try await dynamodb.executeTransaction(input: transactionInput)
     }
 
-    func transactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+    func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         let noConstraints: [EmptyPolymorphicTransactionConstraintEntry] = []
-        return try await self.transactWrite(entries, constraints: noConstraints,
-                                            retriesRemaining: self.retryConfiguration.numRetries)
+        return try await self.polymorphicTransactWrite(entries, constraints: noConstraints,
+                                                       retriesRemaining: self.retryConfiguration.numRetries)
     }
 
-    func transactWrite(
+    func polymorphicTransactWrite(
         _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
     {
-        try await self.transactWrite(entries, constraints: constraints,
-                                     retriesRemaining: self.retryConfiguration.numRetries)
+        try await self.polymorphicTransactWrite(entries, constraints: constraints,
+                                                retriesRemaining: self.retryConfiguration.numRetries)
     }
 
-    private func transactWrite(
+    private func polymorphicTransactWrite(
         _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry],
         retriesRemaining: Int) async throws
     {
@@ -296,7 +296,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         try await Task.sleep(nanoseconds: UInt64(retryInterval) * millisecondsToNanoSeconds)
 
         logger.trace("Reattempting request due to remaining retries: \(retryInterval)")
-        return try await self.transactWrite(entries, constraints: constraints, retriesRemaining: retriesRemaining - 1)
+        return try await self.polymorphicTransactWrite(entries, constraints: constraints, retriesRemaining: retriesRemaining - 1)
     }
 
     private func writeChunkedItems(_ entries: [some PolymorphicWriteEntry]) async throws {
@@ -320,7 +320,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         try self.throwOnBatchExecuteStatementErrors(response: response)
     }
 
-    func bulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+    func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedEntries = entries.chunked(by: AWSDynamoDBLimits.maximumUpdatesPerExecuteStatement)
@@ -362,7 +362,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         try self.throwOnBatchExecuteStatementErrors(response: response)
     }
 
-    func monomorphicBulkWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+    func bulkWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedEntries = entries.chunked(by: AWSDynamoDBLimits.maximumUpdatesPerExecuteStatement)
@@ -371,7 +371,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func monomorphicBulkWriteWithFallback<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws {
+    func bulkWriteWithFallback<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws {
         // fall back to singel operation if the write entry exceeds the statement length limitation
         var bulkWriteEntries: [WriteEntry<AttributesType, ItemType>] = []
         try await entries.concurrentForEach { entry in
@@ -392,7 +392,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             }
         }
 
-        return try await self.monomorphicBulkWrite(bulkWriteEntries)
+        return try await self.bulkWrite(bulkWriteEntries)
     }
 
     func writeChunkedItemsWithoutThrowing(_ entries: [WriteEntry<some Any, some Any>]) async throws
@@ -427,7 +427,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         return errorCodeSet
     }
 
-    func monomorphicBulkWriteWithoutThrowing(_ entries: [WriteEntry<some Any, some Any>]) async throws
+    func bulkWriteWithoutThrowing(_ entries: [WriteEntry<some Any, some Any>]) async throws
         -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
     {
         // BatchExecuteStatement has a maximum of 25 statements

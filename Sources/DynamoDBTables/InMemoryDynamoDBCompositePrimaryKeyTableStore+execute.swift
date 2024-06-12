@@ -29,7 +29,7 @@ import AWSDynamoDB
 import Foundation
 
 extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
-    func execute<ReturnedType: PolymorphicOperationReturnType>(
+    func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter _: [String]?,
         additionalWhereClause: String?) throws
@@ -44,7 +44,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
         return returnedItems
     }
 
-    func execute<ReturnedType: PolymorphicOperationReturnType>(
+    func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter _: [String]?,
         additionalWhereClause: String?, nextToken _: String?) throws
@@ -59,7 +59,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
         return (returnedItems, nil)
     }
 
-    func monomorphicExecute<AttributesType, ItemType>(
+    func execute<AttributesType, ItemType>(
         partitionKeys: [String],
         attributesFilter _: [String]?,
         additionalWhereClause: String?) throws
@@ -83,7 +83,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
         return returnedItems
     }
 
-    func monomorphicExecute<AttributesType, ItemType>(
+    func execute<AttributesType, ItemType>(
         partitionKeys: [String],
         attributesFilter _: [String]?,
         additionalWhereClause: String?, nextToken _: String?) throws
