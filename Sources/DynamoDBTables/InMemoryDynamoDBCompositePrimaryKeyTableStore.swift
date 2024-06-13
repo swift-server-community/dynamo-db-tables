@@ -239,7 +239,7 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
         let context = StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
             InMemoryPolymorphicTransactionConstraintTransform>(table: self)
 
-        if entryCount > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
+        if isTransaction, entryCount > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
             throw DynamoDBTableError.transactionSizeExceeded(attemptedSize: entryCount,
                                                              maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
         }
@@ -250,7 +250,7 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
             throw error
         }
 
-        if let error = self.handleEntries(entries: entries, isTransaction: isTransaction, context: context) {
+        if let error = self.handlePolymorphicEntries(entries: entries, isTransaction: isTransaction, context: context) {
             if isTransaction {
                 // restore the state prior to the transaction
                 self.store = store
@@ -260,18 +260,29 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
         }
     }
 
-    func bulkWrite(_ entries: [WriteEntry<some Any, some Any>]) throws {
-        try entries.forEach { entry in
-            switch entry {
-            case let .update(new: new, existing: existing):
-                return try self.updateItem(newItem: new, existingItem: existing)
-            case let .insert(new: new):
-                return try self.insertItem(new)
-            case let .deleteAtKey(key: key):
-                return try self.deleteItem(forKey: key)
-            case let .deleteItem(existing: existing):
-                return try self.deleteItem(existingItem: existing)
+    func bulkWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>],
+                                             constraints: [TransactionConstraintEntry<AttributesType, ItemType>],
+                                             isTransaction: Bool) throws
+    {
+        let entryCount = entries.count + constraints.count
+        if isTransaction, entryCount > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
+            throw DynamoDBTableError.transactionSizeExceeded(attemptedSize: entryCount,
+                                                             maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
+        }
+
+        let store = self.store
+
+        if let error = self.handleConstraints(constraints: constraints, isTransaction: isTransaction) {
+            throw error
+        }
+
+        if let error = self.handleEntries(entries: entries, isTransaction: isTransaction) {
+            if isTransaction {
+                // restore the state prior to the transaction
+                self.store = store
             }
+
+            throw error
         }
     }
 
@@ -289,7 +300,7 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
             }
         }
 
-        try self.bulkWrite(bulkWriteEntries)
+        try self.bulkWrite(bulkWriteEntries, constraints: [], isTransaction: false)
 
         try nonBulkWriteEntries.forEach { nonBulkWriteEntry in
             switch nonBulkWriteEntry {
@@ -527,6 +538,45 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
 // MARK: - Internal helper functions
 
 extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
+    func handleConstraints<AttributesType, ItemType>(
+        constraints: [TransactionConstraintEntry<AttributesType, ItemType>], isTransaction: Bool)
+        -> DynamoDBTableError?
+    {
+        let errors = constraints.compactMap { entry -> DynamoDBTableError? in
+            let existingItem: TypedDatabaseItem<AttributesType, ItemType>
+
+            switch entry {
+            case let .required(existing: existing):
+                existingItem = existing
+            }
+
+            let compositePrimaryKey = existingItem.compositePrimaryKey
+
+            guard let partition = store[compositePrimaryKey.partitionKey],
+                  let item = partition[compositePrimaryKey.sortKey],
+                  item.rowStatus.rowVersion == existingItem.rowStatus.rowVersion
+            else {
+                if isTransaction {
+                    return DynamoDBTableError.transactionConditionalCheckFailed(partitionKey: compositePrimaryKey.partitionKey,
+                                                                                sortKey: compositePrimaryKey.sortKey,
+                                                                                message: "Item doesn't exist or doesn't have correct version")
+                } else {
+                    return DynamoDBTableError.conditionalCheckFailed(partitionKey: compositePrimaryKey.partitionKey,
+                                                                     sortKey: compositePrimaryKey.sortKey,
+                                                                     message: "Item doesn't exist or doesn't have correct version")
+                }
+            }
+
+            return nil
+        }
+
+        if !errors.isEmpty {
+            return DynamoDBTableError.transactionCanceled(reasons: errors)
+        }
+
+        return nil
+    }
+
     func handleConstraints(
         constraints: [some PolymorphicTransactionConstraintEntry], isTransaction: Bool,
         context: StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
@@ -567,6 +617,53 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
     }
 
     func handleEntries(
+        entries: [WriteEntry<some Any, some Any>], isTransaction: Bool)
+        -> DynamoDBTableError?
+    {
+        let writeErrors = entries.compactMap { entry -> DynamoDBTableError? in
+            do {
+                switch entry {
+                case let .update(new: new, existing: existing):
+                    try self.updateItem(newItem: new, existingItem: existing)
+                case let .insert(new: new):
+                    try self.insertItem(new)
+                case let .deleteAtKey(key: key):
+                    try self.deleteItem(forKey: key)
+                case let .deleteItem(existing: existing):
+                    try self.deleteItem(existingItem: existing)
+                }
+            } catch {
+                if let typedError = error as? DynamoDBTableError {
+                    if case let .conditionalCheckFailed(partitionKey, sortKey, message) = typedError, isTransaction {
+                        if message == itemAlreadyExistsMessage {
+                            return .duplicateItem(partitionKey: partitionKey, sortKey: sortKey, message: message)
+                        } else {
+                            return .transactionConditionalCheckFailed(partitionKey: partitionKey,
+                                                                      sortKey: sortKey, message: message)
+                        }
+                    }
+                    return typedError
+                }
+
+                // return unexpected error
+                return DynamoDBTableError.unexpectedError(cause: error)
+            }
+
+            return nil
+        }
+
+        if writeErrors.count > 0 {
+            if isTransaction {
+                return DynamoDBTableError.transactionCanceled(reasons: writeErrors)
+            } else {
+                return DynamoDBTableError.batchErrorsReturned(errorCount: writeErrors.count, messageMap: [:])
+            }
+        }
+
+        return nil
+    }
+
+    func handlePolymorphicEntries(
         entries: [some PolymorphicWriteEntry], isTransaction: Bool,
         context: StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
             InMemoryPolymorphicTransactionConstraintTransform>)

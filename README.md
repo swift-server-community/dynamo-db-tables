@@ -356,7 +356,12 @@ let entryList: [TestTypeAWriteEntry] = [
 ]
         
 try await table.bulkWrite(entryList)
-//try await table.transactWrite(entryList)  <<-- When implemented
+```
+
+Or alternatively executed within a DynamoDB transaction-
+
+```swift
+try await table.transactWrite(entryList)
 ```
 
 and similarly for polymorphic queries-
@@ -384,20 +389,29 @@ let entryList: [TestPolymorphicWriteEntry] = [
 ]
         
 try await table.polymorphicBulkWrite(entryList)
+```
+
+Or alternatively executed within a DynamoDB transaction-
+
+```swift
 try await table.polymorphicTransactWrite(entryList)
 ```
 
 For transactions, you can additionally specify a set of constraints to be part of the transaction-
 
 ```swift
-typealias TestTypeAStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeA>
+let constraintList: [StandardTransactionConstraintEntry<TestTypeA>] = [
+    .required(existing: databaseItem3),
+    .required(existing: databaseItem4),
+]
 
-// Update when `transactWrite` API implemented
+try await table.transactWrite(entryList, constraints: constraintList)
 ```
 
 and similarly for polymorphic queries-
 
 ```swift
+typealias TestTypeAStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeA>
 typealias TestTypeBStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeB>
 
 enum TestPolymorphicTransactionConstraintEntry: PolymorphicTransactionConstraintEntry {

@@ -106,6 +106,16 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         try await self.wrappedDynamoDBTable.updateItem(newItem: newItem, existingItem: existingItem)
     }
 
+    public func transactWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+        try await self.wrappedDynamoDBTable.transactWrite(entries)
+    }
+
+    public func transactWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>],
+                                                        constraints: [TransactionConstraintEntry<AttributesType, ItemType>]) async throws
+    {
+        try await self.wrappedDynamoDBTable.transactWrite(entries, constraints: constraints)
+    }
+
     public func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         try await self.wrappedDynamoDBTable.polymorphicTransactWrite(entries)
     }

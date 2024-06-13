@@ -45,6 +45,16 @@ public typealias ExecuteItemFilterType = @Sendable (String, String, String, Poly
     -> Bool
 
 public protocol InMemoryTransactionDelegate {
+    /**
+      Inject errors into a `transactWrite` call.
+     */
+    func injectErrors<AttributesType, ItemType>(
+        _ entries: [WriteEntry<AttributesType, ItemType>], constraints: [TransactionConstraintEntry<AttributesType, ItemType>],
+        table: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
+
+    /**
+      Inject errors into a `polymorphicTransactWrite` call.
+     */
     func injectErrors<WriteEntryType: PolymorphicWriteEntry,
         TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
         _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType],
@@ -98,6 +108,21 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
         try await self.storeWrapper.updateItem(newItem: newItem, existingItem: existingItem)
     }
 
+    public func transactWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+        try await self.transactWrite(entries, constraints: [])
+    }
+
+    public func transactWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>],
+                                                        constraints: [TransactionConstraintEntry<AttributesType, ItemType>]) async throws
+    {
+        // if there is a transaction delegate and it wants to inject errors
+        if let errors = try await transactionDelegate?.injectErrors(entries, constraints: constraints, table: self), !errors.isEmpty {
+            throw DynamoDBTableError.transactionCanceled(reasons: errors)
+        }
+
+        return try await self.storeWrapper.bulkWrite(entries, constraints: constraints, isTransaction: true)
+    }
+
     public func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         let noConstraints: [EmptyPolymorphicTransactionConstraintEntry] = []
         return try await self.polymorphicTransactWrite(entries, constraints: noConstraints)
@@ -120,7 +145,7 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
     }
 
     public func bulkWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
-        try await self.storeWrapper.bulkWrite(entries)
+        try await self.storeWrapper.bulkWrite(entries, constraints: [], isTransaction: false)
     }
 
     public func bulkWriteWithFallback(_ entries: [WriteEntry<some Any, some Any>]) async throws {

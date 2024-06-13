@@ -137,6 +137,8 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      * The transaction will comprise of the write entries specified in `entries`.
      * The transaction will fail if the number of entries is greater than 100.
      */
+    func transactWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
+
     func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry>(
         _ entries: [WriteEntryType]) async throws
 
@@ -147,6 +149,9 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      * with a specified version must exist regardless of if it will be written to by the transaction).
      * The transaction will fail if the number of entries and constraints combined is greater than 100.
      */
+    func transactWrite<AttributesType, ItemType>(
+        _ entries: [WriteEntry<AttributesType, ItemType>], constraints: [TransactionConstraintEntry<AttributesType, ItemType>]) async throws
+
     func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry, TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
         _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType]) async throws
 
