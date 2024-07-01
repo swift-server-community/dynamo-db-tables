@@ -30,7 +30,7 @@ import ClientRuntime
 import Foundation
 import Logging
 import Metrics
-import SmithyIdentityAPI
+import SmithyIdentity
 
 public struct AWSDynamoDBTableMetrics {
     // metric to record if the `TransactWrite` API is retried
@@ -51,7 +51,7 @@ public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTa
     let logger: Logging.Logger
 
     public init(tableName: String, region: Swift.String,
-                awsCredentialIdentityResolver: (any SmithyIdentityAPI.AWSCredentialIdentityResolver)? = nil,
+                awsCredentialIdentityResolver: (any SmithyIdentity.AWSCredentialIdentityResolver)? = nil,
                 httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
                 consistentRead: Bool = true,
                 escapeSingleQuoteInPartiQL: Bool = false,
