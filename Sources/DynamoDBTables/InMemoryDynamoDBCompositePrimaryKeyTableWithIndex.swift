@@ -76,6 +76,16 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         try await self.gsiLogic.onUpdateItem(newItem: newItem, existingItem: existingItem, gsiDataStore: self.gsiDataStore)
     }
 
+    public func transactWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+        try await self.primaryTable.transactWrite(entries)
+    }
+
+    public func transactWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>],
+                                                        constraints: [TransactionConstraintEntry<AttributesType, ItemType>]) async throws
+    {
+        try await self.primaryTable.transactWrite(entries, constraints: constraints)
+    }
+
     public func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         try await self.primaryTable.polymorphicTransactWrite(entries)
     }

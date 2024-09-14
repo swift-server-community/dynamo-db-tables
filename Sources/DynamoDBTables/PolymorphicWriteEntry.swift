@@ -60,6 +60,13 @@ public typealias StandardTransactionConstraintEntry<ItemType: Codable> = Transac
 
 public enum TransactionConstraintEntry<AttributesType: PrimaryKeyAttributes, ItemType: Sendable & Codable>: Sendable {
     case required(existing: TypedDatabaseItem<AttributesType, ItemType>)
+
+    public var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
+        switch self {
+        case let .required(existing: existing):
+            return existing.compositePrimaryKey
+        }
+    }
 }
 
 // Conforming types are provided by the application to express the different possible constraint entries
