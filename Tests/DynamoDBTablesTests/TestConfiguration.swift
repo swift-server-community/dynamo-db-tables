@@ -87,16 +87,8 @@ enum TestPolymorphicWriteEntry: Sendable {
     case testTypeB(TestTypeBWriteEntry)
 }
 
-enum TestPolymorphicTransactionConstraintEntry: PolymorphicTransactionConstraintEntry {
+@PolymorphicTransactionConstraintEntry
+enum TestPolymorphicTransactionConstraintEntry: Sendable {
     case testTypeA(TestTypeAStandardTransactionConstraintEntry)
     case testTypeB(TestTypeBStandardTransactionConstraintEntry)
-
-    func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteTransactionConstraintType {
-        switch self {
-        case let .testTypeA(writeEntry):
-            return try context.transform(writeEntry)
-        case let .testTypeB(writeEntry):
-            return try context.transform(writeEntry)
-        }
-    }
 }

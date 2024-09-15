@@ -19,3 +19,9 @@ public macro PolymorphicWriteEntry(passCompositePrimaryKey: Bool = true) =
     #externalMacro(
         module: "DynamoDBTablesMacros",
         type: "PolymorphicWriteEntryMacro")
+
+@attached(extension, conformances: PolymorphicTransactionConstraintEntry, names: named(handle(context:)), named(compositePrimaryKey))
+public macro PolymorphicTransactionConstraintEntry(passCompositePrimaryKey: Bool = true) =
+    #externalMacro(
+        module: "DynamoDBTablesMacros",
+        type: "PolymorphicTransactionConstraintEntryMacro")
