@@ -1,4 +1,4 @@
-// swift-tools-version:5.8
+// swift-tools-version:5.9
 
 //===----------------------------------------------------------------------===//
 //
@@ -21,6 +21,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+import CompilerPluginSupport
 import PackageDescription
 
 let swiftSettings: [SwiftSetting] = [.enableExperimentalFeature("StrictConcurrency=complete"),
@@ -42,10 +43,16 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
         .package(url: "https://github.com/JohnSundell/CollectionConcurrencyKit", from :"0.2.0"),
         .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.53.9"),
+        .package(url: "https://github.com/apple/swift-syntax", from: "509.0.0"),
     ],
     targets: [
+        .macro(name: "DynamoDBTablesMacros", dependencies: [
+            .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+            .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+        ]),
         .target(
             name: "DynamoDBTables", dependencies: [
+                .target(name: "DynamoDBTablesMacros"),
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Metrics", package: "swift-metrics"),
                 .product(name: "AWSDynamoDB", package: "aws-sdk-swift"),
@@ -55,6 +62,7 @@ let package = Package(
         .testTarget(
             name: "DynamoDBTablesTests", dependencies: [
                 .target(name: "DynamoDBTables"),
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ],
             swiftSettings: swiftSettings),
     ],
