@@ -364,7 +364,7 @@ Or alternatively executed within a DynamoDB transaction-
 try await table.transactWrite(entryList)
 ```
 
-and similarly for polymorphic queries by using the `@PolymorphicWriteEntry` macro-
+and similarly for polymorphic queries, most conveniently by using the `@PolymorphicWriteEntry` macro-
 
 ```swift
 typealias TestTypeBWriteEntry = StandardWriteEntry<TestTypeB>
@@ -400,24 +400,16 @@ let constraintList: [StandardTransactionConstraintEntry<TestTypeA>] = [
 try await table.transactWrite(entryList, constraints: constraintList)
 ```
 
-and similarly for polymorphic queries-
+and similarly for polymorphic queries, most conveniently by using the `@PolymorphicTransactionConstraintEntry` macro-
 
 ```swift
 typealias TestTypeAStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeA>
 typealias TestTypeBStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeB>
 
-enum TestPolymorphicTransactionConstraintEntry: PolymorphicTransactionConstraintEntry {
+@PolymorphicTransactionConstraintEntry
+enum TestPolymorphicTransactionConstraintEntry: Sendable {
     case testTypeA(TestTypeAStandardTransactionConstraintEntry)
     case testTypeB(TestTypeBStandardTransactionConstraintEntry)
-
-    func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteTransactionConstraintType {
-        switch self {
-        case .testTypeA(let writeEntry):
-            return try context.transform(writeEntry)
-        case .testTypeB(let writeEntry):
-            return try context.transform(writeEntry)
-        }
-    }
 }
 
 let constraintList: [TestPolymorphicTransactionConstraintEntry] = [
@@ -430,8 +422,9 @@ try await table.polymorphicTransactWrite(entryList, constraints: constraintList)
 
 Both the `PolymorphicWriteEntry` and `PolymorphicTransactionConstraintEntry` conforming types can
 optionally provide a `compositePrimaryKey` property that will allow the API to return more information
-about failed transactions. This is enabled by default when using the `@PolymorphicWriteEntry` macro but 
-can be disabled by setting the `passCompositePrimaryKey` argument.
+about failed transactions. This is enabled by default when using the `@PolymorphicWriteEntry` and 
+`@PolymorphicTransactionConstraintEntry` macros but can be disabled by setting the 
+`passCompositePrimaryKey` argument.
 
 ```swift
 @PolymorphicWriteEntry(passCompositePrimaryKey: false)
