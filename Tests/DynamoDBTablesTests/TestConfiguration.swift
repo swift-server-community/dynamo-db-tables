@@ -81,18 +81,10 @@ typealias TestTypeBWriteEntry = StandardWriteEntry<TestTypeB>
 typealias TestTypeAStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeA>
 typealias TestTypeBStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeB>
 
-enum TestPolymorphicWriteEntry: PolymorphicWriteEntry {
+@PolymorphicWriteEntry
+enum TestPolymorphicWriteEntry: Sendable {
     case testTypeA(TestTypeAWriteEntry)
     case testTypeB(TestTypeBWriteEntry)
-
-    func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteEntryTransformType {
-        switch self {
-        case let .testTypeA(writeEntry):
-            return try context.transform(writeEntry)
-        case let .testTypeB(writeEntry):
-            return try context.transform(writeEntry)
-        }
-    }
 }
 
 enum TestPolymorphicTransactionConstraintEntry: PolymorphicTransactionConstraintEntry {

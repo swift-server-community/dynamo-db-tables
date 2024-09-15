@@ -364,23 +364,15 @@ Or alternatively executed within a DynamoDB transaction-
 try await table.transactWrite(entryList)
 ```
 
-and similarly for polymorphic queries-
+and similarly for polymorphic queries by using the `@PolymorphicWriteEntry` macro-
 
 ```swift
 typealias TestTypeBWriteEntry = StandardWriteEntry<TestTypeB>
 
-enum TestPolymorphicWriteEntry: PolymorphicWriteEntry {
+@PolymorphicWriteEntry
+enum TestPolymorphicWriteEntry: Sendable {
     case testTypeA(TestTypeAWriteEntry)
     case testTypeB(TestTypeBWriteEntry)
-
-    func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteEntryTransformType {
-        switch self {
-        case .testTypeA(let writeEntry):
-            return try context.transform(writeEntry)
-        case .testTypeB(let writeEntry):
-            return try context.transform(writeEntry)
-        }
-    }
 }
 
 let entryList: [TestPolymorphicWriteEntry] = [
@@ -438,30 +430,14 @@ try await table.polymorphicTransactWrite(entryList, constraints: constraintList)
 
 Both the `PolymorphicWriteEntry` and `PolymorphicTransactionConstraintEntry` conforming types can
 optionally provide a `compositePrimaryKey` property that will allow the API to return more information
-about failed transactions.
+about failed transactions. This is enabled by default when using the `@PolymorphicWriteEntry` macro but 
+can be disabled by setting the `passCompositePrimaryKey` argument.
 
 ```swift
-enum TestPolymorphicWriteEntry: PolymorphicWriteEntry {
+@PolymorphicWriteEntry(passCompositePrimaryKey: false)
+enum TestPolymorphicWriteEntry: Sendable {
     case testTypeA(TestTypeAWriteEntry)
     case testTypeB(TestTypeBWriteEntry)
-
-    func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteEntryTransformType {
-        switch self {
-        case .testTypeA(let writeEntry):
-            return try context.transform(writeEntry)
-        case .testTypeB(let writeEntry):
-            return try context.transform(writeEntry)
-        }
-    }
-    
-    var compositePrimaryKey: StandardCompositePrimaryKey? {
-        switch self {
-        case .testTypeA(let writeEntry):
-            return writeEntry.compositePrimaryKey
-        case .testTypeA(let writeEntry):
-            return writeEntry.compositePrimaryKey
-        }
-    }
 }
 ```
 
