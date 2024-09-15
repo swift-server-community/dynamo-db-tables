@@ -21,7 +21,7 @@
     @main
     struct DynamoDBTablesMacrosCompilerPlugin: CompilerPlugin {
         let providingMacros: [Macro.Type] = [
-            PolymorphicWriteEntryMacro.self
+            PolymorphicWriteEntryMacro.self,
         ]
     }
 #endif
