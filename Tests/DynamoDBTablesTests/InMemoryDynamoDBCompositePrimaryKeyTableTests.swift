@@ -380,13 +380,21 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         #expect(retrievedItem1 != nil)
 
         try await table.deleteItem(existingItem: databaseItem)
+
+        // suspend for a small interval so that the creation time of the recreated item is different
+        try await Task.sleep(for: .milliseconds(10))
+
         let recreatedItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
         _ = try await table.insertItem(recreatedItem)
 
         do {
             try await table.deleteItem(existingItem: databaseItem)
+
+            Issue.record("Expected error was not thrown")
         } catch DynamoDBTableError.conditionalCheckFailed {
             // expected error
+        } catch {
+            Issue.record("Expected error was not thrown")
         }
 
         let retrievedItem2: StandardTypedDatabaseItem<TestTypeA>? = try await table.getItem(forKey: key)

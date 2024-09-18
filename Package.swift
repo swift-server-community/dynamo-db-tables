@@ -1,4 +1,4 @@
-// swift-tools-version:5.9
+// swift-tools-version:6.0
 
 //===----------------------------------------------------------------------===//
 //
@@ -24,8 +24,7 @@
 import CompilerPluginSupport
 import PackageDescription
 
-let swiftSettings: [SwiftSetting] = [.enableExperimentalFeature("StrictConcurrency=complete"),
-                                    ]
+let swiftSettings: [SwiftSetting] = []
 
 let package = Package(
     name: "dynamo-db-tables",
@@ -65,6 +64,5 @@ let package = Package(
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ],
             swiftSettings: swiftSettings),
-    ],
-    swiftLanguageVersions: [.v5]
+    ]
 )
