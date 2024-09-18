@@ -3,13 +3,13 @@
 <img src="https://github.com/swift-server-community/dynamo-db-tables/actions/workflows/swift.yml/badge.svg?branch=main" alt="Build - Main Branch">
 </a>
 <a href="http://swift.org">
-<img src="https://img.shields.io/badge/swift-5.9|5.10-orange.svg?style=flat" alt="Swift 5.9 and 5.10 Tested">
+<img src="https://img.shields.io/badge/swift-6.0-orange.svg?style=flat" alt="Swift 6.0 Compatible and Tested">
 </a>
-<img src="https://img.shields.io/badge/ubuntu-20.04|22.04-yellow.svg?style=flat" alt="Ubuntu 20.04 and 22.04 Tested">
+<img src="https://img.shields.io/badge/ubuntu-22.04|24.04-yellow.svg?style=flat" alt="Ubuntu 22.04 and 24.04 Tested">
 <img src="https://img.shields.io/badge/license-Apache2-blue.svg?style=flat" alt="Apache 2">
 </p>
 
-DynamoDBTables is a library to make it easy to use DynamoDB from Swift-based applications, with a particular focus on usage with polymorphic database tables (tables that don't have a single schema for all rows.
+DynamoDBTables is a library to make it easy to use DynamoDB from Swift-based applications, with a particular focus on usage with polymorphic database tables (tables that don't have a single schema for all rows).
 
 DynamoDBTables is a fork of https://github.com/amzn/smoke-dynamodb and acknowledges the authors of that original package.
 

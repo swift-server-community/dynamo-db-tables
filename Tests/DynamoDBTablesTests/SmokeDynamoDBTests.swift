@@ -26,7 +26,8 @@
 
 import AWSDynamoDB
 @testable import DynamoDBTables
-import XCTest
+import Foundation
+import Testing
 
 private func createDecoder() -> JSONDecoder {
     let jsonDecoder = JSONDecoder()
@@ -47,14 +48,15 @@ private func assertNoThrow<T>(_ body: @autoclosure () throws -> T) -> T? {
     do {
         return try body()
     } catch {
-        XCTFail(error.localizedDescription)
+        Issue.record("\(error.localizedDescription)")
     }
 
     return nil
 }
 
-class DynamoDBTablesTests: XCTestCase {
-    func testEncodeTypedItem() {
+struct DynamoDBTablesTests {
+    @Test
+    func encodeTypedItem() {
         let inputData = serializedTypeADatabaseItem.data(using: .utf8)!
 
         guard let jsonAttributeValue = try assertNoThrow(
@@ -77,13 +79,14 @@ class DynamoDBTablesTests: XCTestCase {
 
         switch (decodeAttributeValue, jsonAttributeValue) {
         case let (.m(left), .m(right)):
-            XCTAssertEqual(left.count, right.count)
+            #expect(left.count == right.count)
         default:
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testEncodeTypedItemWithTimeToLive() {
+    @Test
+    func encodeTypedItemWithTimeToLive() {
         let inputData = serializedTypeADatabaseItemWithTimeToLive.data(using: .utf8)!
 
         guard let jsonAttributeValue = try assertNoThrow(
@@ -106,13 +109,14 @@ class DynamoDBTablesTests: XCTestCase {
 
         switch (decodeAttributeValue, jsonAttributeValue) {
         case let (.m(left), .m(right)):
-            XCTAssertEqual(left.count, right.count)
+            #expect(left.count == right.count)
         default:
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testTypedDatabaseItem() {
+    @Test
+    func typedDatabaseItem() {
         let inputData = serializedTypeADatabaseItem.data(using: .utf8)!
 
         guard let attributeValue = try assertNoThrow(
@@ -127,18 +131,19 @@ class DynamoDBTablesTests: XCTestCase {
             return
         }
 
-        XCTAssertEqual(databaseItem.rowValue.firstly, "aaa")
-        XCTAssertEqual(databaseItem.rowValue.secondly, "bbb")
-        XCTAssertEqual(databaseItem.rowStatus.rowVersion, 5)
-        XCTAssertNil(databaseItem.timeToLive)
+        #expect(databaseItem.rowValue.firstly == "aaa")
+        #expect(databaseItem.rowValue.secondly == "bbb")
+        #expect(databaseItem.rowStatus.rowVersion == 5)
+        #expect(databaseItem.timeToLive == nil)
 
         // create an updated item from the decoded one
         let newItem = TypeA(firstly: "hello", secondly: "world!!")
         let updatedItem = databaseItem.createUpdatedItem(withValue: newItem)
-        XCTAssertEqual(updatedItem.rowStatus.rowVersion, 6)
+        #expect(updatedItem.rowStatus.rowVersion == 6)
     }
 
-    func testTypedDatabaseItemWithTimeToLive() {
+    @Test
+    func typedDatabaseItemWithTimeToLive() {
         let inputData = serializedTypeADatabaseItemWithTimeToLive.data(using: .utf8)!
 
         guard let attributeValue = try assertNoThrow(
@@ -153,22 +158,23 @@ class DynamoDBTablesTests: XCTestCase {
             return
         }
 
-        XCTAssertEqual(databaseItem.rowValue.firstly, "aaa")
-        XCTAssertEqual(databaseItem.rowValue.secondly, "bbb")
-        XCTAssertEqual(databaseItem.rowStatus.rowVersion, 5)
-        XCTAssertEqual(databaseItem.timeToLive?.timeToLiveTimestamp, 123_456_789)
+        #expect(databaseItem.rowValue.firstly == "aaa")
+        #expect(databaseItem.rowValue.secondly == "bbb")
+        #expect(databaseItem.rowStatus.rowVersion == 5)
+        #expect(databaseItem.timeToLive?.timeToLiveTimestamp == 123_456_789)
 
         // create an updated item from the decoded one
         let newItem = TypeA(firstly: "hello", secondly: "world!!")
         let updatedItem = databaseItem.createUpdatedItem(withValue: newItem,
                                                          andTimeToLive: StandardTimeToLive(timeToLiveTimestamp: 234_567_890))
-        XCTAssertEqual(updatedItem.rowValue.firstly, "hello")
-        XCTAssertEqual(updatedItem.rowValue.secondly, "world!!")
-        XCTAssertEqual(updatedItem.rowStatus.rowVersion, 6)
-        XCTAssertEqual(updatedItem.timeToLive?.timeToLiveTimestamp, 234_567_890)
+        #expect(updatedItem.rowValue.firstly == "hello")
+        #expect(updatedItem.rowValue.secondly == "world!!")
+        #expect(updatedItem.rowStatus.rowVersion == 6)
+        #expect(updatedItem.timeToLive?.timeToLiveTimestamp == 234_567_890)
     }
 
-    func testPolymorphicDatabaseItemList() {
+    @Test
+    func polymorphicDatabaseItemList() {
         let inputData = serializedPolymorphicDatabaseItemList.data(using: .utf8)!
 
         guard let attributeValues = try assertNoThrow(
@@ -183,43 +189,44 @@ class DynamoDBTablesTests: XCTestCase {
             })
 
         guard let items = itemsOptional else {
-            XCTFail("No items returned.")
+            Issue.record("No items returned.")
 
             return
         }
 
-        XCTAssertEqual(items.count, 2)
+        #expect(items.count == 2)
 
         guard case let .typeA(firstDatabaseItem) = items[0].decodedValue else {
-            XCTFail("Unexpected type returned")
+            Issue.record("Unexpected type returned")
             return
         }
 
         guard case let .typeB(secondDatabaseItem) = items[1].decodedValue else {
-            XCTFail("Unexpected type returned")
+            Issue.record("Unexpected type returned")
             return
         }
 
         let first = firstDatabaseItem.rowValue
         let second = secondDatabaseItem.rowValue
 
-        XCTAssertEqual(first.firstly, "aaa")
-        XCTAssertEqual(first.secondly, "bbb")
-        XCTAssertEqual(firstDatabaseItem.rowStatus.rowVersion, 5)
+        #expect(first.firstly == "aaa")
+        #expect(first.secondly == "bbb")
+        #expect(firstDatabaseItem.rowStatus.rowVersion == 5)
 
-        XCTAssertEqual(second.thirdly, "ccc")
-        XCTAssertEqual(second.fourthly, "ddd")
-        XCTAssertEqual(secondDatabaseItem.rowStatus.rowVersion, 12)
+        #expect(second.thirdly == "ccc")
+        #expect(second.fourthly == "ddd")
+        #expect(secondDatabaseItem.rowStatus.rowVersion == 12)
 
         // try to create up updated item with the correct type
         let newItem = TypeA(firstly: "hello", secondly: "world!!")
 
         let updatedItem = firstDatabaseItem.createUpdatedItem(withValue: newItem)
 
-        XCTAssertEqual(updatedItem.rowStatus.rowVersion, 6)
+        #expect(updatedItem.rowStatus.rowVersion == 6)
     }
 
-    func testPolymorphicDatabaseItemListUnknownType() {
+    @Test
+    func polymorphicDatabaseItemListUnknownType() {
         let inputData = serializedPolymorphicDatabaseItemList.data(using: .utf8)!
 
         guard let attributeValues = try assertNoThrow(
@@ -233,17 +240,18 @@ class DynamoDBTablesTests: XCTestCase {
                 try DynamoDBDecoder().decode(value)
             }
         } catch let DynamoDBTableError.unexpectedType(provided: provided) {
-            XCTAssertEqual(provided, "TypeBCustom")
+            #expect(provided == "TypeBCustom")
 
             return
         } catch {
-            XCTFail("Incorrect error thrown.")
+            Issue.record("Incorrect error thrown.")
         }
 
-        XCTFail("Decoding error expected.")
+        Issue.record("Decoding error expected.")
     }
 
-    func testPolymorphicDatabaseItemListWithIndex() {
+    @Test
+    func polymorphicDatabaseItemListWithIndex() {
         let inputData = serializedPolymorphicDatabaseItemListWithIndex.data(using: .utf8)!
 
         guard let attributeValues = try assertNoThrow(
@@ -258,34 +266,34 @@ class DynamoDBTablesTests: XCTestCase {
             })
 
         guard let items = itemsOptional else {
-            XCTFail("No items returned.")
+            Issue.record("No items returned.")
 
             return
         }
 
-        XCTAssertEqual(items.count, 2)
+        #expect(items.count == 2)
 
         guard case let .typeAWithIndex(firstDatabaseItem) = items[0].decodedValue else {
-            XCTFail("Unexpected type returned")
+            Issue.record("Unexpected type returned")
             return
         }
 
         guard case let .typeB(secondDatabaseItem) = items[1].decodedValue else {
-            XCTFail("Unexpected type returned")
+            Issue.record("Unexpected type returned")
             return
         }
 
         let first = firstDatabaseItem.rowValue
         let second = secondDatabaseItem.rowValue
 
-        XCTAssertEqual(first.rowValue.firstly, "aaa")
-        XCTAssertEqual(first.rowValue.secondly, "bbb")
-        XCTAssertEqual(first.indexValue, "gsi-index")
-        XCTAssertEqual(firstDatabaseItem.rowStatus.rowVersion, 5)
+        #expect(first.rowValue.firstly == "aaa")
+        #expect(first.rowValue.secondly == "bbb")
+        #expect(first.indexValue == "gsi-index")
+        #expect(firstDatabaseItem.rowStatus.rowVersion == 5)
 
-        XCTAssertEqual(second.thirdly, "ccc")
-        XCTAssertEqual(second.fourthly, "ddd")
-        XCTAssertEqual(secondDatabaseItem.rowStatus.rowVersion, 12)
+        #expect(second.thirdly == "ccc")
+        #expect(second.fourthly == "ddd")
+        #expect(secondDatabaseItem.rowStatus.rowVersion == 12)
 
         // try to create up updated item with the correct type
         let newItem = TypeA(firstly: "hello", secondly: "world!!")
@@ -293,6 +301,6 @@ class DynamoDBTablesTests: XCTestCase {
 
         let updatedItem = firstDatabaseItem.createUpdatedItem(withValue: newRowWithIndex)
 
-        XCTAssertEqual(updatedItem.rowStatus.rowVersion, 6)
+        #expect(updatedItem.rowStatus.rowVersion == 6)
     }
 }

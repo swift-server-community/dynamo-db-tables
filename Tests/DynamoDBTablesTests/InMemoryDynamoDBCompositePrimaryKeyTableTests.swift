@@ -26,7 +26,7 @@
 
 import AWSDynamoDB
 @testable import DynamoDBTables
-import XCTest
+import Testing
 
 enum TestPolymorphicOperationReturnType: PolymorphicOperationReturnType {
     typealias AttributesType = StandardPrimaryKeyAttributes
@@ -38,8 +38,9 @@ enum TestPolymorphicOperationReturnType: PolymorphicOperationReturnType {
     case testTypeA(StandardTypedDatabaseItem<TestTypeA>)
 }
 
-class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
-    func testInsertAndUpdate() async throws {
+struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
+    @Test
+    func insertAndUpdate() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
@@ -51,9 +52,9 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key)!
 
-        XCTAssertEqual(databaseItem.compositePrimaryKey.sortKey, retrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem.rowValue.firstly, retrievedItem.rowValue.firstly)
-        XCTAssertEqual(databaseItem.rowValue.secondly, retrievedItem.rowValue.secondly)
+        #expect(databaseItem.compositePrimaryKey.sortKey == retrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem.rowValue.firstly == retrievedItem.rowValue.firstly)
+        #expect(databaseItem.rowValue.secondly == retrievedItem.rowValue.secondly)
 
         let updatedPayload = TestTypeA(firstly: "firstlyX2", secondly: "secondlyX2")
         let updatedDatabaseItem = retrievedItem.createUpdatedItem(withValue: updatedPayload)
@@ -61,12 +62,13 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         let secondRetrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key)!
 
-        XCTAssertEqual(updatedDatabaseItem.compositePrimaryKey.sortKey, secondRetrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(updatedDatabaseItem.rowValue.firstly, secondRetrievedItem.rowValue.firstly)
-        XCTAssertEqual(updatedDatabaseItem.rowValue.secondly, secondRetrievedItem.rowValue.secondly)
+        #expect(updatedDatabaseItem.compositePrimaryKey.sortKey == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(updatedDatabaseItem.rowValue.firstly == secondRetrievedItem.rowValue.firstly)
+        #expect(updatedDatabaseItem.rowValue.secondly == secondRetrievedItem.rowValue.secondly)
     }
 
-    func testDoubleInsert() async throws {
+    @Test
+    func doubleInsert() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
@@ -78,15 +80,16 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         do {
             try await table.insertItem(databaseItem)
-            XCTFail()
+            Issue.record()
         } catch DynamoDBTableError.conditionalCheckFailed {
             // expected error
         } catch {
-            XCTFail("Unexpected error \(error)")
+            Issue.record("Unexpected error \(error)")
         }
     }
 
-    func testUpdateWithoutInsert() async throws {
+    @Test
+    func updateWithoutInsert() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
@@ -98,15 +101,16 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.updateItem(newItem: databaseItem.createUpdatedItem(withValue: updatedPayload),
                                        existingItem: databaseItem)
-            XCTFail()
+            Issue.record()
         } catch DynamoDBTableError.conditionalCheckFailed {
             // expected error
         } catch {
-            XCTFail("Unexpected error \(error)")
+            Issue.record("Unexpected error \(error)")
         }
     }
 
-    func testPaginatedPolymorphicQuery() async throws {
+    @Test
+    func paginatedPolymorphicQuery() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         var items: [StandardTypedDatabaseItem<TestTypeA>] = []
@@ -145,7 +149,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
             }
         }
 
-        XCTAssertEqual(items.count, retrievedItems.count)
+        #expect(items.count == retrievedItems.count)
         // items are returned in sorted order
         let sortedItems = items.sorted { left, right in left.compositePrimaryKey.sortKey < right.compositePrimaryKey.sortKey }
 
@@ -154,18 +158,19 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
             let retrievedItem = retrievedItems[index]
 
             guard case let .testTypeA(databaseItem) = retrievedItem else {
-                XCTFail("Unexpected type.")
+                Issue.record("Unexpected type.")
                 return
             }
             let retrievedValue = databaseItem.rowValue
 
-            XCTAssertEqual(originalItem.compositePrimaryKey.sortKey, databaseItem.compositePrimaryKey.sortKey)
-            XCTAssertEqual(originalItem.rowValue.firstly, retrievedValue.firstly)
-            XCTAssertEqual(originalItem.rowValue.secondly, retrievedValue.secondly)
+            #expect(originalItem.compositePrimaryKey.sortKey == databaseItem.compositePrimaryKey.sortKey)
+            #expect(originalItem.rowValue.firstly == retrievedValue.firstly)
+            #expect(originalItem.rowValue.secondly == retrievedValue.secondly)
         }
     }
 
-    func testReversedPaginatedPolymorphicQuery() async throws {
+    @Test
+    func reversedPaginatedPolymorphicQuery() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         var items: [StandardTypedDatabaseItem<TestTypeA>] = []
@@ -205,7 +210,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
             }
         }
 
-        XCTAssertEqual(items.count, retrievedItems.count)
+        #expect(items.count == retrievedItems.count)
         // items are returned in reversed sorted order
         let sortedItems = items.sorted { left, right in left.compositePrimaryKey.sortKey > right.compositePrimaryKey.sortKey }
 
@@ -214,18 +219,19 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
             let retrievedItem = retrievedItems[index]
 
             guard case let .testTypeA(databaseItem) = retrievedItem else {
-                XCTFail("Unexpected type.")
+                Issue.record("Unexpected type.")
                 return
             }
             let retrievedValue = databaseItem.rowValue
 
-            XCTAssertEqual(originalItem.compositePrimaryKey.sortKey, databaseItem.compositePrimaryKey.sortKey)
-            XCTAssertEqual(originalItem.rowValue.firstly, retrievedValue.firstly)
-            XCTAssertEqual(originalItem.rowValue.secondly, retrievedValue.secondly)
+            #expect(originalItem.compositePrimaryKey.sortKey == databaseItem.compositePrimaryKey.sortKey)
+            #expect(originalItem.rowValue.firstly == retrievedValue.firstly)
+            #expect(originalItem.rowValue.secondly == retrievedValue.secondly)
         }
     }
 
-    func testPolymorphicQuery() async throws {
+    @Test
+    func polymorphicQuery() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         var items: [StandardTypedDatabaseItem<TestTypeA>] = []
@@ -245,19 +251,20 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
             try await table.polymorphicQuery(forPartitionKey: "partitionId",
                                              sortKeyCondition: nil)
 
-        XCTAssertEqual(items.count, retrievedItems.count)
+        #expect(items.count == retrievedItems.count)
 
         for index in 0 ..< items.count {
             let originalItem = items[index]
             let retrievedItem = items[index]
 
-            XCTAssertEqual(originalItem.compositePrimaryKey.sortKey, retrievedItem.compositePrimaryKey.sortKey)
-            XCTAssertEqual(originalItem.rowValue.firstly, retrievedItem.rowValue.firstly)
-            XCTAssertEqual(originalItem.rowValue.secondly, retrievedItem.rowValue.secondly)
+            #expect(originalItem.compositePrimaryKey.sortKey == retrievedItem.compositePrimaryKey.sortKey)
+            #expect(originalItem.rowValue.firstly == retrievedItem.rowValue.firstly)
+            #expect(originalItem.rowValue.secondly == retrievedItem.rowValue.secondly)
         }
     }
 
-    func testMonomorphicQuery() async throws {
+    @Test
+    func monomorphicQuery() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         var items: [StandardTypedDatabaseItem<TestTypeA>] = []
@@ -277,19 +284,20 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
             try await table.query(forPartitionKey: "partitionId",
                                   sortKeyCondition: nil)
 
-        XCTAssertEqual(items.count, retrievedItems.count)
+        #expect(items.count == retrievedItems.count)
 
         for index in 0 ..< items.count {
             let originalItem = items[index]
             let retrievedItem = items[index]
 
-            XCTAssertEqual(originalItem.compositePrimaryKey.sortKey, retrievedItem.compositePrimaryKey.sortKey)
-            XCTAssertEqual(originalItem.rowValue.firstly, retrievedItem.rowValue.firstly)
-            XCTAssertEqual(originalItem.rowValue.secondly, retrievedItem.rowValue.secondly)
+            #expect(originalItem.compositePrimaryKey.sortKey == retrievedItem.compositePrimaryKey.sortKey)
+            #expect(originalItem.rowValue.firstly == retrievedItem.rowValue.firstly)
+            #expect(originalItem.rowValue.secondly == retrievedItem.rowValue.secondly)
         }
     }
 
-    func testDeleteForKey() async throws {
+    @Test
+    func deleteForKey() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
@@ -300,15 +308,16 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         _ = try await table.insertItem(databaseItem)
 
         let retrievedItem1: StandardTypedDatabaseItem<TestTypeA>? = try await table.getItem(forKey: key)
-        XCTAssertNotNil(retrievedItem1)
+        #expect(retrievedItem1 != nil)
 
         try await table.deleteItem(forKey: key)
 
         let retrievedItem2: StandardTypedDatabaseItem<TestTypeA>? = try await table.getItem(forKey: key)
-        XCTAssertNil(retrievedItem2)
+        #expect(retrievedItem2 == nil)
     }
 
-    func testDeleteForExistingItem() async throws {
+    @Test
+    func deleteForExistingItem() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
@@ -319,15 +328,16 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         _ = try await table.insertItem(databaseItem)
 
         let retrievedItem1: StandardTypedDatabaseItem<TestTypeA>? = try await table.getItem(forKey: key)
-        XCTAssertNotNil(retrievedItem1)
+        #expect(retrievedItem1 != nil)
 
         try await table.deleteItem(existingItem: databaseItem)
 
         let retrievedItem2: StandardTypedDatabaseItem<TestTypeA>? = try await table.getItem(forKey: key)
-        XCTAssertNil(retrievedItem2)
+        #expect(retrievedItem2 == nil)
     }
 
-    func testDeleteForExistingItemAfterUpdate() async throws {
+    @Test
+    func deleteForExistingItemAfterUpdate() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
@@ -340,7 +350,7 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         _ = try await table.insertItem(databaseItem)
 
         let retrievedItem1: StandardTypedDatabaseItem<TestTypeA>? = try await table.getItem(forKey: key)
-        XCTAssertNotNil(retrievedItem1)
+        #expect(retrievedItem1 != nil)
 
         try await table.updateItem(newItem: updatedItem, existingItem: databaseItem)
 
@@ -352,10 +362,11 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         let retrievedItem2: StandardTypedDatabaseItem<TestTypeA>? = try await table.getItem(forKey: key)
         // the table should still contain the item
-        XCTAssertNotNil(retrievedItem2)
+        #expect(retrievedItem2 != nil)
     }
 
-    func testDeleteForExistingItemAfterRecreation() async throws {
+    @Test
+    func deleteForExistingItemAfterRecreation() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
@@ -366,10 +377,9 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         _ = try await table.insertItem(databaseItem)
 
         let retrievedItem1: StandardTypedDatabaseItem<TestTypeA>? = try await table.getItem(forKey: key)
-        XCTAssertNotNil(retrievedItem1)
+        #expect(retrievedItem1 != nil)
 
         try await table.deleteItem(existingItem: databaseItem)
-        sleep(1)
         let recreatedItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
         _ = try await table.insertItem(recreatedItem)
 
@@ -381,10 +391,11 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         let retrievedItem2: StandardTypedDatabaseItem<TestTypeA>? = try await table.getItem(forKey: key)
         // the table should still contain the item
-        XCTAssertNotNil(retrievedItem2)
+        #expect(retrievedItem2 != nil)
     }
 
-    func testPolymorphicGetItems() async throws {
+    @Test
+    func polymorphicGetItems() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -403,20 +414,21 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         let batch: [StandardCompositePrimaryKey: TestQueryableTypes] = try await table.polymorphicGetItems(forKeys: [key1, key2])
 
         guard case let .testTypeA(retrievedDatabaseItem1) = batch[key1] else {
-            XCTFail()
+            Issue.record()
             return
         }
 
         guard case let .testTypeB(retrievedDatabaseItem2) = batch[key2] else {
-            XCTFail()
+            Issue.record()
             return
         }
 
-        XCTAssertEqual(payload1, retrievedDatabaseItem1.rowValue)
-        XCTAssertEqual(payload2, retrievedDatabaseItem2.rowValue)
+        #expect(payload1 == retrievedDatabaseItem1.rowValue)
+        #expect(payload2 == retrievedDatabaseItem2.rowValue)
     }
 
-    func testGetItems() async throws {
+    @Test
+    func getItems() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -436,20 +448,21 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
             = try await table.getItems(forKeys: [key1, key2])
 
         guard let retrievedDatabaseItem1 = batch[key1] else {
-            XCTFail()
+            Issue.record()
             return
         }
 
         guard let retrievedDatabaseItem2 = batch[key2] else {
-            XCTFail()
+            Issue.record()
             return
         }
 
-        XCTAssertEqual(payload1, retrievedDatabaseItem1.rowValue)
-        XCTAssertEqual(payload2, retrievedDatabaseItem2.rowValue)
+        #expect(payload1 == retrievedDatabaseItem1.rowValue)
+        #expect(payload2 == retrievedDatabaseItem2.rowValue)
     }
 
-    func testBulkWriteWithoutThrowing() async throws {
+    @Test
+    func bulkWriteWithoutThrowing() async throws {
         typealias TestObject = TestTypeA
         typealias TestObjectDatabaseItem = StandardTypedDatabaseItem<TestObject>
         typealias TestObjectWriteEntry = StandardWriteEntry<TestObject>
@@ -467,15 +480,16 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
 
         let result1 = try await table.bulkWriteWithoutThrowing(entryList)
-        XCTAssertEqual(result1.count, 1)
+        #expect(result1.count == 1)
         if result1.contains(DynamoDBClientTypes.BatchStatementErrorCodeEnum.duplicateitem) {
             return
         } else {
-            XCTFail("should contain duplicateitem error")
+            Issue.record("should contain duplicateitem error")
         }
     }
 
-    func testTransactWrite() async throws {
+    @Test
+    func transactWrite() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -497,18 +511,19 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key1)!
 
-        XCTAssertEqual(databaseItem1.compositePrimaryKey.sortKey, retrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem1.rowValue.firstly, retrievedItem.rowValue.firstly)
-        XCTAssertEqual(databaseItem1.rowValue.secondly, retrievedItem.rowValue.secondly)
+        #expect(databaseItem1.compositePrimaryKey.sortKey == retrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem1.rowValue.firstly == retrievedItem.rowValue.firstly)
+        #expect(databaseItem1.rowValue.secondly == retrievedItem.rowValue.secondly)
 
         let secondRetrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key2)!
 
-        XCTAssertEqual(databaseItem2.compositePrimaryKey.sortKey, secondRetrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem2.rowValue.firstly, secondRetrievedItem.rowValue.firstly)
-        XCTAssertEqual(databaseItem2.rowValue.secondly, secondRetrievedItem.rowValue.secondly)
+        #expect(databaseItem2.compositePrimaryKey.sortKey == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem2.rowValue.firstly == secondRetrievedItem.rowValue.firstly)
+        #expect(databaseItem2.rowValue.secondly == secondRetrievedItem.rowValue.secondly)
     }
 
-    func testTransactWriteWithMissingRequired() async throws {
+    @Test
+    func transactWriteWithMissingRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -544,16 +559,17 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.transactWrite(entryList, constraints: constraintList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // both required items are missing
-            XCTAssertEqual(2, reasons.count)
+            #expect(2 == reasons.count)
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testTransactWriteTransactWriteWithExistingRequired() async throws {
+    @Test
+    func transactWriteTransactWriteWithExistingRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -593,18 +609,19 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key1)!
 
-        XCTAssertEqual(databaseItem1.compositePrimaryKey.sortKey, retrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem1.rowValue.firstly, retrievedItem.rowValue.firstly)
-        XCTAssertEqual(databaseItem1.rowValue.secondly, retrievedItem.rowValue.secondly)
+        #expect(databaseItem1.compositePrimaryKey.sortKey == retrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem1.rowValue.firstly == retrievedItem.rowValue.firstly)
+        #expect(databaseItem1.rowValue.secondly == retrievedItem.rowValue.secondly)
 
         let secondRetrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key2)!
 
-        XCTAssertEqual(databaseItem2.compositePrimaryKey.sortKey, secondRetrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem2.rowValue.firstly, secondRetrievedItem.rowValue.firstly)
-        XCTAssertEqual(databaseItem2.rowValue.secondly, secondRetrievedItem.rowValue.secondly)
+        #expect(databaseItem2.compositePrimaryKey.sortKey == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem2.rowValue.firstly == secondRetrievedItem.rowValue.firstly)
+        #expect(databaseItem2.rowValue.secondly == secondRetrievedItem.rowValue.secondly)
     }
 
-    func testTransactWriteWithIncorrectVersionForRequired() async throws {
+    @Test
+    func transactWriteWithIncorrectVersionForRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -647,23 +664,24 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.transactWrite(entryList, constraints: constraintList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one has an incorrect version
-            XCTAssertEqual(1, reasons.count)
+            #expect(1 == reasons.count)
 
             if let first = reasons.first {
                 guard case .transactionConditionalCheckFailed = first else {
-                    XCTFail("Unexpected error")
+                    Issue.record("Unexpected error")
                     return
                 }
             }
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testTransactWriteWithIncorrectVersionForUpdate() async throws {
+    @Test
+    func transactWriteWithIncorrectVersionForUpdate() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -694,23 +712,24 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.transactWrite(entryList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one has an incorrect version
-            XCTAssertEqual(1, reasons.count)
+            #expect(1 == reasons.count)
 
             if let first = reasons.first {
                 guard case .transactionConditionalCheckFailed = first else {
-                    XCTFail("Unexpected error \(first)")
+                    Issue.record("Unexpected error \(first)")
                     return
                 }
             }
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testPolymorphicTransactWrite() async throws {
+    @Test
+    func polymorphicTransactWrite() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -732,18 +751,19 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key1)!
 
-        XCTAssertEqual(databaseItem1.compositePrimaryKey.sortKey, retrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem1.rowValue.firstly, retrievedItem.rowValue.firstly)
-        XCTAssertEqual(databaseItem1.rowValue.secondly, retrievedItem.rowValue.secondly)
+        #expect(databaseItem1.compositePrimaryKey.sortKey == retrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem1.rowValue.firstly == retrievedItem.rowValue.firstly)
+        #expect(databaseItem1.rowValue.secondly == retrievedItem.rowValue.secondly)
 
         let secondRetrievedItem: StandardTypedDatabaseItem<TestTypeB> = try await table.getItem(forKey: key2)!
 
-        XCTAssertEqual(databaseItem2.compositePrimaryKey.sortKey, secondRetrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem2.rowValue.thirdly, secondRetrievedItem.rowValue.thirdly)
-        XCTAssertEqual(databaseItem2.rowValue.fourthly, secondRetrievedItem.rowValue.fourthly)
+        #expect(databaseItem2.compositePrimaryKey.sortKey == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem2.rowValue.thirdly == secondRetrievedItem.rowValue.thirdly)
+        #expect(databaseItem2.rowValue.fourthly == secondRetrievedItem.rowValue.fourthly)
     }
 
-    func testPolymorphicTransactWriteWithMissingRequired() async throws {
+    @Test
+    func polymorphicTransactWriteWithMissingRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -779,16 +799,17 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.polymorphicTransactWrite(entryList, constraints: constraintList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // both required items are missing
-            XCTAssertEqual(2, reasons.count)
+            #expect(2 == reasons.count)
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testPolymorphicTransactWriteTransactWriteWithExistingRequired() async throws {
+    @Test
+    func polymorphicTransactWriteTransactWriteWithExistingRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -828,18 +849,19 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key1)!
 
-        XCTAssertEqual(databaseItem1.compositePrimaryKey.sortKey, retrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem1.rowValue.firstly, retrievedItem.rowValue.firstly)
-        XCTAssertEqual(databaseItem1.rowValue.secondly, retrievedItem.rowValue.secondly)
+        #expect(databaseItem1.compositePrimaryKey.sortKey == retrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem1.rowValue.firstly == retrievedItem.rowValue.firstly)
+        #expect(databaseItem1.rowValue.secondly == retrievedItem.rowValue.secondly)
 
         let secondRetrievedItem: StandardTypedDatabaseItem<TestTypeB> = try await table.getItem(forKey: key2)!
 
-        XCTAssertEqual(databaseItem2.compositePrimaryKey.sortKey, secondRetrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem2.rowValue.thirdly, secondRetrievedItem.rowValue.thirdly)
-        XCTAssertEqual(databaseItem2.rowValue.fourthly, secondRetrievedItem.rowValue.fourthly)
+        #expect(databaseItem2.compositePrimaryKey.sortKey == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem2.rowValue.thirdly == secondRetrievedItem.rowValue.thirdly)
+        #expect(databaseItem2.rowValue.fourthly == secondRetrievedItem.rowValue.fourthly)
     }
 
-    func testPolymorphicTransactWriteWithIncorrectVersionForRequired() async throws {
+    @Test
+    func polymorphicTransactWriteWithIncorrectVersionForRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -882,23 +904,24 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.polymorphicTransactWrite(entryList, constraints: constraintList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one has an incorrect version
-            XCTAssertEqual(1, reasons.count)
+            #expect(1 == reasons.count)
 
             if let first = reasons.first {
                 guard case .transactionConditionalCheckFailed = first else {
-                    XCTFail("Unexpected error")
+                    Issue.record("Unexpected error")
                     return
                 }
             }
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testPolymorphicTransactWriteWithIncorrectVersionForUpdate() async throws {
+    @Test
+    func polymorphicTransactWriteWithIncorrectVersionForUpdate() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -927,19 +950,19 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.polymorphicTransactWrite(entryList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one has an incorrect version
-            XCTAssertEqual(1, reasons.count)
+            #expect(1 == reasons.count)
 
             if let first = reasons.first {
                 guard case .transactionConditionalCheckFailed = first else {
-                    XCTFail("Unexpected error \(first)")
+                    Issue.record("Unexpected error \(first)")
                     return
                 }
             }
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
@@ -965,7 +988,8 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         }
     }
 
-    func testTransactWriteWithInjectedErrors() async throws {
+    @Test
+    func transactWriteWithInjectedErrors() async throws {
         let errors = [DynamoDBTableError.transactionConflict(message: "There is a Conflict!!")]
         let transactionDelegate = TestInMemoryTransactionDelegate(errors: errors)
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable(transactionDelegate: transactionDelegate)
@@ -1003,25 +1027,26 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.transactWrite(entryList, constraints: constraintList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // errors should match what was injected
-            XCTAssertEqual(errors.count, reasons.count)
+            #expect(errors.count == reasons.count)
 
             for (error, reason) in zip(errors, reasons) {
                 switch (error, reason) {
                 case let (.transactionConflict(message1), .transactionConflict(message2)):
-                    XCTAssertEqual(message1, message2)
+                    #expect(message1 == message2)
                 default:
-                    XCTFail()
+                    Issue.record()
                 }
             }
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testTransactWriteWithExistingItem() async throws {
+    @Test
+    func transactWriteWithExistingItem() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -1044,23 +1069,24 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.transactWrite(entryList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one already exists
-            XCTAssertEqual(1, reasons.count)
+            #expect(1 == reasons.count)
 
             if let first = reasons.first {
                 guard case .duplicateItem = first else {
-                    XCTFail("Unexpected error")
+                    Issue.record("Unexpected error")
                     return
                 }
             }
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testPolymorphicTransactWriteWithInjectedErrors() async throws {
+    @Test
+    func polymorphicTransactWriteWithInjectedErrors() async throws {
         let errors = [DynamoDBTableError.transactionConflict(message: "There is a Conflict!!")]
         let transactionDelegate = TestInMemoryTransactionDelegate(errors: errors)
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable(transactionDelegate: transactionDelegate)
@@ -1098,25 +1124,26 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.polymorphicTransactWrite(entryList, constraints: constraintList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // errors should match what was injected
-            XCTAssertEqual(errors.count, reasons.count)
+            #expect(errors.count == reasons.count)
 
             for (error, reason) in zip(errors, reasons) {
                 switch (error, reason) {
                 case let (.transactionConflict(message1), .transactionConflict(message2)):
-                    XCTAssertEqual(message1, message2)
+                    #expect(message1 == message2)
                 default:
-                    XCTFail()
+                    Issue.record()
                 }
             }
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testPolymorphicTransactWriteWithExistingItem() async throws {
+    @Test
+    func polymorphicTransactWriteWithExistingItem() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -1139,23 +1166,24 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.polymorphicTransactWrite(entryList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one already exists
-            XCTAssertEqual(1, reasons.count)
+            #expect(1 == reasons.count)
 
             if let first = reasons.first {
                 guard case .duplicateItem = first else {
-                    XCTFail("Unexpected error")
+                    Issue.record("Unexpected error")
                     return
                 }
             }
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testBulkWrite() async throws {
+    @Test
+    func bulkWrite() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -1177,18 +1205,19 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key1)!
 
-        XCTAssertEqual(databaseItem1.compositePrimaryKey.sortKey, retrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem1.rowValue.firstly, retrievedItem.rowValue.firstly)
-        XCTAssertEqual(databaseItem1.rowValue.secondly, retrievedItem.rowValue.secondly)
+        #expect(databaseItem1.compositePrimaryKey.sortKey == retrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem1.rowValue.firstly == retrievedItem.rowValue.firstly)
+        #expect(databaseItem1.rowValue.secondly == retrievedItem.rowValue.secondly)
 
         let secondRetrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key2)!
 
-        XCTAssertEqual(databaseItem2.compositePrimaryKey.sortKey, secondRetrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem2.rowValue.firstly, secondRetrievedItem.rowValue.firstly)
-        XCTAssertEqual(databaseItem2.rowValue.secondly, secondRetrievedItem.rowValue.secondly)
+        #expect(databaseItem2.compositePrimaryKey.sortKey == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem2.rowValue.firstly == secondRetrievedItem.rowValue.firstly)
+        #expect(databaseItem2.rowValue.secondly == secondRetrievedItem.rowValue.secondly)
     }
 
-    func testBulkWriteWithExistingItem() async throws {
+    @Test
+    func bulkWriteWithExistingItem() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -1211,16 +1240,17 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.bulkWrite(entryList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.batchErrorsReturned(errorCount, _) {
             // one required item exists, one already exists
-            XCTAssertEqual(1, errorCount)
+            #expect(1 == errorCount)
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
-    func testPolymorphicBulkWrite() async throws {
+    @Test
+    func polymorphicBulkWrite() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -1242,18 +1272,19 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key1)!
 
-        XCTAssertEqual(databaseItem1.compositePrimaryKey.sortKey, retrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem1.rowValue.firstly, retrievedItem.rowValue.firstly)
-        XCTAssertEqual(databaseItem1.rowValue.secondly, retrievedItem.rowValue.secondly)
+        #expect(databaseItem1.compositePrimaryKey.sortKey == retrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem1.rowValue.firstly == retrievedItem.rowValue.firstly)
+        #expect(databaseItem1.rowValue.secondly == retrievedItem.rowValue.secondly)
 
         let secondRetrievedItem: StandardTypedDatabaseItem<TestTypeB> = try await table.getItem(forKey: key2)!
 
-        XCTAssertEqual(databaseItem2.compositePrimaryKey.sortKey, secondRetrievedItem.compositePrimaryKey.sortKey)
-        XCTAssertEqual(databaseItem2.rowValue.thirdly, secondRetrievedItem.rowValue.thirdly)
-        XCTAssertEqual(databaseItem2.rowValue.fourthly, secondRetrievedItem.rowValue.fourthly)
+        #expect(databaseItem2.compositePrimaryKey.sortKey == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(databaseItem2.rowValue.thirdly == secondRetrievedItem.rowValue.thirdly)
+        #expect(databaseItem2.rowValue.fourthly == secondRetrievedItem.rowValue.fourthly)
     }
 
-    func testPolymorphicBulkWriteWithExistingItem() async throws {
+    @Test
+    func polymorphicBulkWriteWithExistingItem() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
         let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
@@ -1276,12 +1307,12 @@ class InMemoryDynamoDBCompositePrimaryKeyTableTests: XCTestCase {
         do {
             try await table.polymorphicBulkWrite(entryList)
 
-            XCTFail()
+            Issue.record()
         } catch let DynamoDBTableError.batchErrorsReturned(errorCount, _) {
             // one required item exists, one already exists
-            XCTAssertEqual(1, errorCount)
+            #expect(1 == errorCount)
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 }

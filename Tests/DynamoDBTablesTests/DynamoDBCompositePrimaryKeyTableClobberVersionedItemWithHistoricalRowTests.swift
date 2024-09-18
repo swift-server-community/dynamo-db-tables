@@ -26,10 +26,11 @@
 
 @testable import DynamoDBTables
 import Foundation
-import XCTest
+import Testing
 
-class DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTests: XCTestCase {
-    func testClobberVersionedItemWithHistoricalRow() async throws {
+struct DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTests {
+    @Test
+    func clobberVersionedItemWithHistoricalRow() async throws {
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let partitionKey = "partitionId"
         let historicalPartitionPrefix = "historical"
@@ -51,16 +52,16 @@ class DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTests
         // the v0 row, copy of version 1
         let key1 = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: generateSortKey(withVersion: 0))
         let item1: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key1)!
-        XCTAssertEqual(1, item1.rowValue.itemVersion)
-        XCTAssertEqual(1, item1.rowStatus.rowVersion)
-        XCTAssertEqual(payload1, item1.rowValue.rowValue)
+        #expect(1 == item1.rowValue.itemVersion)
+        #expect(1 == item1.rowStatus.rowVersion)
+        #expect(payload1 == item1.rowValue.rowValue)
 
         // the v1 row, has version 1
         let key2 = StandardCompositePrimaryKey(partitionKey: historicalPartitionKey, sortKey: generateSortKey(withVersion: 1))
         let item2: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key2)!
-        XCTAssertEqual(1, item2.rowValue.itemVersion)
-        XCTAssertEqual(1, item2.rowStatus.rowVersion)
-        XCTAssertEqual(payload1, item2.rowValue.rowValue)
+        #expect(1 == item2.rowValue.itemVersion)
+        #expect(1 == item2.rowStatus.rowVersion)
+        #expect(payload1 == item2.rowValue.rowValue)
 
         let payload2 = TestTypeA(firstly: "thirdly", secondly: "fourthly")
 
@@ -73,22 +74,22 @@ class DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTests
         // the v0 row, copy of version 2
         let key3 = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: generateSortKey(withVersion: 0))
         let item3: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key3)!
-        XCTAssertEqual(2, item3.rowValue.itemVersion)
-        XCTAssertEqual(2, item3.rowStatus.rowVersion)
-        XCTAssertEqual(payload2, item3.rowValue.rowValue)
+        #expect(2 == item3.rowValue.itemVersion)
+        #expect(2 == item3.rowStatus.rowVersion)
+        #expect(payload2 == item3.rowValue.rowValue)
 
         // the v1 row, still has version 1
         let key4 = StandardCompositePrimaryKey(partitionKey: historicalPartitionKey, sortKey: generateSortKey(withVersion: 1))
         let item4: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key4)!
-        XCTAssertEqual(1, item4.rowValue.itemVersion)
-        XCTAssertEqual(1, item4.rowStatus.rowVersion)
-        XCTAssertEqual(payload1, item4.rowValue.rowValue)
+        #expect(1 == item4.rowValue.itemVersion)
+        #expect(1 == item4.rowStatus.rowVersion)
+        #expect(payload1 == item4.rowValue.rowValue)
 
         // the v2 row, has version 2
         let key5 = StandardCompositePrimaryKey(partitionKey: historicalPartitionKey, sortKey: generateSortKey(withVersion: 2))
         let item5: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key5)!
-        XCTAssertEqual(2, item5.rowValue.itemVersion)
-        XCTAssertEqual(1, item5.rowStatus.rowVersion)
-        XCTAssertEqual(payload2, item5.rowValue.rowValue)
+        #expect(2 == item5.rowValue.itemVersion)
+        #expect(1 == item5.rowStatus.rowVersion)
+        #expect(payload2 == item5.rowValue.rowValue)
     }
 }

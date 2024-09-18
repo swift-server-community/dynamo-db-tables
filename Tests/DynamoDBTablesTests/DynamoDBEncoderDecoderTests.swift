@@ -25,7 +25,7 @@
 //
 
 @testable import DynamoDBTables
-import XCTest
+import Testing
 
 struct CoreAccountAttributes: Codable {
     var description: String
@@ -53,7 +53,7 @@ extension NotificationTargets: Equatable {
 
 typealias DatabaseItemType = StandardTypedDatabaseItem<CoreAccountAttributes>
 
-class DynamoDBEncoderDecoderTests: XCTestCase {
+struct DynamoDBEncoderDecoderTests {
     let partitionKey = "partitionKey"
     let sortKey = "sortKey"
     let attributes = CoreAccountAttributes(
@@ -61,7 +61,8 @@ class DynamoDBEncoderDecoderTests: XCTestCase {
         mappedValues: ["A": "one", "B": "two"],
         notificationTargets: NotificationTargets(currentIDs: [], maximum: 20))
 
-    func testEncoderDecoder() throws {
+    @Test
+    func encoderDecoder() throws {
         // create key and database item to create
         let key = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: sortKey)
         let newDatabaseItem: DatabaseItemType = StandardTypedDatabaseItem.newItem(withKey: key, andValue: self.attributes)
@@ -70,14 +71,15 @@ class DynamoDBEncoderDecoderTests: XCTestCase {
 
         let output: DatabaseItemType = try DynamoDBDecoder().decode(encodedAttributeValue)
 
-        XCTAssertEqual(newDatabaseItem.rowValue, output.rowValue)
-        XCTAssertEqual(self.partitionKey, output.compositePrimaryKey.partitionKey)
-        XCTAssertEqual(self.sortKey, output.compositePrimaryKey.sortKey)
-        XCTAssertEqual(self.attributes, output.rowValue)
-        XCTAssertNil(output.timeToLive)
+        #expect(newDatabaseItem.rowValue == output.rowValue)
+        #expect(self.partitionKey == output.compositePrimaryKey.partitionKey)
+        #expect(self.sortKey == output.compositePrimaryKey.sortKey)
+        #expect(self.attributes == output.rowValue)
+        #expect(output.timeToLive == nil)
     }
 
-    func testEncoderDecoderWithTimeToLive() throws {
+    @Test
+    func encoderDecoderWithTimeToLive() throws {
         let timeToLiveTimestamp: Int64 = 123_456_789
         let timeToLive = StandardTimeToLive(timeToLiveTimestamp: timeToLiveTimestamp)
 
@@ -92,10 +94,10 @@ class DynamoDBEncoderDecoderTests: XCTestCase {
 
         let output: DatabaseItemType = try DynamoDBDecoder().decode(encodedAttributeValue)
 
-        XCTAssertEqual(newDatabaseItem.rowValue, output.rowValue)
-        XCTAssertEqual(self.partitionKey, output.compositePrimaryKey.partitionKey)
-        XCTAssertEqual(self.sortKey, output.compositePrimaryKey.sortKey)
-        XCTAssertEqual(self.attributes, output.rowValue)
-        XCTAssertEqual(timeToLiveTimestamp, output.timeToLive?.timeToLiveTimestamp)
+        #expect(newDatabaseItem.rowValue == output.rowValue)
+        #expect(self.partitionKey == output.compositePrimaryKey.partitionKey)
+        #expect(self.sortKey == output.compositePrimaryKey.sortKey)
+        #expect(self.attributes == output.rowValue)
+        #expect(timeToLiveTimestamp == output.timeToLive?.timeToLiveTimestamp)
     }
 }
