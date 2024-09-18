@@ -224,7 +224,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         let inputKeys = entries.map(\.compositePrimaryKey)
 
         try await self.polymorphicTransactWrite(transactionInput, inputKeys: inputKeys,
-                                                       retriesRemaining: self.retryConfiguration.numRetries)
+                                                retriesRemaining: self.retryConfiguration.numRetries)
     }
 
     func polymorphicTransactWrite(
@@ -347,8 +347,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         return try await self.transactWrite(entries, constraints: constraints, retriesRemaining: retriesRemaining - 1)
     }
 
-    private func polymorphicTransactWrite(_ transactionInput: ExecuteTransactionInput, inputKeys: [StandardCompositePrimaryKey?], retriesRemaining: Int) async throws
-    {
+    private func polymorphicTransactWrite(_ transactionInput: ExecuteTransactionInput, inputKeys: [StandardCompositePrimaryKey?], retriesRemaining: Int) async throws {
         if inputKeys.count > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
             throw DynamoDBTableError.transactionSizeExceeded(attemptedSize: inputKeys.count,
                                                              maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
@@ -433,8 +432,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    private func retryPolymorphicTransactWrite(_ transactionInput: ExecuteTransactionInput, inputKeys: [StandardCompositePrimaryKey?], retriesRemaining: Int) async throws
-    {
+    private func retryPolymorphicTransactWrite(_ transactionInput: ExecuteTransactionInput, inputKeys: [StandardCompositePrimaryKey?], retriesRemaining: Int) async throws {
         // determine the required interval
         let retryInterval = Int(self.retryConfiguration.getRetryInterval(retriesRemaining: retriesRemaining))
 

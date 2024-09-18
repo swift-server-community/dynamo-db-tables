@@ -157,7 +157,7 @@ struct SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests {
         }
 
         // should only fail five times
-        #expect(5 == errorCount)
+        #expect(errorCount == 5)
 
         try await table.deleteItem(forKey: key)
 
@@ -202,7 +202,7 @@ struct SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests {
         }
 
         // should only fail five times
-        #expect(5 == errorCount)
+        #expect(errorCount == 5)
 
         try await table.deleteItem(forKey: key)
 

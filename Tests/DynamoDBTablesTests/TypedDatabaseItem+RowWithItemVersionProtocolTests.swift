@@ -45,12 +45,12 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
         let updatedItem = try databaseItem.createUpdatedRowWithItemVersion(withValue: "Updated",
                                                                            conditionalStatusVersion: nil)
 
-        #expect(1 == databaseItem.rowStatus.rowVersion)
-        #expect(1 == databaseItem.rowValue.itemVersion)
+        #expect(databaseItem.rowStatus.rowVersion == 1)
+        #expect(databaseItem.rowValue.itemVersion == 1)
         #expect(ORIGINAL_PAYLOAD == databaseItem.rowValue.rowValue)
         #expect(databaseItem.timeToLive == nil)
-        #expect(2 == updatedItem.rowStatus.rowVersion)
-        #expect(2 == updatedItem.rowValue.itemVersion)
+        #expect(updatedItem.rowStatus.rowVersion == 2)
+        #expect(updatedItem.rowValue.itemVersion == 2)
         #expect(UPDATED_PAYLOAD == updatedItem.rowValue.rowValue)
         #expect(updatedItem.timeToLive == nil)
     }
@@ -68,12 +68,12 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
                                                                            conditionalStatusVersion: nil,
                                                                            andTimeToLive: StandardTimeToLive(timeToLiveTimestamp: 234_567_890))
 
-        #expect(1 == databaseItem.rowStatus.rowVersion)
-        #expect(1 == databaseItem.rowValue.itemVersion)
+        #expect(databaseItem.rowStatus.rowVersion == 1)
+        #expect(databaseItem.rowValue.itemVersion == 1)
         #expect(ORIGINAL_PAYLOAD == databaseItem.rowValue.rowValue)
         #expect(ORIGINAL_TIME_TO_LIVE == databaseItem.timeToLive?.timeToLiveTimestamp)
-        #expect(2 == updatedItem.rowStatus.rowVersion)
-        #expect(2 == updatedItem.rowValue.itemVersion)
+        #expect(updatedItem.rowStatus.rowVersion == 2)
+        #expect(updatedItem.rowValue.itemVersion == 2)
         #expect(UPDATED_PAYLOAD == updatedItem.rowValue.rowValue)
         #expect(UPDATED_TIME_TO_LIVE == updatedItem.timeToLive?.timeToLiveTimestamp)
     }
@@ -88,11 +88,11 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
         let updatedItem = try databaseItem.createUpdatedRowWithItemVersion(withValue: "Updated",
                                                                            conditionalStatusVersion: 1)
 
-        #expect(1 == databaseItem.rowStatus.rowVersion)
-        #expect(1 == databaseItem.rowValue.itemVersion)
+        #expect(databaseItem.rowStatus.rowVersion == 1)
+        #expect(databaseItem.rowValue.itemVersion == 1)
         #expect(ORIGINAL_PAYLOAD == databaseItem.rowValue.rowValue)
-        #expect(2 == updatedItem.rowStatus.rowVersion)
-        #expect(2 == updatedItem.rowValue.itemVersion)
+        #expect(updatedItem.rowStatus.rowVersion == 2)
+        #expect(updatedItem.rowValue.itemVersion == 2)
         #expect(UPDATED_PAYLOAD == updatedItem.rowValue.rowValue)
     }
 

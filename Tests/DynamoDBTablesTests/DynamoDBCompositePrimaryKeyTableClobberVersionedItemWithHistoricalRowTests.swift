@@ -52,15 +52,15 @@ struct DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTest
         // the v0 row, copy of version 1
         let key1 = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: generateSortKey(withVersion: 0))
         let item1: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key1)!
-        #expect(1 == item1.rowValue.itemVersion)
-        #expect(1 == item1.rowStatus.rowVersion)
+        #expect(item1.rowValue.itemVersion == 1)
+        #expect(item1.rowStatus.rowVersion == 1)
         #expect(payload1 == item1.rowValue.rowValue)
 
         // the v1 row, has version 1
         let key2 = StandardCompositePrimaryKey(partitionKey: historicalPartitionKey, sortKey: generateSortKey(withVersion: 1))
         let item2: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key2)!
-        #expect(1 == item2.rowValue.itemVersion)
-        #expect(1 == item2.rowStatus.rowVersion)
+        #expect(item2.rowValue.itemVersion == 1)
+        #expect(item2.rowStatus.rowVersion == 1)
         #expect(payload1 == item2.rowValue.rowValue)
 
         let payload2 = TestTypeA(firstly: "thirdly", secondly: "fourthly")
@@ -74,22 +74,22 @@ struct DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTest
         // the v0 row, copy of version 2
         let key3 = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: generateSortKey(withVersion: 0))
         let item3: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key3)!
-        #expect(2 == item3.rowValue.itemVersion)
-        #expect(2 == item3.rowStatus.rowVersion)
+        #expect(item3.rowValue.itemVersion == 2)
+        #expect(item3.rowStatus.rowVersion == 2)
         #expect(payload2 == item3.rowValue.rowValue)
 
         // the v1 row, still has version 1
         let key4 = StandardCompositePrimaryKey(partitionKey: historicalPartitionKey, sortKey: generateSortKey(withVersion: 1))
         let item4: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key4)!
-        #expect(1 == item4.rowValue.itemVersion)
-        #expect(1 == item4.rowStatus.rowVersion)
+        #expect(item4.rowValue.itemVersion == 1)
+        #expect(item4.rowStatus.rowVersion == 1)
         #expect(payload1 == item4.rowValue.rowValue)
 
         // the v2 row, has version 2
         let key5 = StandardCompositePrimaryKey(partitionKey: historicalPartitionKey, sortKey: generateSortKey(withVersion: 2))
         let item5: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key5)!
-        #expect(2 == item5.rowValue.itemVersion)
-        #expect(1 == item5.rowStatus.rowVersion)
+        #expect(item5.rowValue.itemVersion == 2)
+        #expect(item5.rowStatus.rowVersion == 1)
         #expect(payload2 == item5.rowValue.rowValue)
     }
 }
