@@ -8,35 +8,17 @@ on:
       
 jobs:
   LatestVersionBuild:
-    name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
+    name: Swift with image ${{ matrix.image }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04]
-        swift: ["5.10"]
-    runs-on: ${{ matrix.os }}
+        image: ["6.0.0-noble", "6.0.0-jammy"]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
     steps:
-      - uses: swift-actions/setup-swift@v2.1.0
-        with:
-          swift-version: ${{ matrix.swift }}
       - uses: actions/checkout@v4
       - name: Build
         run: swift build -c release -Xswiftc -strict-concurrency=complete
-      - name: Run tests
-        run: swift test
-  OlderVersionBuild:
-    name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-20.04]
-        swift: ["5.9"]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: swift-actions/setup-swift@v2.1.0
-        with:
-          swift-version: ${{ matrix.swift }}
-      - uses: actions/checkout@v4
-      - name: Build
-        run: swift build -c release
       - name: Run tests
         run: swift test
   SwiftLint:

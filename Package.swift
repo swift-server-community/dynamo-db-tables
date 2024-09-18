@@ -38,7 +38,7 @@ let package = Package(
             targets: ["DynamoDBTables"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "0.45.0"),
+        .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
         .package(url: "https://github.com/JohnSundell/CollectionConcurrencyKit", from :"0.2.0"),

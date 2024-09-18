@@ -25,39 +25,43 @@
 //
 
 @testable import DynamoDBTables
-import XCTest
+import Testing
 
-class StringDynamoDBKeyTests: XCTestCase {
-    func testDynamoDBKeyTests() {
-        XCTAssertEqual([].dynamodbKey, "")
-        XCTAssertEqual(["one"].dynamodbKey, "one")
-        XCTAssertEqual(["one", "two"].dynamodbKey, "one.two")
-        XCTAssertEqual(["one", "two", "three", "four", "five", "six"].dynamodbKey, "one.two.three.four.five.six")
+struct StringDynamoDBKeyTests {
+    @Test
+    func dynamoDBKeyTests() {
+        #expect([].dynamodbKey == "")
+        #expect(["one"].dynamodbKey == "one")
+        #expect(["one", "two"].dynamodbKey == "one.two")
+        #expect(["one", "two", "three", "four", "five", "six"].dynamodbKey == "one.two.three.four.five.six")
     }
 
-    func testDropAsDynamoDBKeyPrefix() {
-        XCTAssertEqual(["one", "two"].dropAsDynamoDBKeyPrefix(from: "one.two.three.four.five.six")!,
+    @Test
+    func dropAsDynamoDBKeyPrefix() {
+        #expect(["one", "two"].dropAsDynamoDBKeyPrefix(from: "one.two.three.four.five.six")! ==
                        "three.four.five.six")
-        XCTAssertEqual([].dropAsDynamoDBKeyPrefix(from: "one.two.three.four.five.six")!,
+        #expect([].dropAsDynamoDBKeyPrefix(from: "one.two.three.four.five.six")! ==
                        "one.two.three.four.five.six")
-        XCTAssertEqual(["four", "two"].dropAsDynamoDBKeyPrefix(from: "one.two.three.four.five.six"), nil)
+        #expect(["four", "two"].dropAsDynamoDBKeyPrefix(from: "one.two.three.four.five.six") == nil)
     }
 
-    func testDynamoDBKeyPrefixTests() {
-        XCTAssertEqual([].dynamodbKeyPrefix, "")
-        XCTAssertEqual(["one"].dynamodbKeyPrefix, "one.")
-        XCTAssertEqual(["one", "two"].dynamodbKeyPrefix, "one.two.")
-        XCTAssertEqual(["one", "two", "three", "four", "five", "six"].dynamodbKeyPrefix, "one.two.three.four.five.six.")
+    @Test
+    func dynamoDBKeyPrefixTests() {
+        #expect([].dynamodbKeyPrefix == "")
+        #expect(["one"].dynamodbKeyPrefix == "one.")
+        #expect(["one", "two"].dynamodbKeyPrefix == "one.two.")
+        #expect(["one", "two", "three", "four", "five", "six"].dynamodbKeyPrefix == "one.two.three.four.five.six.")
     }
 
-    func testDynamoDBKeyWithPrefixedVersionTests() {
-        XCTAssertEqual([].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5), "v00008")
-        XCTAssertEqual(["one"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5), "v00008.one")
-        XCTAssertEqual(["one", "two"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5), "v00008.one.two")
-        XCTAssertEqual(["one", "two", "three", "four", "five", "six"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5),
+    @Test
+    func dynamoDBKeyWithPrefixedVersionTests() {
+        #expect([].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5) == "v00008")
+        #expect(["one"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5) == "v00008.one")
+        #expect(["one", "two"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5) == "v00008.one.two")
+        #expect(["one", "two", "three", "four", "five", "six"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5) ==
                        "v00008.one.two.three.four.five.six")
 
-        XCTAssertEqual(["one", "two"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 2), "v08.one.two")
-        XCTAssertEqual(["one", "two"].dynamodbKeyWithPrefixedVersion(4888, minimumFieldWidth: 2), "v4888.one.two")
+        #expect(["one", "two"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 2) == "v08.one.two")
+        #expect(["one", "two"].dynamodbKeyWithPrefixedVersion(4888, minimumFieldWidth: 2) == "v4888.one.two")
     }
 }
