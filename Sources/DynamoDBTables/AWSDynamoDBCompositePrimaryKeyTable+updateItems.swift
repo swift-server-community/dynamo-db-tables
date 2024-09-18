@@ -556,11 +556,11 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
 
         var errorCodeSet: Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum> = Set()
         // TODO: Remove errorCodeSet and return errorSet instead
-        var errorSet: Set<DynamoDBClientTypes.BatchStatementError> = Set()
+        var errorSet: Set<InternalBatchStatementError> = Set()
         result.responses?.forEach { response in
             if let error = response.error, let code = error.code {
                 errorCodeSet.insert(code)
-                errorSet.insert(error)
+                errorSet.insert(.init(code: error.code, item: error.item, message: error.message))
             }
         }
 
@@ -588,17 +588,13 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
     }
 }
 
-extension DynamoDBClientTypes.BatchStatementError: Equatable {
-    public static func == (lhs: DynamoDBClientTypes.BatchStatementError, rhs: DynamoDBClientTypes.BatchStatementError) -> Bool {
-        guard lhs.code == rhs.code, lhs.item == rhs.item, lhs.message == rhs.message else {
-            return false
-        }
-
-        return true
-    }
+struct InternalBatchStatementError: Equatable {
+    var code: DynamoDBClientTypes.BatchStatementErrorCodeEnum?
+    var item: [Swift.String: DynamoDBClientTypes.AttributeValue]?
+    var message: Swift.String?
 }
 
-extension DynamoDBClientTypes.BatchStatementError: Hashable {
+extension InternalBatchStatementError: Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(self.code)
         hasher.combine(self.message)
