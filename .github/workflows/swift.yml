@@ -16,9 +16,8 @@ jobs:
     container:
       image: ${{ matrix.image }}
     steps:
-       - name: Install libssl-dev
-        run: |
-          apt-get install -y openssl libssl-dev
+      - name: Install libssl-dev
+        run: apt-get install -y openssl libssl-dev
       - uses: actions/checkout@v4
       - name: Build
         run: swift build -c release -Xswiftc -strict-concurrency=complete
