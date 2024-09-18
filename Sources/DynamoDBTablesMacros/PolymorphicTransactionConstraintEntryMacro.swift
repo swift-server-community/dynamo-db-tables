@@ -19,13 +19,13 @@ import SwiftSyntax
 import SwiftSyntaxMacros
 
 struct PolymorphicTransactionConstraintEntryMacroAttributes: MacroAttributes {
-    static var macroName: String = "PolymorphicTransactionConstraintEntry"
+    static let macroName: String = "PolymorphicTransactionConstraintEntry"
 
-    static var protocolName: String = "PolymorphicTransactionConstraintEntry"
+    static let protocolName: String = "PolymorphicTransactionConstraintEntry"
 
-    static var transformType: String = "WriteTransactionConstraintType"
+    static let transformType: String = "WriteTransactionConstraintType"
 
-    static var contextType: String = "PolymorphicWriteEntryContext"
+    static let contextType: String = "PolymorphicWriteEntryContext"
 }
 
 public enum PolymorphicTransactionConstraintEntryMacro: ExtensionMacro {
