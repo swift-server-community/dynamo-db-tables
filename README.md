@@ -370,7 +370,7 @@ and similarly for polymorphic queries, most conveniently by using the `@Polymorp
 typealias TestTypeBWriteEntry = StandardWriteEntry<TestTypeB>
 
 @PolymorphicWriteEntry
-enum TestPolymorphicWriteEntry: Sendable {
+enum TestPolymorphicWriteEntry {
     case testTypeA(TestTypeAWriteEntry)
     case testTypeB(TestTypeBWriteEntry)
 }
@@ -407,7 +407,7 @@ typealias TestTypeAStandardTransactionConstraintEntry = StandardTransactionConst
 typealias TestTypeBStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeB>
 
 @PolymorphicTransactionConstraintEntry
-enum TestPolymorphicTransactionConstraintEntry: Sendable {
+enum TestPolymorphicTransactionConstraintEntry {
     case testTypeA(TestTypeAStandardTransactionConstraintEntry)
     case testTypeB(TestTypeBStandardTransactionConstraintEntry)
 }
@@ -428,7 +428,7 @@ about failed transactions. This is enabled by default when using the `@Polymorph
 
 ```swift
 @PolymorphicWriteEntry(passCompositePrimaryKey: false)
-enum TestPolymorphicWriteEntry: Sendable {
+enum TestPolymorphicWriteEntry {
     case testTypeA(TestTypeAWriteEntry)
     case testTypeB(TestTypeBWriteEntry)
 }

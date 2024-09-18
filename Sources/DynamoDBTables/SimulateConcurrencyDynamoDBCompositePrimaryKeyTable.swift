@@ -116,17 +116,17 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         try await self.wrappedDynamoDBTable.transactWrite(entries, constraints: constraints)
     }
 
-    public func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+    public func polymorphicTransactWrite(_ entries: sending [some PolymorphicWriteEntry]) async throws {
         try await self.wrappedDynamoDBTable.polymorphicTransactWrite(entries)
     }
 
     public func polymorphicTransactWrite(
-        _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
+        _ entries: sending [some PolymorphicWriteEntry], constraints: sending [some PolymorphicTransactionConstraintEntry]) async throws
     {
         try await self.wrappedDynamoDBTable.polymorphicTransactWrite(entries, constraints: constraints)
     }
 
-    public func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+    public func polymorphicBulkWrite(_ entries: sending [some PolymorphicWriteEntry]) async throws {
         try await self.wrappedDynamoDBTable.polymorphicBulkWrite(entries)
     }
 

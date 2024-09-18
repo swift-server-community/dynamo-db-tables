@@ -981,16 +981,8 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             self.errors = errors
         }
 
-        func injectErrors<AttributesType, ItemType>(
-            _: [WriteEntry<AttributesType, ItemType>], constraints _: [TransactionConstraintEntry<AttributesType, ItemType>],
-            table _: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
-        {
-            self.errors
-        }
-
-        func injectErrors(
-            _: [some PolymorphicWriteEntry], constraints _: [some PolymorphicTransactionConstraintEntry],
-            table _: InMemoryDynamoDBCompositePrimaryKeyTable) async -> [DynamoDBTableError]
+        func injectErrors<AttributesType>(
+        inputKeys: [CompositePrimaryKey<AttributesType>?], table: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
         {
             self.errors
         }

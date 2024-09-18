@@ -140,7 +140,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     func transactWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
 
     func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry>(
-        _ entries: [WriteEntryType]) async throws
+        _ entries: sending [WriteEntryType]) async throws
 
     /**
      * Provides the ability to bulk write database rows in a transaction.
@@ -153,7 +153,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
         _ entries: [WriteEntry<AttributesType, ItemType>], constraints: [TransactionConstraintEntry<AttributesType, ItemType>]) async throws
 
     func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry, TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
-        _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType]) async throws
+        _ entries: sending [WriteEntryType], constraints: sending [TransactionConstraintEntryType]) async throws
 
     /**
      * Provides the ability to bulk write database rows
@@ -165,7 +165,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     func bulkWriteWithoutThrowing<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws
         -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
 
-    func polymorphicBulkWrite<WriteEntryType: PolymorphicWriteEntry>(_ entries: [WriteEntryType]) async throws
+    func polymorphicBulkWrite<WriteEntryType: PolymorphicWriteEntry>(_ entries: sending [WriteEntryType]) async throws
 
     /**
      * Retrieves an item from the database table. Returns nil if the item doesn't exist.

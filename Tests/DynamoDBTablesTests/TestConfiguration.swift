@@ -82,13 +82,13 @@ typealias TestTypeAStandardTransactionConstraintEntry = StandardTransactionConst
 typealias TestTypeBStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeB>
 
 @PolymorphicWriteEntry
-enum TestPolymorphicWriteEntry: Sendable {
+enum TestPolymorphicWriteEntry {
     case testTypeA(TestTypeAWriteEntry)
     case testTypeB(TestTypeBWriteEntry)
 }
 
 @PolymorphicTransactionConstraintEntry
-enum TestPolymorphicTransactionConstraintEntry: Sendable {
+enum TestPolymorphicTransactionConstraintEntry {
     case testTypeA(TestTypeAStandardTransactionConstraintEntry)
     case testTypeB(TestTypeBStandardTransactionConstraintEntry)
 }
