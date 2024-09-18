@@ -6,7 +6,6 @@
 <img src="https://img.shields.io/badge/swift-6.0-orange.svg?style=flat" alt="Swift 6.0 Compatible and Tested">
 </a>
 <img src="https://img.shields.io/badge/ubuntu-22.04|24.04-yellow.svg?style=flat" alt="Ubuntu 22.04 and 24.04 Tested">
-<img src="https://img.shields.io/badge/amazonlinux-2-yellow.svg?style=flat" alt="Amazon Linux 2 Tested">
 <img src="https://img.shields.io/badge/license-Apache2-blue.svg?style=flat" alt="Apache 2">
 </p>
 
