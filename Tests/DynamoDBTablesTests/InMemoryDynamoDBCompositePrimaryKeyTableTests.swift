@@ -570,7 +570,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // both required items are missing
-            #expect(2 == reasons.count)
+            #expect(reasons.count == 2)
         } catch {
             Issue.record()
         }
@@ -675,7 +675,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one has an incorrect version
-            #expect(1 == reasons.count)
+            #expect(reasons.count == 1)
 
             if let first = reasons.first {
                 guard case .transactionConditionalCheckFailed = first else {
@@ -723,7 +723,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one has an incorrect version
-            #expect(1 == reasons.count)
+            #expect(reasons.count == 1)
 
             if let first = reasons.first {
                 guard case .transactionConditionalCheckFailed = first else {
@@ -810,7 +810,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // both required items are missing
-            #expect(2 == reasons.count)
+            #expect(reasons.count == 2)
         } catch {
             Issue.record()
         }
@@ -915,7 +915,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one has an incorrect version
-            #expect(1 == reasons.count)
+            #expect(reasons.count == 1)
 
             if let first = reasons.first {
                 guard case .transactionConditionalCheckFailed = first else {
@@ -961,7 +961,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one has an incorrect version
-            #expect(1 == reasons.count)
+            #expect(reasons.count == 1)
 
             if let first = reasons.first {
                 guard case .transactionConditionalCheckFailed = first else {
@@ -981,16 +981,8 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             self.errors = errors
         }
 
-        func injectErrors<AttributesType, ItemType>(
-            _: [WriteEntry<AttributesType, ItemType>], constraints _: [TransactionConstraintEntry<AttributesType, ItemType>],
-            table _: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
-        {
-            self.errors
-        }
-
         func injectErrors(
-            _: [some PolymorphicWriteEntry], constraints _: [some PolymorphicTransactionConstraintEntry],
-            table _: InMemoryDynamoDBCompositePrimaryKeyTable) async -> [DynamoDBTableError]
+            inputKeys _: [CompositePrimaryKey<some Any>?], table _: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
         {
             self.errors
         }
@@ -1080,7 +1072,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one already exists
-            #expect(1 == reasons.count)
+            #expect(reasons.count == 1)
 
             if let first = reasons.first {
                 guard case .duplicateItem = first else {
@@ -1177,7 +1169,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             Issue.record()
         } catch let DynamoDBTableError.transactionCanceled(reasons: reasons) {
             // one required item exists, one already exists
-            #expect(1 == reasons.count)
+            #expect(reasons.count == 1)
 
             if let first = reasons.first {
                 guard case .duplicateItem = first else {
@@ -1251,7 +1243,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             Issue.record()
         } catch let DynamoDBTableError.batchErrorsReturned(errorCount, _) {
             // one required item exists, one already exists
-            #expect(1 == errorCount)
+            #expect(errorCount == 1)
         } catch {
             Issue.record()
         }
@@ -1318,7 +1310,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             Issue.record()
         } catch let DynamoDBTableError.batchErrorsReturned(errorCount, _) {
             // one required item exists, one already exists
-            #expect(1 == errorCount)
+            #expect(errorCount == 1)
         } catch {
             Issue.record()
         }

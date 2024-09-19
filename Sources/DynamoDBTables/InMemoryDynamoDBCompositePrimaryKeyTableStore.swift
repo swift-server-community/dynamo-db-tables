@@ -232,7 +232,7 @@ actor InMemoryDynamoDBCompositePrimaryKeyTableStore {
     }
 
     func polymorphicBulkWrite(
-        _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry],
+        _ entries: sending [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry],
         isTransaction: Bool) throws
     {
         let entryCount = entries.count + constraints.count
@@ -664,7 +664,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
     }
 
     func handlePolymorphicEntries(
-        entries: [some PolymorphicWriteEntry], isTransaction: Bool,
+        entries: sending [some PolymorphicWriteEntry], isTransaction: Bool,
         context: StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
             InMemoryPolymorphicTransactionConstraintTransform>)
         -> DynamoDBTableError?

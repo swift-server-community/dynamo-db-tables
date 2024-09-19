@@ -30,7 +30,6 @@ protocol MacroAttributes {
 
 enum BaseEntryDiagnostic<Attributes: MacroAttributes>: String, DiagnosticMessage {
     case notAttachedToEnumDeclaration
-    case enumMustHaveSendableConformance
     case enumMustNotHaveZeroCases
     case enumCasesMustHaveASingleParameter
 
@@ -46,8 +45,6 @@ enum BaseEntryDiagnostic<Attributes: MacroAttributes>: String, DiagnosticMessage
         switch self {
         case .notAttachedToEnumDeclaration:
             return "@\(Attributes.macroName) must be attached to an enum declaration."
-        case .enumMustHaveSendableConformance:
-            return "@\(Attributes.macroName) decorated enum must conform to Sendable."
         case .enumMustNotHaveZeroCases:
             return "@\(Attributes.macroName) decorated enum must be have at least a singe case."
         case .enumCasesMustHaveASingleParameter:
@@ -129,21 +126,6 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
             }
 
             return partialResult
-        }
-
-        // make sure the type is conforming to Sendable
-        let hasSendableConformance = declaration.inheritanceClause?.inheritedTypes.reduce(false) { partialResult, inheritedType in
-            if let identifierTypeSyntax = inheritedType.type.as(IdentifierTypeSyntax.self), identifierTypeSyntax.name.text == "Sendable" {
-                return true
-            }
-
-            return partialResult
-        } ?? false
-
-        guard hasSendableConformance else {
-            context.diagnose(.init(node: declaration, message: BaseEntryDiagnostic<Attributes>.enumMustHaveSendableConformance))
-
-            return []
         }
 
         let memberBlock = enumDeclaration.memberBlock.members

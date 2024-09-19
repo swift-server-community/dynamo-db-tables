@@ -39,9 +39,9 @@ struct StringDynamoDBKeyTests {
     @Test
     func dropAsDynamoDBKeyPrefix() {
         #expect(["one", "two"].dropAsDynamoDBKeyPrefix(from: "one.two.three.four.five.six")! ==
-                       "three.four.five.six")
+            "three.four.five.six")
         #expect([].dropAsDynamoDBKeyPrefix(from: "one.two.three.four.five.six")! ==
-                       "one.two.three.four.five.six")
+            "one.two.three.four.five.six")
         #expect(["four", "two"].dropAsDynamoDBKeyPrefix(from: "one.two.three.four.five.six") == nil)
     }
 
@@ -59,7 +59,7 @@ struct StringDynamoDBKeyTests {
         #expect(["one"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5) == "v00008.one")
         #expect(["one", "two"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5) == "v00008.one.two")
         #expect(["one", "two", "three", "four", "five", "six"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 5) ==
-                       "v00008.one.two.three.four.five.six")
+            "v00008.one.two.three.four.five.six")
 
         #expect(["one", "two"].dynamodbKeyWithPrefixedVersion(8, minimumFieldWidth: 2) == "v08.one.two")
         #expect(["one", "two"].dynamodbKeyWithPrefixedVersion(4888, minimumFieldWidth: 2) == "v4888.one.two")

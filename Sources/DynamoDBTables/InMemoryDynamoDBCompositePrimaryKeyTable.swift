@@ -46,19 +46,10 @@ public typealias ExecuteItemFilterType = @Sendable (String, String, String, Poly
 
 public protocol InMemoryTransactionDelegate {
     /**
-      Inject errors into a `transactWrite` call.
+      Inject errors into a `transactWrite` or `polymorphicTransactWrite` call.
      */
-    func injectErrors<AttributesType, ItemType>(
-        _ entries: [WriteEntry<AttributesType, ItemType>], constraints: [TransactionConstraintEntry<AttributesType, ItemType>],
-        table: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
-
-    /**
-      Inject errors into a `polymorphicTransactWrite` call.
-     */
-    func injectErrors<WriteEntryType: PolymorphicWriteEntry,
-        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
-        _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType],
-        table: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
+    func injectErrors<AttributesType>(
+        inputKeys: [CompositePrimaryKey<AttributesType>?], table: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
 }
 
 public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable {
@@ -116,30 +107,32 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
                                                         constraints: [TransactionConstraintEntry<AttributesType, ItemType>]) async throws
     {
         // if there is a transaction delegate and it wants to inject errors
-        if let errors = try await transactionDelegate?.injectErrors(entries, constraints: constraints, table: self), !errors.isEmpty {
+        let inputKeys = entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
+        if let errors = try await transactionDelegate?.injectErrors(inputKeys: inputKeys, table: self), !errors.isEmpty {
             throw DynamoDBTableError.transactionCanceled(reasons: errors)
         }
 
         return try await self.storeWrapper.bulkWrite(entries, constraints: constraints, isTransaction: true)
     }
 
-    public func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+    public func polymorphicTransactWrite(_ entries: sending [some PolymorphicWriteEntry]) async throws {
         let noConstraints: [EmptyPolymorphicTransactionConstraintEntry] = []
         return try await self.polymorphicTransactWrite(entries, constraints: noConstraints)
     }
 
     public func polymorphicTransactWrite(
-        _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
+        _ entries: sending [some PolymorphicWriteEntry], constraints: sending [some PolymorphicTransactionConstraintEntry]) async throws
     {
         // if there is a transaction delegate and it wants to inject errors
-        if let errors = try await transactionDelegate?.injectErrors(entries, constraints: constraints, table: self), !errors.isEmpty {
+        let inputKeys = entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
+        if let errors = try await transactionDelegate?.injectErrors(inputKeys: inputKeys, table: self), !errors.isEmpty {
             throw DynamoDBTableError.transactionCanceled(reasons: errors)
         }
 
         return try await self.storeWrapper.polymorphicBulkWrite(entries, constraints: constraints, isTransaction: true)
     }
 
-    public func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+    public func polymorphicBulkWrite(_ entries: sending [some PolymorphicWriteEntry]) async throws {
         let noConstraints: [EmptyPolymorphicTransactionConstraintEntry] = []
         return try await self.storeWrapper.polymorphicBulkWrite(entries, constraints: noConstraints, isTransaction: false)
     }

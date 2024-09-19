@@ -44,7 +44,7 @@ public protocol PolymorphicTransactionConstraintTransform {
 
 // Conforming types are provided by the application to express the different possible write entries
 // and how they can be converted to the table-provided transform type.
-public protocol PolymorphicWriteEntry: Sendable {
+public protocol PolymorphicWriteEntry {
     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteEntryTransformType
 
     var compositePrimaryKey: StandardCompositePrimaryKey? { get }

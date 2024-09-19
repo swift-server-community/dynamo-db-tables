@@ -62,9 +62,9 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
-        #expect("sortId" == secondRetrievedItem.compositePrimaryKey.sortKey)
-        #expect("firstlyX2" == secondRetrievedItem.rowValue.firstly)
-        #expect("secondlyX2" == secondRetrievedItem.rowValue.secondly)
+        #expect(secondRetrievedItem.compositePrimaryKey.sortKey == "sortId")
+        #expect(secondRetrievedItem.rowValue.firstly == "firstlyX2")
+        #expect(secondRetrievedItem.rowValue.secondly == "secondlyX2")
     }
 
     @Test
@@ -88,9 +88,9 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
-        #expect("sortId" == secondRetrievedItem.compositePrimaryKey.sortKey)
-        #expect("firstlyX2" == secondRetrievedItem.rowValue.firstly)
-        #expect("secondlyX2" == secondRetrievedItem.rowValue.secondly)
+        #expect(secondRetrievedItem.compositePrimaryKey.sortKey == "sortId")
+        #expect(secondRetrievedItem.rowValue.firstly == "firstlyX2")
+        #expect(secondRetrievedItem.rowValue.secondly == "secondlyX2")
     }
 
     @Test
@@ -117,9 +117,9 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
-        #expect("sortId" == secondRetrievedItem.compositePrimaryKey.sortKey)
-        #expect("firstlyX2" == secondRetrievedItem.rowValue.firstly)
-        #expect("secondlyX2" == secondRetrievedItem.rowValue.secondly)
+        #expect(secondRetrievedItem.compositePrimaryKey.sortKey == "sortId")
+        #expect(secondRetrievedItem.rowValue.firstly == "firstlyX2")
+        #expect(secondRetrievedItem.rowValue.secondly == "secondlyX2")
     }
 
     @Test
@@ -146,9 +146,9 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
-        #expect("sortId" == secondRetrievedItem.compositePrimaryKey.sortKey)
-        #expect("firstlyX2" == secondRetrievedItem.rowValue.firstly)
-        #expect("secondlyX2" == secondRetrievedItem.rowValue.secondly)
+        #expect(secondRetrievedItem.compositePrimaryKey.sortKey == "sortId")
+        #expect(secondRetrievedItem.rowValue.firstly == "firstlyX2")
+        #expect(secondRetrievedItem.rowValue.secondly == "secondlyX2")
     }
 
     @Test
@@ -183,10 +183,10 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
-        #expect("sortId" == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(secondRetrievedItem.compositePrimaryKey.sortKey == "sortId")
         // Check the item hasn't been updated
-        #expect("firstly" == secondRetrievedItem.rowValue.firstly)
-        #expect("secondly" == secondRetrievedItem.rowValue.secondly)
+        #expect(secondRetrievedItem.rowValue.firstly == "firstly")
+        #expect(secondRetrievedItem.rowValue.secondly == "secondly")
     }
 
     @Test
@@ -221,10 +221,10 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
-        #expect("sortId" == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(secondRetrievedItem.compositePrimaryKey.sortKey == "sortId")
         // Check the item hasn't been updated
-        #expect("firstly" == secondRetrievedItem.rowValue.firstly)
-        #expect("secondly" == secondRetrievedItem.rowValue.secondly)
+        #expect(secondRetrievedItem.rowValue.firstly == "firstly")
+        #expect(secondRetrievedItem.rowValue.secondly == "secondly")
     }
 
     @Test
@@ -259,10 +259,10 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
-        #expect("sortId" == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(secondRetrievedItem.compositePrimaryKey.sortKey == "sortId")
         // Check the item hasn't been updated
-        #expect("firstly" == secondRetrievedItem.rowValue.firstly)
-        #expect("secondly" == secondRetrievedItem.rowValue.secondly)
+        #expect(secondRetrievedItem.rowValue.firstly == "firstly")
+        #expect(secondRetrievedItem.rowValue.secondly == "secondly")
     }
 
     enum TestError: Error {
@@ -313,10 +313,10 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
-        #expect("sortId" == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(secondRetrievedItem.compositePrimaryKey.sortKey == "sortId")
         // Check the item hasn't been updated
-        #expect("firstly" == secondRetrievedItem.rowValue.firstly)
-        #expect("secondly" == secondRetrievedItem.rowValue.secondly)
+        #expect(secondRetrievedItem.rowValue.firstly == "firstly")
+        #expect(secondRetrievedItem.rowValue.secondly == "secondly")
     }
 
     @Test
@@ -367,10 +367,10 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
-        #expect("sortId" == secondRetrievedItem.compositePrimaryKey.sortKey)
+        #expect(secondRetrievedItem.compositePrimaryKey.sortKey == "sortId")
         // Check the item hasn't been updated
-        #expect("firstly" == secondRetrievedItem.rowValue.firstly)
-        #expect("secondly" == secondRetrievedItem.rowValue.secondly)
+        #expect(secondRetrievedItem.rowValue.firstly == "firstly")
+        #expect(secondRetrievedItem.rowValue.secondly == "secondly")
     }
 
     @Test
