@@ -1,5 +1,5 @@
 {
-  "originHash" : "66f165180bb9884cb26cc984b5c8f6b7daa891759ac8c473b3143fe1b32de4d4",
+  "originHash" : "8d1f8fc1a9a7976efa680564a54d9d0020bd7a1348ba74eb6d8061f1cb3dd8b6",
   "pins" : [
     {
       "identity" : "aws-crt-swift",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/awslabs/aws-sdk-swift.git",
       "state" : {
-        "revision" : "9ad12684f6cb9c9b60e840c051a2bba604024650",
-        "version" : "1.0.69"
+        "revision" : "d7af96edebf56f331358d0e90e45d42785483867",
+        "version" : "1.0.71"
       }
     },
     {
