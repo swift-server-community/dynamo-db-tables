@@ -32,8 +32,9 @@ private typealias DatabaseRowType = StandardTypedDatabaseItem<TestTypeA>
 
 enum ExpectedQueryableTypes: PolymorphicOperationReturnType {
     typealias AttributesType = StandardPrimaryKeyAttributes
+    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
 
-    static let types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
+    static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] = [
         (TestTypeA.self, .init { .testTypeA($0) }),
     ]
 
@@ -60,7 +61,7 @@ struct SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests {
     }
 
     private func verifyWithUpdate(table: SimulateConcurrencyDynamoDBCompositePrimaryKeyTable,
-                                  databaseItem: TypedDatabaseItem<StandardPrimaryKeyAttributes, TestTypeA>,
+                                  databaseItem: StandardTypedDatabaseItem<TestTypeA>,
                                   key: StandardCompositePrimaryKey,
                                   expectedFailureCount: Int) async throws
     {

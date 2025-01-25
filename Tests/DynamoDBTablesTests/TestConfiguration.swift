@@ -55,8 +55,9 @@ struct TestTypeC: Codable {
 
 enum TestQueryableTypes: PolymorphicOperationReturnType {
     typealias AttributesType = StandardPrimaryKeyAttributes
+    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
 
-    static let types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
+    static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] = [
         (TestTypeA.self, .init { .testTypeA($0) }),
         (TestTypeB.self, .init { .testTypeB($0) }),
     ]

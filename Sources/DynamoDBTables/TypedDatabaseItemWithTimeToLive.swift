@@ -3,7 +3,7 @@
 // This source file is part of the DynamoDBTables open source project
 //
 // This file is forked from
-// https://github.com/amzn/smoke-dynamodb/tree/smoke-dynamodb-3.x/Sources/SmokeDynamoDB/TypedDatabaseItemWithTimeToLive.swift
+// https://github.com/amzn/smoke-dynamodb/tree/smoke-dynamodb-3.x/Sources/SmokeDynamoDB/TypedTTLDatabaseItem.swift
 // Copyright 2018-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // Licensed under Apache License v2.0
 //
@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  TypedDatabaseItemWithTimeToLive.swift
+//  TypedTTLDatabaseItem.swift
 //  DynamoDBTables
 //
 
@@ -41,31 +41,9 @@ public struct RowStatus: Sendable, Codable {
     }
 }
 
-public protocol DatabaseItem: Sendable {
-    associatedtype AttributesType: PrimaryKeyAttributes
-    // Default to StandardTimeToLiveAttributes for backwards compatibility
-    associatedtype TimeToLiveAttributesType: TimeToLiveAttributes = StandardTimeToLiveAttributes
-
-    var compositePrimaryKey: CompositePrimaryKey<AttributesType> { get }
-    var createDate: Date { get }
-    var rowStatus: RowStatus { get }
-    var timeToLive: TimeToLive<TimeToLiveAttributesType>? { get }
-}
-
-public extension DatabaseItem {
-    var timeToLive: TimeToLive<TimeToLiveAttributesType>? {
-        nil
-    }
-}
-
-public protocol StandardDatabaseItem: DatabaseItem where AttributesType == StandardPrimaryKeyAttributes {}
-
-// Default to StandardTimeToLiveAttributes for backwards compatibility
-public typealias TypedDatabaseItem<AttributesType: PrimaryKeyAttributes, RowType: Sendable & Codable> = TypedDatabaseItemWithTimeToLive<AttributesType, RowType, StandardTimeToLiveAttributes>
-
-public struct TypedDatabaseItemWithTimeToLive<AttributesType: PrimaryKeyAttributes,
-    RowType: Sendable & Codable,
-    TimeToLiveAttributesType: TimeToLiveAttributes>: DatabaseItem, Sendable, Codable
+public struct TypedTTLDatabaseItem<AttributesType: PrimaryKeyAttributes,
+    RowType: Codable,
+    TimeToLiveAttributesType: TimeToLiveAttributes>: Codable
 {
     public let compositePrimaryKey: CompositePrimaryKey<AttributesType>
     public let createDate: Date
@@ -81,9 +59,9 @@ public struct TypedDatabaseItemWithTimeToLive<AttributesType: PrimaryKeyAttribut
     public static func newItem(withKey key: CompositePrimaryKey<AttributesType>,
                                andValue value: RowType,
                                andTimeToLive timeToLive: TimeToLive<TimeToLiveAttributesType>? = nil)
-        -> TypedDatabaseItemWithTimeToLive<AttributesType, RowType, TimeToLiveAttributesType>
+        -> TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>
     {
-        TypedDatabaseItemWithTimeToLive<AttributesType, RowType, TimeToLiveAttributesType>(
+        TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>(
             compositePrimaryKey: key,
             createDate: Date(),
             rowStatus: RowStatus(rowVersion: 1, lastUpdatedDate: Date()),
@@ -93,9 +71,9 @@ public struct TypedDatabaseItemWithTimeToLive<AttributesType: PrimaryKeyAttribut
 
     public func createUpdatedItem(withValue value: RowType,
                                   andTimeToLive timeToLive: TimeToLive<TimeToLiveAttributesType>? = nil)
-        -> TypedDatabaseItemWithTimeToLive<AttributesType, RowType, TimeToLiveAttributesType>
+        -> TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>
     {
-        TypedDatabaseItemWithTimeToLive<AttributesType, RowType, TimeToLiveAttributesType>(
+        TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>(
             compositePrimaryKey: self.compositePrimaryKey,
             createDate: self.createDate,
             rowStatus: RowStatus(rowVersion: self.rowStatus.rowVersion + 1,

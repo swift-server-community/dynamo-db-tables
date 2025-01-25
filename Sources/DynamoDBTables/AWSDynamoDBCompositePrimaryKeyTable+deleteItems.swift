@@ -52,7 +52,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         try throwOnBatchExecuteStatementErrors(response: response)
     }
 
-    private func deleteChunkedItems(_ existingItems: [some DatabaseItem]) async throws {
+    private func deleteChunkedItems(_ existingItems: [TypedTTLDatabaseItem<some Any, some Any, some Any>]) async throws {
         // if there are no items, there is nothing to update
         guard existingItems.count > 0 else {
             return
@@ -80,7 +80,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func deleteItems(existingItems: [some DatabaseItem]) async throws {
+    func deleteItems(existingItems: [TypedTTLDatabaseItem<some Any, some Any, some Any>]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedItems = existingItems.chunked(by: maximumUpdatesPerExecuteStatement)

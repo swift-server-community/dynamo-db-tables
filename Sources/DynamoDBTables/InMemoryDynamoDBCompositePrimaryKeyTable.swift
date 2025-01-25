@@ -28,23 +28,16 @@
 @preconcurrency import AWSDynamoDB
 import Foundation
 
-public protocol PolymorphicOperationReturnTypeConvertable: Sendable {
-    var createDate: Foundation.Date { get }
-    var rowStatus: RowStatus { get }
-
-    var rowTypeIdentifier: String { get }
-}
-
-extension TypedDatabaseItem: PolymorphicOperationReturnTypeConvertable {
-    public var rowTypeIdentifier: String {
+public extension TypedTTLDatabaseItem {
+    var rowTypeIdentifier: String {
         getTypeRowIdentifier(type: RowType.self)
     }
 }
 
-public typealias ExecuteItemFilterType = @Sendable (String, String, String, PolymorphicOperationReturnTypeConvertable)
+public typealias ExecuteItemFilterType = @Sendable (String, String, String, InMemoryDatabaseItem)
     -> Bool
 
-public protocol InMemoryTransactionDelegate {
+public protocol InMemoryTransactionDelegate: Sendable {
     /**
       Inject errors into a `transactWrite` or `polymorphicTransactWrite` call.
      */
@@ -52,59 +45,85 @@ public protocol InMemoryTransactionDelegate {
         inputKeys: [CompositePrimaryKey<AttributesType>?], table: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
 }
 
-public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable {
+public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable, Sendable {
     public let escapeSingleQuoteInPartiQL: Bool
     public let transactionDelegate: InMemoryTransactionDelegate?
+    public let executeItemFilter: ExecuteItemFilterType?
     let storeWrapper: InMemoryDynamoDBCompositePrimaryKeyTableStore
 
     public init(executeItemFilter: ExecuteItemFilterType? = nil,
                 escapeSingleQuoteInPartiQL: Bool = false,
                 transactionDelegate: InMemoryTransactionDelegate? = nil)
     {
-        self.storeWrapper = InMemoryDynamoDBCompositePrimaryKeyTableStore(executeItemFilter: executeItemFilter)
+        self.storeWrapper = InMemoryDynamoDBCompositePrimaryKeyTableStore()
         self.escapeSingleQuoteInPartiQL = escapeSingleQuoteInPartiQL
         self.transactionDelegate = transactionDelegate
+        self.executeItemFilter = executeItemFilter
     }
 
-    init(storeWrapper: InMemoryDynamoDBCompositePrimaryKeyTableStore,
-         escapeSingleQuoteInPartiQL: Bool = false,
-         transactionDelegate: InMemoryTransactionDelegate? = nil)
-    {
-        self.storeWrapper = storeWrapper
-        self.escapeSingleQuoteInPartiQL = escapeSingleQuoteInPartiQL
-        self.transactionDelegate = transactionDelegate
-    }
-
-    public var store: [String: [String: PolymorphicOperationReturnTypeConvertable]] {
+    public var store: [String: [String: InMemoryDatabaseItem]] {
         get async {
             await self.storeWrapper.store
         }
     }
 
-    public func validateEntry(entry: WriteEntry<some Any, some Any>) throws {
-        try self.storeWrapper.validateEntry(entry: entry)
+    public func validateEntry(entry: WriteEntry<some Any, some Any, some Any>) throws {
+        let entryString = "\(entry)"
+        if entryString.count > AWSDynamoDBLimits.maxStatementLength {
+            throw DynamoDBTableError.statementLengthExceeded(
+                reason: "failed to satisfy constraint: Member must have length less than or equal to "
+                    + "\(AWSDynamoDBLimits.maxStatementLength). Actual length \(entryString.count)")
+        }
     }
 
-    public func insertItem(_ item: TypedDatabaseItem<some Any, some Any>) async throws {
-        try await self.storeWrapper.insertItem(item)
+    public func insertItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
+        let inMemoryDatabaseItem = try item.inMemoryFormWithKey()
+        try await self.storeWrapper.execute { store in
+            try self.insertItem(inMemoryDatabaseItem, store: &store)
+        }
     }
 
-    public func clobberItem(_ item: TypedDatabaseItem<some Any, some Any>) async throws {
-        try await self.storeWrapper.clobberItem(item)
+    public func clobberItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
+        let inMemoryDatabaseItem = try item.inMemoryForm()
+        let compositePrimaryKey = item.compositePrimaryKey
+
+        await self.storeWrapper.execute { store in
+            let partition = store[compositePrimaryKey.partitionKey]
+
+            // if there is already a partition
+            var updatedPartition: [String: InMemoryDatabaseItem]
+            if let partition {
+                updatedPartition = partition
+
+                updatedPartition[compositePrimaryKey.sortKey] = inMemoryDatabaseItem
+            } else {
+                updatedPartition = [compositePrimaryKey.sortKey: inMemoryDatabaseItem]
+            }
+
+            store[compositePrimaryKey.partitionKey] = updatedPartition
+        }
     }
 
-    public func updateItem<AttributesType, ItemType>(newItem: TypedDatabaseItem<AttributesType, ItemType>,
-                                                     existingItem: TypedDatabaseItem<AttributesType, ItemType>) async throws
+    public func updateItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+        newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
     {
-        try await self.storeWrapper.updateItem(newItem: newItem, existingItem: existingItem)
+        let inMemoryDatabaseItem = try newItem.inMemoryForm()
+        let existingItemMetadata = existingItem.asMetadataWithKey()
+        try await self.storeWrapper.execute { store in
+            try self.updateItem(newItem: inMemoryDatabaseItem, existingItemMetadata: existingItemMetadata, store: &store)
+        }
     }
 
-    public func transactWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+    public func transactWrite(
+        _ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
+    {
         try await self.transactWrite(entries, constraints: [])
     }
 
-    public func transactWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>],
-                                                        constraints: [TransactionConstraintEntry<AttributesType, ItemType>]) async throws
+    public func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
+        _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
+        constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]) async throws
     {
         // if there is a transaction delegate and it wants to inject errors
         let inputKeys = entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
@@ -112,16 +131,21 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
             throw DynamoDBTableError.transactionCanceled(reasons: errors)
         }
 
-        return try await self.storeWrapper.bulkWrite(entries, constraints: constraints, isTransaction: true)
+        let inMemoryEntries = try entries.map { try $0.inMemoryForm() }
+        let inMemoryConstraints = try constraints.map { try $0.inMemoryForm() }
+
+        try await self.storeWrapper.execute { store in
+            try self.bulkWrite(inMemoryEntries, constraints: inMemoryConstraints, store: &store, isTransaction: true)
+        }
     }
 
-    public func polymorphicTransactWrite(_ entries: sending [some PolymorphicWriteEntry]) async throws {
+    public func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         let noConstraints: [EmptyPolymorphicTransactionConstraintEntry] = []
         return try await self.polymorphicTransactWrite(entries, constraints: noConstraints)
     }
 
     public func polymorphicTransactWrite(
-        _ entries: sending [some PolymorphicWriteEntry], constraints: sending [some PolymorphicTransactionConstraintEntry]) async throws
+        _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
     {
         // if there is a transaction delegate and it wants to inject errors
         let inputKeys = entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
@@ -129,64 +153,246 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
             throw DynamoDBTableError.transactionCanceled(reasons: errors)
         }
 
-        return try await self.storeWrapper.polymorphicBulkWrite(entries, constraints: constraints, isTransaction: true)
+        let context = StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
+            InMemoryPolymorphicTransactionConstraintTransform>(table: self)
+
+        let entryTransformResults = entries.asInMemoryTransforms(context: context)
+        let contraintTransformResults = constraints.asInMemoryTransforms(context: context)
+
+        try await self.storeWrapper.execute { store in
+            try self.polymorphicBulkWrite(entryTransformResults, constraintTransformResults: contraintTransformResults,
+                                          store: &store, context: context, isTransaction: true)
+        }
     }
 
-    public func polymorphicBulkWrite(_ entries: sending [some PolymorphicWriteEntry]) async throws {
-        let noConstraints: [EmptyPolymorphicTransactionConstraintEntry] = []
-        return try await self.storeWrapper.polymorphicBulkWrite(entries, constraints: noConstraints, isTransaction: false)
+    public func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+        let context = StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
+            InMemoryPolymorphicTransactionConstraintTransform>(table: self)
+
+        let entryTransformResults = entries.asInMemoryTransforms(context: context)
+
+        try await self.storeWrapper.execute { store in
+            try self.polymorphicBulkWrite(entryTransformResults, constraintTransformResults: [],
+                                          store: &store, context: context, isTransaction: false)
+        }
     }
 
-    public func bulkWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
-        try await self.storeWrapper.bulkWrite(entries, constraints: [], isTransaction: false)
+    public func bulkWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
+        let inMemoryEntries = try entries.map { try $0.inMemoryForm() }
+        try await self.storeWrapper.execute { store in
+            try self.bulkWrite(inMemoryEntries, constraints: [], store: &store, isTransaction: false)
+        }
     }
 
-    public func bulkWriteWithFallback(_ entries: [WriteEntry<some Any, some Any>]) async throws {
-        try await self.storeWrapper.bulkWriteWithFallback(entries)
+    public func bulkWriteWithFallback<AttributesType>(_ entries: [WriteEntry<AttributesType, some Any, some Any>]) async throws {
+        // fall back to single operation if the write entry exceeds the statement length limitation
+        var bulkWriteEntries: [InMemoryWriteEntry<AttributesType>] = []
+        var nonBulkWriteEntries: [InMemoryWriteEntry<AttributesType>] = []
+
+        for entry in entries {
+            do {
+                try self.validateEntry(entry: entry)
+                try bulkWriteEntries.append(entry.inMemoryForm())
+            } catch DynamoDBTableError.statementLengthExceeded {
+                try nonBulkWriteEntries.append(entry.inMemoryForm())
+            }
+        }
+
+        try await self.storeWrapper.execute { store in
+            try self.bulkWrite(bulkWriteEntries, constraints: [], store: &store, isTransaction: false)
+
+            try nonBulkWriteEntries.forEach { nonBulkWriteEntry in
+                switch nonBulkWriteEntry {
+                case let .update(new: new, existing: existing):
+                    try self.updateItem(newItem: new.inMemoryDatabaseItem,
+                                        existingItemMetadata: existing.asMetadataWithKey(),
+                                        store: &store)
+                case let .insert(new: new):
+                    try self.insertItem(new, store: &store)
+                case let .deleteAtKey(key: key):
+                    try self.deleteItem(forKey: key, store: &store)
+                case let .deleteItem(existing: existing):
+                    try self.deleteItem(itemMetadata: existing.asMetadataWithKey(), store: &store)
+                }
+            }
+        }
     }
 
-    public func bulkWriteWithoutThrowing(_ entries: [WriteEntry<some Any, some Any>]) async throws
+    public func bulkWriteWithoutThrowing(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
         -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
     {
-        try await self.storeWrapper.bulkWriteWithoutThrowing(entries)
+        let inMemoryEntries = try entries.map { try $0.inMemoryForm() }
+
+        let results = await self.storeWrapper.execute { store in
+            inMemoryEntries.map { entry -> Bool in
+                switch entry {
+                case let .update(new: new, existing: existing):
+                    do {
+                        try self.updateItem(newItem: new.inMemoryDatabaseItem,
+                                            existingItemMetadata: existing.asMetadataWithKey(),
+                                            store: &store)
+
+                        return false
+                    } catch {
+                        return true
+                    }
+                case let .insert(new: new):
+                    do {
+                        try self.insertItem(new, store: &store)
+
+                        return false
+                    } catch {
+                        return true
+                    }
+                case let .deleteAtKey(key: key):
+                    do {
+                        try self.deleteItem(forKey: key, store: &store)
+
+                        return false
+                    } catch {
+                        return true
+                    }
+                case let .deleteItem(existing: existing):
+                    do {
+                        try self.deleteItem(itemMetadata: existing.asMetadataWithKey(), store: &store)
+
+                        return false
+                    } catch {
+                        return true
+                    }
+                }
+            }
+        }
+
+        var errors: Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum> = Set()
+        for result in results {
+            if result {
+                errors.insert(.duplicateitem)
+            }
+        }
+
+        return errors
     }
 
-    public func getItem<AttributesType, ItemType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
-        -> TypedDatabaseItem<AttributesType, ItemType>?
+    public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
+        -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
     {
-        try await self.storeWrapper.getItem(forKey: key)
+        if let partition = await self.store[key.partitionKey] {
+            guard let value = partition[key.sortKey] else {
+                return nil
+            }
+
+            return try value.getItem()
+        }
+
+        return nil
     }
 
     public func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
         forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]) async throws
         -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
     {
-        try await self.storeWrapper.polymorphicGetItems(forKeys: keys)
+        let store = await self.store
+
+        var resultMap: [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType] = [:]
+        for key in keys {
+            if let value = store[key.partitionKey]?[key.sortKey] {
+                let itemAsReturnedType: ReturnedType = try self.convertToQueryableType(input: value)
+
+                resultMap[key] = itemAsReturnedType
+            }
+        }
+        return resultMap
     }
 
     public func deleteItem(forKey key: CompositePrimaryKey<some Any>) async throws {
-        try await self.storeWrapper.deleteItem(forKey: key)
+        try await self.storeWrapper.execute { store in
+            try self.deleteItem(forKey: key, store: &store)
+        }
     }
 
     public func deleteItems(forKeys keys: [CompositePrimaryKey<some Any>]) async throws {
-        try await self.storeWrapper.deleteItems(forKeys: keys)
+        try await self.storeWrapper.execute { store in
+            try keys.forEach { key in
+                try self.deleteItem(forKey: key, store: &store)
+            }
+        }
     }
 
-    public func deleteItems(existingItems: [some DatabaseItem]) async throws {
-        try await self.storeWrapper.deleteItems(existingItems: existingItems)
+    public func deleteItems(existingItems: [TypedTTLDatabaseItem<some Any, some Any, some Any>]) async throws {
+        let itemMetadataList = existingItems.map { $0.asMetadataWithKey() }
+        try await self.storeWrapper.execute { store in
+            try itemMetadataList.forEach { itemMetadata in
+                try self.deleteItem(itemMetadata: itemMetadata, store: &store)
+            }
+        }
     }
 
-    public func deleteItem(existingItem: TypedDatabaseItem<some Any, some Any>) async throws {
-        try await self.storeWrapper.deleteItem(existingItem: existingItem)
+    public func deleteItem(existingItem: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
+        let itemMetadata = existingItem.asMetadataWithKey()
+        try await self.storeWrapper.execute { store in
+            try self.deleteItem(itemMetadata: itemMetadata, store: &store)
+        }
     }
 
     public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
                                                                                sortKeyCondition: AttributeCondition?,
-                                                                               consistentRead: Bool) async throws
+                                                                               consistentRead _: Bool) async throws
         -> [ReturnedType]
     {
-        try await self.storeWrapper.polymorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                                     consistentRead: consistentRead)
+        var items: [ReturnedType] = []
+
+        if let partition = await self.store[partitionKey] {
+            let sortedPartition = partition.sorted(by: { left, right -> Bool in
+                left.key < right.key
+            })
+
+            sortKeyIteration: for (sortKey, value) in sortedPartition {
+                if let currentSortKeyCondition = sortKeyCondition {
+                    switch currentSortKeyCondition {
+                    case let .equals(value):
+                        if !(value == sortKey) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .lessThan(value):
+                        if !(sortKey < value) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .lessThanOrEqual(value):
+                        if !(sortKey <= value) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .greaterThan(value):
+                        if !(sortKey > value) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .greaterThanOrEqual(value):
+                        if !(sortKey >= value) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .between(value1, value2):
+                        if !(sortKey > value1 && sortKey < value2) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .beginsWith(value):
+                        if !(sortKey.hasPrefix(value)) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    }
+                }
+
+                try items.append(self.convertToQueryableType(input: value))
+            }
+        }
+
+        return items
     }
 
     public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
@@ -196,8 +402,12 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
                                                                                consistentRead: Bool) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
-        try await self.storeWrapper.polymorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                                     limit: limit, exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
+        try await self.polymorphicQuery(forPartitionKey: partitionKey,
+                                        sortKeyCondition: sortKeyCondition,
+                                        limit: limit,
+                                        scanIndexForward: true,
+                                        exclusiveStartKey: exclusiveStartKey,
+                                        consistentRead: consistentRead)
     }
 
     public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
@@ -208,77 +418,306 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
                                                                                consistentRead: Bool) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
-        try await self.storeWrapper.polymorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                                     limit: limit, scanIndexForward: scanIndexForward,
-                                                     exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
+        // get all the results
+        let rawItems: [ReturnedType] = try await polymorphicQuery(forPartitionKey: partitionKey,
+                                                                  sortKeyCondition: sortKeyCondition,
+                                                                  consistentRead: consistentRead)
+
+        let items: [ReturnedType]
+        if !scanIndexForward {
+            items = rawItems.reversed()
+        } else {
+            items = rawItems
+        }
+
+        let startIndex: Int
+        // if there is an exclusiveStartKey
+        if let exclusiveStartKey {
+            guard let storedStartIndex = Int(exclusiveStartKey) else {
+                fatalError("Unexpectedly encoded exclusiveStartKey '\(exclusiveStartKey)'")
+            }
+
+            startIndex = storedStartIndex
+        } else {
+            startIndex = 0
+        }
+
+        let endIndex: Int
+        let lastEvaluatedKey: String?
+        if let limit, startIndex + limit < items.count {
+            endIndex = startIndex + limit
+            lastEvaluatedKey = String(endIndex)
+        } else {
+            endIndex = items.count
+            lastEvaluatedKey = nil
+        }
+
+        return (Array(items[startIndex ..< endIndex]), lastEvaluatedKey)
     }
 
     public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
-        attributesFilter: [String]?,
-        additionalWhereClause: String?) async throws
-        -> [ReturnedType]
+        attributesFilter _: [String]?,
+        additionalWhereClause: String?) async throws -> [ReturnedType]
     {
-        try await self.storeWrapper.polymorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
-                                                       additionalWhereClause: additionalWhereClause)
+        let items = await self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
+
+        let returnedItems: [ReturnedType] = try items.map { item in
+            try self.convertToQueryableType(input: item)
+        }
+
+        return returnedItems
     }
 
     public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
-        attributesFilter: [String]?,
-        additionalWhereClause: String?, nextToken: String?) async throws
+        attributesFilter _: [String]?,
+        additionalWhereClause: String?, nextToken _: String?) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
-        try await self.storeWrapper.polymorphicExecute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
-                                                       additionalWhereClause: additionalWhereClause, nextToken: nextToken)
+        let items = await self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
+
+        let returnedItems: [ReturnedType] = try items.map { item in
+            try self.convertToQueryableType(input: item)
+        }
+
+        return (returnedItems, nil)
     }
 
-    public func execute<AttributesType, ItemType>(
+    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
-        attributesFilter: [String]?,
-        additionalWhereClause: String?) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
+        attributesFilter _: [String]?,
+        additionalWhereClause: String?) async throws -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
-        try await self.storeWrapper.execute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
-                                            additionalWhereClause: additionalWhereClause)
+        let items = await self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
+
+        let returnedItems: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try items.map { item in
+            guard let typedItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> = try item.getItem() else {
+                let foundType = type(of: item)
+                let description = "Expected to decode \(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self). Instead found \(foundType)."
+                let context = DecodingError.Context(codingPath: [], debugDescription: description)
+                let error = DecodingError.typeMismatch(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self, context)
+
+                throw error
+            }
+
+            return typedItem
+        }
+
+        return returnedItems
     }
 
-    public func execute<AttributesType, ItemType>(
+    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
-        attributesFilter: [String]?,
-        additionalWhereClause: String?, nextToken: String?) async throws
-        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
+        attributesFilter _: [String]?,
+        additionalWhereClause: String?, nextToken _: String?) async throws
+        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
     {
-        try await self.storeWrapper.execute(partitionKeys: partitionKeys, attributesFilter: attributesFilter,
-                                            additionalWhereClause: additionalWhereClause, nextToken: nextToken)
+        let items = await self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
+
+        let returnedItems: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try items.map { item in
+            guard let typedItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> = try item.getItem() else {
+                let foundType = type(of: item)
+                let description = "Expected to decode \(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self). Instead found \(foundType)."
+                let context = DecodingError.Context(codingPath: [], debugDescription: description)
+                let error = DecodingError.typeMismatch(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self, context)
+
+                throw error
+            }
+
+            return typedItem
+        }
+
+        return (returnedItems, nil)
     }
 
-    public func getItems<AttributesType, ItemType>(
+    private func getInMemoryDatabaseItems<AttributesType>(forKeys keys: [CompositePrimaryKey<AttributesType>]) async
+        -> [CompositePrimaryKey<AttributesType>: InMemoryDatabaseItem]
+    {
+        var map: [CompositePrimaryKey<AttributesType>: InMemoryDatabaseItem] = [:]
+
+        let store = await self.storeWrapper.store
+
+        for key in keys {
+            if let partition = store[key.partitionKey] {
+                guard let value = partition[key.sortKey] else {
+                    continue
+                }
+
+                map[key] = value
+            }
+        }
+
+        return map
+    }
+
+    public func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
         forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
-        -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
+        -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
-        try await self.storeWrapper.getItems(forKeys: keys)
+        let items = await self.getInMemoryDatabaseItems(forKeys: keys)
+
+        var map: [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = [:]
+
+        try items.forEach { key, value in
+            map[key] = try DynamoDBDecoder().decode(DynamoDBClientTypes.AttributeValue.m(value.item))
+        }
+
+        return map
     }
 
-    public func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                sortKeyCondition: AttributeCondition?,
-                                                consistentRead: Bool) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
+    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
+                                                                          sortKeyCondition: AttributeCondition?,
+                                                                          consistentRead _: Bool) async throws
+        -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
-        try await self.storeWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                          consistentRead: consistentRead)
+        var items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = []
+
+        if let partition = await self.store[partitionKey] {
+            let sortedPartition = partition.sorted(by: { left, right -> Bool in
+                left.key < right.key
+            })
+
+            sortKeyIteration: for (sortKey, value) in sortedPartition {
+                if let currentSortKeyCondition = sortKeyCondition {
+                    switch currentSortKeyCondition {
+                    case let .equals(value):
+                        if !(value == sortKey) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .lessThan(value):
+                        if !(sortKey < value) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .lessThanOrEqual(value):
+                        if !(sortKey <= value) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .greaterThan(value):
+                        if !(sortKey > value) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .greaterThanOrEqual(value):
+                        if !(sortKey >= value) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .between(value1, value2):
+                        if !(sortKey > value1 && sortKey < value2) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    case let .beginsWith(value):
+                        if !(sortKey.hasPrefix(value)) {
+                            // don't include this in the results
+                            continue sortKeyIteration
+                        }
+                    }
+                }
+
+                if let typedValue: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> = try value.getItem() {
+                    items.append(typedValue)
+                } else {
+                    let description = "Expected type \(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self), "
+                        + " was \(type(of: value))."
+                    let context = DecodingError.Context(codingPath: [], debugDescription: description)
+
+                    throw DecodingError.typeMismatch(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self, context)
+                }
+            }
+        }
+
+        return items
     }
 
-    public func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                sortKeyCondition: AttributeCondition?,
-                                                limit: Int?,
-                                                scanIndexForward: Bool,
-                                                exclusiveStartKey: String?,
-                                                consistentRead: Bool) async throws
-        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
+    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
+                                                                          sortKeyCondition: AttributeCondition?,
+                                                                          limit: Int?,
+                                                                          scanIndexForward: Bool,
+                                                                          exclusiveStartKey: String?,
+                                                                          consistentRead: Bool) async throws
+        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
     {
-        try await self.storeWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                          limit: limit, scanIndexForward: scanIndexForward,
-                                          exclusiveStartKey: exclusiveStartKey, consistentRead: consistentRead)
+        // get all the results
+        let rawItems: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try await query(forPartitionKey: partitionKey,
+                                                                                                                   sortKeyCondition: sortKeyCondition,
+                                                                                                                   consistentRead: consistentRead)
+
+        let items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
+        if !scanIndexForward {
+            items = rawItems.reversed()
+        } else {
+            items = rawItems
+        }
+
+        let startIndex: Int
+        // if there is an exclusiveStartKey
+        if let exclusiveStartKey {
+            guard let storedStartIndex = Int(exclusiveStartKey) else {
+                fatalError("Unexpectedly encoded exclusiveStartKey '\(exclusiveStartKey)'")
+            }
+
+            startIndex = storedStartIndex
+        } else {
+            startIndex = 0
+        }
+
+        let endIndex: Int
+        let lastEvaluatedKey: String?
+        if let limit, startIndex + limit < items.count {
+            endIndex = startIndex + limit
+            lastEvaluatedKey = String(endIndex)
+        } else {
+            endIndex = items.count
+            lastEvaluatedKey = nil
+        }
+
+        return (Array(items[startIndex ..< endIndex]), lastEvaluatedKey)
+    }
+
+    func convertToQueryableType<ReturnedType: PolymorphicOperationReturnType>(input: InMemoryDatabaseItem) throws -> ReturnedType {
+        let attributeValue = DynamoDBClientTypes.AttributeValue.m(input.item)
+
+        let decodedItem: ReturnTypeDecodable<ReturnedType> = try DynamoDBDecoder().decode(attributeValue)
+
+        return decodedItem.decodedValue
+    }
+
+    func getExecuteItems(partitionKeys: [String],
+                         additionalWhereClause: String?) async -> [InMemoryDatabaseItem]
+    {
+        let store = await self.store
+
+        var items: [InMemoryDatabaseItem] = []
+        for partitionKey in partitionKeys {
+            guard let partition = store[partitionKey] else {
+                // no such partition, continue
+                continue
+            }
+
+            for (sortKey, databaseItem) in partition {
+                // if there is an additional where clause
+                if let additionalWhereClause {
+                    // there must be an executeItemFilter
+                    if let executeItemFilter = self.executeItemFilter {
+                        if executeItemFilter(partitionKey, sortKey, additionalWhereClause, databaseItem) {
+                            // add if the filter says yes
+                            items.append(databaseItem)
+                        }
+                    } else {
+                        fatalError("An executeItemFilter must be provided when an excute call includes an additionalWhereClause")
+                    }
+                } else {
+                    // otherwise just add the item
+                    items.append(databaseItem)
+                }
+            }
+        }
+
+        return items
     }
 }

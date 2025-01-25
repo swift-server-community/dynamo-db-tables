@@ -3,7 +3,7 @@
 // This source file is part of the DynamoDBTables open source project
 //
 // This file is forked from
-// https://github.com/amzn/smoke-dynamodb/tree/smoke-dynamodb-3.x/Tests/SmokeDynamoDBTests/TypedDatabaseItem+RowWithItemVersionProtocolTests.swift
+// https://github.com/amzn/smoke-dynamodb/tree/smoke-dynamodb-3.x/Tests/SmokeDynamoDBTests/TypedTTLDatabaseItem+RowWithItemVersionProtocolTests.swift
 // Copyright 2018-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // Licensed under Apache License v2.0
 //
@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  TypedDatabaseItem+RowWithItemVersionProtocolTests.swift
+//  TypedTTLDatabaseItem+RowWithItemVersionProtocolTests.swift
 //  DynamoDBTablesTests
 //
 
@@ -34,13 +34,13 @@ private let ORIGINAL_TIME_TO_LIVE: Int64 = 123_456_789
 private let UPDATED_PAYLOAD = "Updated"
 private let UPDATED_TIME_TO_LIVE: Int64 = 234_567_890
 
-struct TypedDatabaseItemRowWithItemVersionProtocolTests {
+struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     @Test
     func createUpdatedRowWithItemVersion() throws {
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
         let rowWithItemVersion = RowWithItemVersion.newItem(withValue: "Payload")
-        let databaseItem = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: rowWithItemVersion)
+        let databaseItem = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: rowWithItemVersion)
 
         let updatedItem = try databaseItem.createUpdatedRowWithItemVersion(withValue: "Updated",
                                                                            conditionalStatusVersion: nil)
@@ -60,9 +60,9 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
         let rowWithItemVersion = RowWithItemVersion.newItem(withValue: "Payload")
-        let databaseItem = TypedDatabaseItem.newItem(withKey: compositeKey,
-                                                     andValue: rowWithItemVersion,
-                                                     andTimeToLive: StandardTimeToLive(timeToLiveTimestamp: 123_456_789))
+        let databaseItem = TypedTTLDatabaseItem.newItem(withKey: compositeKey,
+                                                        andValue: rowWithItemVersion,
+                                                        andTimeToLive: StandardTimeToLive(timeToLiveTimestamp: 123_456_789))
 
         let updatedItem = try databaseItem.createUpdatedRowWithItemVersion(withValue: "Updated",
                                                                            conditionalStatusVersion: nil,
@@ -83,7 +83,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
         let rowWithItemVersion = RowWithItemVersion.newItem(withValue: "Payload")
-        let databaseItem = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: rowWithItemVersion)
+        let databaseItem = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: rowWithItemVersion)
 
         let updatedItem = try databaseItem.createUpdatedRowWithItemVersion(withValue: "Updated",
                                                                            conditionalStatusVersion: 1)
@@ -101,7 +101,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
         let rowWithItemVersion = RowWithItemVersion.newItem(withValue: "Payload")
-        let databaseItem = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: rowWithItemVersion)
+        let databaseItem = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: rowWithItemVersion)
 
         do {
             _ = try databaseItem.createUpdatedRowWithItemVersion(withValue: "Updated",
@@ -123,7 +123,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -144,7 +144,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "par'titio''nKey",
                                                        sortKey: "so'rt'''Key")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable(escapeSingleQuoteInPartiQL: true)
@@ -165,7 +165,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -187,7 +187,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -209,7 +209,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "par'titio''nKey",
                                                        sortKey: "so'rt'''Key")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable(escapeSingleQuoteInPartiQL: true)
@@ -230,7 +230,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -256,7 +256,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -283,7 +283,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "par'titio''nKey",
                                                        sortKey: "so'rt'''Key")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable(escapeSingleQuoteInPartiQL: true)
@@ -306,7 +306,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -327,7 +327,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -348,7 +348,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -377,7 +377,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -398,7 +398,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -419,7 +419,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -440,7 +440,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -461,7 +461,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
@@ -483,8 +483,8 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
-        let databaseItemB = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
@@ -510,8 +510,8 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "pa'rtition''Key",
                                                        sortKey: "so'rt''Key")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
-        let databaseItemB = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable(escapeSingleQuoteInPartiQL: true)
 
@@ -535,8 +535,8 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
-        let databaseItemB = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
@@ -558,8 +558,8 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
-        let databaseItemB = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
@@ -580,7 +580,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
@@ -599,7 +599,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "p'artitionKe''y",
                                                        sortKey: "sort'''Key")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable(escapeSingleQuoteInPartiQL: true)
 
@@ -618,7 +618,7 @@ struct TypedDatabaseItemRowWithItemVersionProtocolTests {
 
         let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
                                                        sortKey: "sortKey")
-        let databaseItemA = TypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
+        let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 

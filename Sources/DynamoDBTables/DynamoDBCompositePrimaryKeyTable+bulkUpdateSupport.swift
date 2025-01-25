@@ -45,25 +45,26 @@ enum AttributeDifference: Equatable {
     }
 }
 
-extension DynamoDBCompositePrimaryKeyTable {
-    func getAttributes(forItem item: TypedDatabaseItem<some Any, some Any>) throws
-        -> [String: DynamoDBClientTypes.AttributeValue]
-    {
-        let attributeValue = try DynamoDBEncoder().encode(item)
+func getAttributes(forItem item: TypedTTLDatabaseItem<some Any, some Any, some Any>) throws
+    -> [String: DynamoDBClientTypes.AttributeValue]
+{
+    let attributeValue = try DynamoDBEncoder().encode(item)
 
-        let attributes: [String: DynamoDBClientTypes.AttributeValue]
-        if case let .m(itemAttributes) = attributeValue {
-            attributes = itemAttributes
-        } else {
-            throw DynamoDBTableError.unexpectedResponse(reason: "Expected a map.")
-        }
-
-        return attributes
+    let attributes: [String: DynamoDBClientTypes.AttributeValue]
+    if case let .m(itemAttributes) = attributeValue {
+        attributes = itemAttributes
+    } else {
+        throw DynamoDBTableError.unexpectedResponse(reason: "Expected a map.")
     }
 
-    func getUpdateExpression<AttributesType, ItemType>(tableName: String,
-                                                       newItem: TypedDatabaseItem<AttributesType, ItemType>,
-                                                       existingItem: TypedDatabaseItem<AttributesType, ItemType>) throws -> String
+    return attributes
+}
+
+extension DynamoDBCompositePrimaryKeyTable {
+    func getUpdateExpression<AttributesType, ItemType, TimeToLiveAttributesType>(
+        tableName: String,
+        newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) throws -> String
     {
         let attributeDifferences = try diffItems(newItem: newItem,
                                                  existingItem: existingItem)
@@ -89,7 +90,7 @@ extension DynamoDBCompositePrimaryKeyTable {
     }
 
     func getInsertExpression(tableName: String,
-                             newItem: TypedDatabaseItem<some Any, some Any>) throws -> String
+                             newItem: TypedTTLDatabaseItem<some Any, some Any, some Any>) throws -> String
     {
         let newAttributes = try getAttributes(forItem: newItem)
         let flattenedAttribute = try getFlattenedMapAttribute(attribute: newAttributes)
@@ -98,12 +99,12 @@ extension DynamoDBCompositePrimaryKeyTable {
         return "INSERT INTO \"\(tableName)\" value \(flattenedAttribute)"
     }
 
-    func getDeleteExpression<ItemType: DatabaseItem>(tableName: String,
-                                                     existingItem: ItemType) throws -> String
+    func getDeleteExpression<AttributesType>(tableName: String,
+                                             existingItem: TypedTTLDatabaseItem<AttributesType, some Any, some Any>) throws -> String
     {
         "DELETE FROM \"\(tableName)\" "
-            + "WHERE \(ItemType.AttributesType.partitionKeyAttributeName)='\(self.sanitizeString(existingItem.compositePrimaryKey.partitionKey))' "
-            + "AND \(ItemType.AttributesType.sortKeyAttributeName)='\(self.sanitizeString(existingItem.compositePrimaryKey.sortKey))' "
+            + "WHERE \(AttributesType.partitionKeyAttributeName)='\(self.sanitizeString(existingItem.compositePrimaryKey.partitionKey))' "
+            + "AND \(AttributesType.sortKeyAttributeName)='\(self.sanitizeString(existingItem.compositePrimaryKey.sortKey))' "
             + "AND \(RowStatus.CodingKeys.rowVersion.rawValue)=\(existingItem.rowStatus.rowVersion)"
     }
 
@@ -116,7 +117,7 @@ extension DynamoDBCompositePrimaryKeyTable {
     }
 
     func getExistsExpression<AttributesType>(tableName: String,
-                                             existingItem: TypedDatabaseItem<AttributesType, some Any>) -> String
+                                             existingItem: TypedTTLDatabaseItem<AttributesType, some Any, some Any>) -> String
     {
         // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-functions.exists.html
         "EXISTS("
@@ -131,9 +132,9 @@ extension DynamoDBCompositePrimaryKeyTable {
      Function to return the differences between two items. This is used to then create an UPDATE
      query that just specifies the values that are changing.
      */
-    func diffItems<AttributesType, ItemType>(
-        newItem: TypedDatabaseItem<AttributesType, ItemType>,
-        existingItem: TypedDatabaseItem<AttributesType, ItemType>) throws -> [AttributeDifference]
+    func diffItems<AttributesType, ItemType, TimeToLiveAttributesType>(
+        newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) throws -> [AttributeDifference]
     {
         let newAttributes = try getAttributes(forItem: newItem)
         let existingAttributes = try getAttributes(forItem: existingItem)

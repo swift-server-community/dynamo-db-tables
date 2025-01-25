@@ -128,11 +128,11 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         return itemLists.flatMap { $0 }
     }
 
-    func execute<AttributesType, ItemType>(
+    func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?, nextToken: String?) async throws
-        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
+        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
     {
         // if there are no partitions, there will be no results to return
         // succeed immediately with empty results
@@ -158,7 +158,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         let nextToken = executeOutput.nextToken
 
         if let outputAttributeValues = executeOutput.items {
-            let items: [TypedDatabaseItem<AttributesType, ItemType>]
+            let items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
 
             do {
                 items = try outputAttributeValues.map { values in
@@ -176,16 +176,17 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func execute<AttributesType, ItemType>(
+    func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
+        -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         // ExecuteStatement API has a maximum limit on the number of decomposed read operations per request.
         // This function handles pagination internally.
         let chunkedPartitionKeys = partitionKeys.chunked(by: maximumKeysPerExecuteStatement)
-        let itemLists = try await chunkedPartitionKeys.concurrentMap { chunk -> [TypedDatabaseItem<AttributesType, ItemType>] in
+        let itemLists = try await chunkedPartitionKeys.concurrentMap { chunk
+            -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] in
             try await self.partialExecute(partitionKeys: chunk,
                                           attributesFilter: attributesFilter,
                                           additionalWhereClause: additionalWhereClause,
@@ -225,14 +226,14 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    private func partialExecute<AttributesType, ItemType>(
+    private func partialExecute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?,
         nextToken: String?) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
+        -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
-        let paginatedItems: ([TypedDatabaseItem<AttributesType, ItemType>], String?) =
+        let paginatedItems: ([TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], String?) =
             try await execute(partitionKeys: partitionKeys,
                               attributesFilter: attributesFilter,
                               additionalWhereClause: additionalWhereClause,
@@ -241,7 +242,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         // if there are more items
         if let returnedNextToken = paginatedItems.1 {
             // returns a future with all the results from all later paginated calls
-            let partialResult: [TypedDatabaseItem<AttributesType, ItemType>] = try await self.partialExecute(
+            let partialResult: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try await self.partialExecute(
                 partitionKeys: partitionKeys,
                 attributesFilter: attributesFilter,
                 additionalWhereClause: additionalWhereClause,

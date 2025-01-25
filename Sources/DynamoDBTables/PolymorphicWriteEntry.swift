@@ -31,7 +31,8 @@ import AWSDynamoDB
 public protocol PolymorphicWriteEntryTransform {
     associatedtype TableType
 
-    init<AttributesType: PrimaryKeyAttributes, ItemType: Codable>(_ entry: WriteEntry<AttributesType, ItemType>, table: TableType) throws
+    init<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
+        _ entry: WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>, table: TableType) throws
 }
 
 // Conforming types are provided by the Table implementation to convert a `WriteEntry` into
@@ -39,7 +40,8 @@ public protocol PolymorphicWriteEntryTransform {
 public protocol PolymorphicTransactionConstraintTransform {
     associatedtype TableType
 
-    init<AttributesType: PrimaryKeyAttributes, ItemType: Codable>(_ entry: TransactionConstraintEntry<AttributesType, ItemType>, table: TableType) throws
+    init<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
+        _ entry: TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>, table: TableType) throws
 }
 
 // Conforming types are provided by the application to express the different possible write entries
@@ -56,10 +58,11 @@ public extension PolymorphicWriteEntry {
     }
 }
 
-public typealias StandardTransactionConstraintEntry<ItemType: Codable> = TransactionConstraintEntry<StandardPrimaryKeyAttributes, ItemType>
+public typealias StandardTransactionConstraintEntry<ItemType: Codable> =
+    TransactionConstraintEntry<StandardPrimaryKeyAttributes, ItemType, StandardTimeToLiveAttributes>
 
-public enum TransactionConstraintEntry<AttributesType: PrimaryKeyAttributes, ItemType: Sendable & Codable>: Sendable {
-    case required(existing: TypedDatabaseItem<AttributesType, ItemType>)
+public enum TransactionConstraintEntry<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes> {
+    case required(existing: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
 
     public var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
         switch self {
@@ -71,7 +74,7 @@ public enum TransactionConstraintEntry<AttributesType: PrimaryKeyAttributes, Ite
 
 // Conforming types are provided by the application to express the different possible constraint entries
 // and how they can be converted to the table-provided transform type.
-public protocol PolymorphicTransactionConstraintEntry: Sendable {
+public protocol PolymorphicTransactionConstraintEntry {
     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteTransactionConstraintType
 
     var compositePrimaryKey: StandardCompositePrimaryKey? { get }
@@ -94,10 +97,12 @@ public protocol PolymorphicWriteEntryContext {
     associatedtype WriteEntryTransformType: PolymorphicWriteEntryTransform
     associatedtype WriteTransactionConstraintType: PolymorphicTransactionConstraintTransform
 
-    func transform<AttributesType: PrimaryKeyAttributes, ItemType: Codable>(_ entry: WriteEntry<AttributesType, ItemType>) throws
+    func transform<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
+        _ entry: WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>) throws
         -> WriteEntryTransformType
 
-    func transform<AttributesType: PrimaryKeyAttributes, ItemType: Codable>(_ entry: TransactionConstraintEntry<AttributesType, ItemType>) throws
+    func transform<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
+        _ entry: TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>) throws
         -> WriteTransactionConstraintType
 }
 
@@ -113,15 +118,17 @@ public struct StandardPolymorphicWriteEntryContext<WriteEntryTransformType: Poly
         self.table = table
     }
 
-    public func transform(_ entry: WriteEntry<some PrimaryKeyAttributes, some Codable>) throws
+    public func transform(_ entry: WriteEntry<some PrimaryKeyAttributes, some Codable, some TimeToLiveAttributes>) throws
         -> WriteEntryTransformType
     {
         try .init(entry, table: self.table)
     }
 
-    public func transform(_ entry: TransactionConstraintEntry<some PrimaryKeyAttributes, some Codable>) throws
+    public func transform(_ entry: TransactionConstraintEntry<some PrimaryKeyAttributes, some Codable, some TimeToLiveAttributes>) throws
         -> WriteTransactionConstraintType
     {
         try .init(entry, table: self.table)
     }
 }
+
+extension StandardPolymorphicWriteEntryContext: Sendable where WriteEntryTransformType.TableType: Sendable {}

@@ -3,7 +3,7 @@
 // This source file is part of the DynamoDBTables open source project
 //
 // This file is forked from
-// https://github.com/amzn/smoke-dynamodb/tree/smoke-dynamodb-3.x/Sources/SmokeDynamoDB/TypedDatabaseItemWithTimeToLive+RowWithItemVersionProtocol.swift
+// https://github.com/amzn/smoke-dynamodb/tree/smoke-dynamodb-3.x/Sources/SmokeDynamoDB/TypedTTLDatabaseItem+RowWithItemVersionProtocol.swift
 // Copyright 2018-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // Licensed under Apache License v2.0
 //
@@ -20,22 +20,22 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  TypedDatabaseItemWithTimeToLive+RowWithItemVersionProtocol.swift
+//  TypedTTLDatabaseItem+RowWithItemVersionProtocol.swift
 //  DynamoDBTables
 //
 
 import Foundation
 
-/// An extension for TypedDatabaseItem that is constrained by the RowType conforming
+/// An extension for TypedTTLDatabaseItem that is constrained by the RowType conforming
 /// to RowWithItemVersionProtocol
-public extension TypedDatabaseItemWithTimeToLive where RowType: RowWithItemVersionProtocol {
+public extension TypedTTLDatabaseItem where RowType: RowWithItemVersionProtocol {
     /// Helper function wrapping createUpdatedItem that will verify if
     /// conditionalStatusVersion is provided that it matches the version
     /// of the current item
     func createUpdatedRowWithItemVersion(withValue value: RowType.RowType,
                                          conditionalStatusVersion: Int?,
                                          andTimeToLive timeToLive: TimeToLive<TimeToLiveAttributesType>? = nil) throws
-        -> TypedDatabaseItemWithTimeToLive<AttributesType, RowType, TimeToLiveAttributesType>
+        -> TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>
     {
         // if we can only update a particular version
         if let overwriteVersion = conditionalStatusVersion,

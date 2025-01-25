@@ -33,35 +33,37 @@ public protocol BatchCapableReturnType {
     func getItemKey() -> CompositePrimaryKey<AttributesType>
 }
 
-public protocol PolymorphicOperationReturnType: Sendable {
+public protocol PolymorphicOperationReturnType {
     associatedtype AttributesType: PrimaryKeyAttributes
+    associatedtype TimeToLiveAttributesType: TimeToLiveAttributes
 
-    static var types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self>)] { get }
+    static var types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] { get }
 }
 
-public struct PolymorphicOperationReturnOption<AttributesType: PrimaryKeyAttributes, ReturnType>: Sendable {
+public struct PolymorphicOperationReturnOption<AttributesType: PrimaryKeyAttributes, ReturnType, TimeToLiveAttributesType: TimeToLiveAttributes>: Sendable {
     private let decodingPayloadHandler: @Sendable (Decoder) throws -> ReturnType
     private let typeConvertingPayloadHander: @Sendable (Any) throws -> ReturnType
 
     public init<RowType: Codable>(
-        _ payloadHandler: @escaping @Sendable (TypedDatabaseItem<AttributesType, RowType>) -> ReturnType)
+        _ payloadHandler: @escaping @Sendable (TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>) -> ReturnType)
     {
         @Sendable
         func newDecodingPayloadHandler(decoder: Decoder) throws -> ReturnType {
-            let typedDatabaseItem: TypedDatabaseItem<AttributesType, RowType> = try TypedDatabaseItem(from: decoder)
+            let TypedTTLDatabaseItem: TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType> =
+                try TypedTTLDatabaseItem(from: decoder)
 
-            return payloadHandler(typedDatabaseItem)
+            return payloadHandler(TypedTTLDatabaseItem)
         }
 
         @Sendable
         func newTypeConvertingPayloadHandler(input: Any) throws -> ReturnType {
-            guard let typedDatabaseItem = input as? TypedDatabaseItem<AttributesType, RowType> else {
-                let description = "Expected to use item type \(TypedDatabaseItem<AttributesType, RowType>.self)."
+            guard let TypedTTLDatabaseItem = input as? TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType> else {
+                let description = "Expected to use item type \(TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>.self)."
                 let context = DecodingError.Context(codingPath: [], debugDescription: description)
-                throw DecodingError.typeMismatch(TypedDatabaseItem<AttributesType, RowType>.self, context)
+                throw DecodingError.typeMismatch(TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>.self, context)
             }
 
-            return payloadHandler(typedDatabaseItem)
+            return payloadHandler(TypedTTLDatabaseItem)
         }
 
         self.decodingPayloadHandler = newDecodingPayloadHandler
@@ -70,10 +72,6 @@ public struct PolymorphicOperationReturnOption<AttributesType: PrimaryKeyAttribu
 
     func getReturnType(from decoder: Decoder) throws -> ReturnType {
         try self.decodingPayloadHandler(decoder)
-    }
-
-    func getReturnType(input: Any) throws -> ReturnType {
-        try self.typeConvertingPayloadHander(input)
     }
 }
 
@@ -92,7 +90,7 @@ struct ReturnTypeDecodable<ReturnType: PolymorphicOperationReturnType>: Decodabl
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let storedRowTypeName = try values.decode(String.self, forKey: .rowType)
 
-        var queryableTypeProviders: [String: PolymorphicOperationReturnOption<ReturnType.AttributesType, ReturnType>] = [:]
+        var queryableTypeProviders: [String: PolymorphicOperationReturnOption<ReturnType.AttributesType, ReturnType, ReturnType.TimeToLiveAttributesType>] = [:]
         for (type, provider) in ReturnType.types {
             queryableTypeProviders[getTypeRowIdentifier(type: type)] = provider
         }

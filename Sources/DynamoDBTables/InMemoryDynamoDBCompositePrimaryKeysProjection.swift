@@ -31,7 +31,7 @@ import Foundation
 public struct InMemoryDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimaryKeysProjection {
     let keysWrapper: InMemoryDynamoDBCompositePrimaryKeysProjectionStore
 
-    public init(keys: [Sendable] = []) {
+    public init(keys: [CompositePrimaryKey<some Any>] = []) {
         self.keysWrapper = InMemoryDynamoDBCompositePrimaryKeysProjectionStore(keys: keys)
     }
 
@@ -39,7 +39,7 @@ public struct InMemoryDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositeP
         self.keysWrapper = keysWrapper
     }
 
-    public var keys: [Sendable] {
+    public var keys: [TypeErasedCompositePrimaryKey] {
         get async {
             await self.keysWrapper.keys
         }

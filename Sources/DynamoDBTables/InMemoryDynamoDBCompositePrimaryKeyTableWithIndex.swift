@@ -51,7 +51,7 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         self.gsiDataStore = InMemoryDynamoDBCompositePrimaryKeyTable(executeItemFilter: executeItemFilter)
     }
 
-    public func validateEntry(entry: WriteEntry<some Any, some Any>) throws {
+    public func validateEntry(entry: WriteEntry<some Any, some Any, some Any>) throws {
         let entryString = "\(entry)"
         if entryString.count > maxStatementLength {
             throw DynamoDBTableError.statementLengthExceeded(
@@ -59,48 +59,50 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         }
     }
 
-    public func insertItem(_ item: TypedDatabaseItem<some Any, some Any>) async throws {
+    public func insertItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         try await self.primaryTable.insertItem(item)
         try await self.gsiLogic.onInsertItem(item, gsiDataStore: self.gsiDataStore)
     }
 
-    public func clobberItem(_ item: TypedDatabaseItem<some Any, some Any>) async throws {
+    public func clobberItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         try await self.primaryTable.clobberItem(item)
         try await self.gsiLogic.onClobberItem(item, gsiDataStore: self.gsiDataStore)
     }
 
-    public func updateItem<AttributesType, ItemType>(newItem: TypedDatabaseItem<AttributesType, ItemType>,
-                                                     existingItem: TypedDatabaseItem<AttributesType, ItemType>) async throws
+    public func updateItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+        newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
     {
         try await self.primaryTable.updateItem(newItem: newItem, existingItem: existingItem)
         try await self.gsiLogic.onUpdateItem(newItem: newItem, existingItem: existingItem, gsiDataStore: self.gsiDataStore)
     }
 
-    public func transactWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+    public func transactWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
         try await self.primaryTable.transactWrite(entries)
     }
 
-    public func transactWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>],
-                                                        constraints: [TransactionConstraintEntry<AttributesType, ItemType>]) async throws
+    public func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
+        _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
+        constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]) async throws
     {
         try await self.primaryTable.transactWrite(entries, constraints: constraints)
     }
 
-    public func polymorphicTransactWrite(_ entries: sending [some PolymorphicWriteEntry]) async throws {
+    public func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         try await self.primaryTable.polymorphicTransactWrite(entries)
     }
 
     public func polymorphicTransactWrite(
-        _ entries: sending [some PolymorphicWriteEntry], constraints: sending [some PolymorphicTransactionConstraintEntry]) async throws
+        _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
     {
         try await self.primaryTable.polymorphicTransactWrite(entries, constraints: constraints)
     }
 
-    public func polymorphicBulkWrite(_ entries: sending [some PolymorphicWriteEntry]) async throws {
+    public func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         try await self.primaryTable.polymorphicBulkWrite(entries)
     }
 
-    public func bulkWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+    public func bulkWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
         try await entries.asyncForEach { entry in
             switch entry {
             case let .update(new: new, existing: existing):
@@ -115,9 +117,11 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         }
     }
 
-    public func bulkWriteWithFallback<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>]) async throws {
+    public func bulkWriteWithFallback<AttributesType, ItemType, TimeToLiveAttributesType>(
+        _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>]) async throws
+    {
         // fall back to single operation if the write entry exceeds the statement length limitation
-        var nonBulkWriteEntries: [WriteEntry<AttributesType, ItemType>] = []
+        var nonBulkWriteEntries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>] = []
 
         let bulkWriteEntries = try entries.compactMap { entry in
             do {
@@ -145,8 +149,7 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         }
     }
 
-    public func bulkWriteWithoutThrowing(
-        _ entries: [WriteEntry<some Any, some Any>]) async throws
+    public func bulkWriteWithoutThrowing(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
         -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
     {
         let results = await entries.asyncMap { entry -> DynamoDBClientTypes.BatchStatementErrorCodeEnum? in
@@ -195,8 +198,8 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         return errors
     }
 
-    public func getItem<AttributesType, ItemType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
-        -> TypedDatabaseItem<AttributesType, ItemType>?
+    public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
+        -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
     {
         try await self.primaryTable.getItem(forKey: key)
     }
@@ -213,7 +216,7 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         try await self.gsiLogic.onDeleteItem(forKey: key, gsiDataStore: self.gsiDataStore)
     }
 
-    public func deleteItem(existingItem: TypedDatabaseItem<some Any, some Any>) async throws {
+    public func deleteItem(existingItem: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         try await self.primaryTable.deleteItem(existingItem: existingItem)
         try await self.gsiLogic.onDeleteItem(forKey: existingItem.compositePrimaryKey, gsiDataStore: self.gsiDataStore)
     }
@@ -226,7 +229,7 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         }
     }
 
-    public func deleteItems(existingItems: [some DatabaseItem]) async throws {
+    public func deleteItems(existingItems: [TypedTTLDatabaseItem<some Any, some Any, some Any>]) async throws {
         try await self.primaryTable.deleteItems(existingItems: existingItems)
 
         try await existingItems.asyncForEach { existingItem in
@@ -312,8 +315,7 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
     public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?) async throws
-        -> [ReturnedType]
+        additionalWhereClause: String?) async throws -> [ReturnedType]
     {
         // if this is executing on index
         if let indexName = ReturnedType.AttributesType.indexName {
@@ -355,17 +357,17 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
                                                               additionalWhereClause: additionalWhereClause, nextToken: nextToken)
     }
 
-    public func getItems<AttributesType, ItemType>(
+    public func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
         forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
-        -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
+        -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         try await self.primaryTable.getItems(forKeys: keys)
     }
 
-    public func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                sortKeyCondition: AttributeCondition?,
-                                                consistentRead: Bool) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
+    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
+                                                                          sortKeyCondition: AttributeCondition?,
+                                                                          consistentRead: Bool) async throws
+        -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         // if this is querying an index
         if let indexName = AttributesType.indexName {
@@ -386,13 +388,13 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
                                                  consistentRead: consistentRead)
     }
 
-    public func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                sortKeyCondition: AttributeCondition?,
-                                                limit: Int?,
-                                                scanIndexForward: Bool,
-                                                exclusiveStartKey: String?,
-                                                consistentRead: Bool) async throws
-        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
+    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
+                                                                          sortKeyCondition: AttributeCondition?,
+                                                                          limit: Int?,
+                                                                          scanIndexForward: Bool,
+                                                                          exclusiveStartKey: String?,
+                                                                          consistentRead: Bool) async throws
+        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
     {
         // if this is querying an index
         if let indexName = AttributesType.indexName {
@@ -413,11 +415,10 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
                                                  consistentRead: consistentRead)
     }
 
-    public func execute<AttributesType, ItemType>(
+    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
+        additionalWhereClause: String?) async throws -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         // if this is executing on index
         if let indexName = AttributesType.indexName {
@@ -436,11 +437,11 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
                                                    additionalWhereClause: additionalWhereClause)
     }
 
-    public func execute<AttributesType, ItemType>(
+    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?, nextToken: String?) async throws
-        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
+        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
     {
         // if this is executing on index
         if let indexName = AttributesType.indexName {
