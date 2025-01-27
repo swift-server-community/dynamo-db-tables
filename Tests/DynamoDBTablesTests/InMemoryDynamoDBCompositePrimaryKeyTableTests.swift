@@ -28,14 +28,8 @@ import AWSDynamoDB
 @testable import DynamoDBTables
 import Testing
 
-enum TestPolymorphicOperationReturnType: PolymorphicOperationReturnType {
-    typealias AttributesType = StandardPrimaryKeyAttributes
-    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
-
-    static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] = [
-        (TestTypeA.self, .init { .testTypeA($0) }),
-    ]
-
+@PolymorphicOperationReturnType
+enum TestPolymorphicOperationReturnType {
     case testTypeA(StandardTypedDatabaseItem<TestTypeA>)
 }
 

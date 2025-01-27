@@ -26,27 +26,14 @@
 @testable import DynamoDBTables
 import Foundation
 
-enum AllQueryableTypes: PolymorphicOperationReturnType {
-    typealias AttributesType = StandardPrimaryKeyAttributes
-    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
-
-    static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] = [
-        (TypeA.self, .init { .typeA($0) }),
-        (TypeB.self, .init { .typeB($0) }),
-    ]
-
+@PolymorphicOperationReturnType
+enum AllQueryableTypes {
     case typeA(StandardTypedDatabaseItem<TypeA>)
     case typeB(StandardTypedDatabaseItem<TypeB>)
 }
 
-enum SomeQueryableTypes: PolymorphicOperationReturnType {
-    typealias AttributesType = StandardPrimaryKeyAttributes
-    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
-
-    static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] = [
-        (TypeA.self, .init { .typeA($0) }),
-    ]
-
+@PolymorphicOperationReturnType
+enum SomeQueryableTypes {
     case typeA(StandardTypedDatabaseItem<TypeA>)
 }
 
@@ -55,15 +42,8 @@ struct GSI1PKIndexIdentity: IndexIdentity {
     static let identity = "GSI1PK"
 }
 
-enum AllQueryableTypesWithIndex: PolymorphicOperationReturnType {
-    typealias AttributesType = StandardPrimaryKeyAttributes
-    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
-
-    static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] = [
-        (RowWithIndex<TypeA, GSI1PKIndexIdentity>.self, .init { .typeAWithIndex($0) }),
-        (TypeB.self, .init { .typeB($0) }),
-    ]
-
+@PolymorphicOperationReturnType
+enum AllQueryableTypesWithIndex {
     case typeAWithIndex(StandardTypedDatabaseItem<RowWithIndex<TypeA, GSI1PKIndexIdentity>>)
     case typeB(StandardTypedDatabaseItem<TestTypeB>)
 }

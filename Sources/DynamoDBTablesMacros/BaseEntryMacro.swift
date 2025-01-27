@@ -18,17 +18,19 @@ import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-protocol MacroAttributes {
+protocol CoreMacroAttributes {
     static var macroName: String { get }
 
     static var protocolName: String { get }
+}
 
+protocol MacroAttributes: CoreMacroAttributes {
     static var transformType: String { get }
 
     static var contextType: String { get }
 }
 
-enum BaseEntryDiagnostic<Attributes: MacroAttributes>: String, DiagnosticMessage {
+enum BaseEntryDiagnostic<Attributes: CoreMacroAttributes>: String, DiagnosticMessage {
     case notAttachedToEnumDeclaration
     case enumMustNotHaveZeroCases
     case enumCasesMustHaveASingleParameter
