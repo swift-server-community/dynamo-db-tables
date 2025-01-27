@@ -15,13 +15,13 @@
 //
 
 @attached(extension, conformances: PolymorphicWriteEntry, names: named(handle(context:)), named(compositePrimaryKey))
-public macro PolymorphicWriteEntry(passCompositePrimaryKey: Bool = true) =
+public macro PolymorphicWriteEntry() =
     #externalMacro(
         module: "DynamoDBTablesMacros",
         type: "PolymorphicWriteEntryMacro")
 
 @attached(extension, conformances: PolymorphicTransactionConstraintEntry, names: named(handle(context:)), named(compositePrimaryKey))
-public macro PolymorphicTransactionConstraintEntry(passCompositePrimaryKey: Bool = true) =
+public macro PolymorphicTransactionConstraintEntry() =
     #externalMacro(
         module: "DynamoDBTablesMacros",
         type: "PolymorphicTransactionConstraintEntryMacro")

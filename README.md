@@ -420,20 +420,6 @@ let constraintList: [TestPolymorphicTransactionConstraintEntry] = [
 try await table.polymorphicTransactWrite(entryList, constraints: constraintList)
 ```
 
-Both the `PolymorphicWriteEntry` and `PolymorphicTransactionConstraintEntry` conforming types can
-optionally provide a `compositePrimaryKey` property that will allow the API to return more information
-about failed transactions. This is enabled by default when using the `@PolymorphicWriteEntry` and 
-`@PolymorphicTransactionConstraintEntry` macros but can be disabled by setting the 
-`passCompositePrimaryKey` argument.
-
-```swift
-@PolymorphicWriteEntry(passCompositePrimaryKey: false)
-enum TestPolymorphicWriteEntry {
-    case testTypeA(TestTypeAWriteEntry)
-    case testTypeB(TestTypeBWriteEntry)
-}
-```
-
 ## Recording updates in a historical partition
 
 This package contains a number of convenience functions for storing versions of a row in a historical partition

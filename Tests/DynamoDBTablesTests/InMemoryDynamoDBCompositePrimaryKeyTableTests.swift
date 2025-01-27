@@ -471,33 +471,6 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     }
 
     @Test
-    func bulkWriteWithoutThrowing() async throws {
-        typealias TestObject = TestTypeA
-        typealias TestObjectDatabaseItem = StandardTypedDatabaseItem<TestObject>
-        typealias TestObjectWriteEntry = StandardWriteEntry<TestObject>
-
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
-
-        var entryList: [TestObjectWriteEntry] = []
-        var index = 0
-        while index < 26 {
-            let key = StandardCompositePrimaryKey(partitionKey: "partitionId\(index % 25)", sortKey: "sortId\(index % 25)")
-            let test = TestObject(firstly: "firstly", secondly: "secondly")
-            let testItem = TestObjectDatabaseItem.newItem(withKey: key, andValue: test)
-            entryList.append(TestObjectWriteEntry.insert(new: testItem))
-            index += 1
-        }
-
-        let result1 = try await table.bulkWriteWithoutThrowing(entryList)
-        #expect(result1.count == 1)
-        if result1.contains(DynamoDBClientTypes.BatchStatementErrorCodeEnum.duplicateitem) {
-            return
-        } else {
-            Issue.record("should contain duplicateitem error")
-        }
-    }
-
-    @Test
     func transactWrite() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
@@ -679,7 +652,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             #expect(reasons.count == 1)
 
             if let first = reasons.first {
-                guard case .transactionConditionalCheckFailed = first else {
+                guard case .conditionalCheckFailed = first else {
                     Issue.record("Unexpected error")
                     return
                 }
@@ -727,7 +700,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             #expect(reasons.count == 1)
 
             if let first = reasons.first {
-                guard case .transactionConditionalCheckFailed = first else {
+                guard case .conditionalCheckFailed = first else {
                     Issue.record("Unexpected error \(first)")
                     return
                 }
@@ -919,7 +892,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             #expect(reasons.count == 1)
 
             if let first = reasons.first {
-                guard case .transactionConditionalCheckFailed = first else {
+                guard case .conditionalCheckFailed = first else {
                     Issue.record("Unexpected error")
                     return
                 }
@@ -965,7 +938,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             #expect(reasons.count == 1)
 
             if let first = reasons.first {
-                guard case .transactionConditionalCheckFailed = first else {
+                guard case .conditionalCheckFailed = first else {
                     Issue.record("Unexpected error \(first)")
                     return
                 }
@@ -1242,9 +1215,14 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             try await table.bulkWrite(entryList)
 
             Issue.record()
-        } catch let DynamoDBTableError.batchErrorsReturned(errorCount, _) {
+        } catch let DynamoDBTableError.batchFailures(errors) {
             // one required item exists, one already exists
-            #expect(errorCount == 1)
+            #expect(errors.count == 1)
+
+            guard case .conditionalCheckFailed = errors[0] else {
+                Issue.record("Expected error to be conditionalCheckFailed")
+                return
+            }
         } catch {
             Issue.record()
         }
@@ -1309,9 +1287,14 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             try await table.polymorphicBulkWrite(entryList)
 
             Issue.record()
-        } catch let DynamoDBTableError.batchErrorsReturned(errorCount, _) {
+        } catch let DynamoDBTableError.batchFailures(errors) {
             // one required item exists, one already exists
-            #expect(errorCount == 1)
+            #expect(errors.count == 1)
+
+            guard case .conditionalCheckFailed = errors[0] else {
+                Issue.record("Expected error to be conditionalCheckFailed")
+                return
+            }
         } catch {
             Issue.record()
         }

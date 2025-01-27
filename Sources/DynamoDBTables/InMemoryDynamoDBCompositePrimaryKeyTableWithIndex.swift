@@ -117,85 +117,10 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         }
     }
 
-    public func bulkWriteWithFallback<AttributesType, ItemType, TimeToLiveAttributesType>(
-        _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>]) async throws
+    public func bulkWriteWithFallback(
+        _ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
     {
-        // fall back to single operation if the write entry exceeds the statement length limitation
-        var nonBulkWriteEntries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>] = []
-
-        let bulkWriteEntries = try entries.compactMap { entry in
-            do {
-                try self.validateEntry(entry: entry)
-                return entry
-            } catch DynamoDBTableError.statementLengthExceeded {
-                nonBulkWriteEntries.append(entry)
-                return nil
-            }
-        }
-
-        try await self.bulkWrite(bulkWriteEntries)
-
-        try await nonBulkWriteEntries.asyncForEach { nonBulkWriteEntry in
-            switch nonBulkWriteEntry {
-            case let .update(new: new, existing: existing):
-                try await self.updateItem(newItem: new, existingItem: existing)
-            case let .insert(new: new):
-                try await self.insertItem(new)
-            case let .deleteAtKey(key: key):
-                try await self.deleteItem(forKey: key)
-            case let .deleteItem(existing: existing):
-                try await self.deleteItem(existingItem: existing)
-            }
-        }
-    }
-
-    public func bulkWriteWithoutThrowing(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
-        -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
-    {
-        let results = await entries.asyncMap { entry -> DynamoDBClientTypes.BatchStatementErrorCodeEnum? in
-            switch entry {
-            case let .update(new: new, existing: existing):
-                do {
-                    try await self.updateItem(newItem: new, existingItem: existing)
-
-                    return nil
-                } catch {
-                    return .duplicateitem
-                }
-            case let .insert(new: new):
-                do {
-                    try await self.insertItem(new)
-
-                    return nil
-                } catch {
-                    return .duplicateitem
-                }
-            case let .deleteAtKey(key: key):
-                do {
-                    try await self.deleteItem(forKey: key)
-
-                    return nil
-                } catch {
-                    return .duplicateitem
-                }
-            case let .deleteItem(existing: existing):
-                do {
-                    try await self.deleteItem(existingItem: existing)
-
-                    return nil
-                } catch {
-                    return .duplicateitem
-                }
-            }
-        }
-
-        var errors: Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum> = Set()
-        for result in results {
-            if let result {
-                errors.insert(result)
-            }
-        }
-        return errors
+        try await self.bulkWrite(entries)
     }
 
     public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
