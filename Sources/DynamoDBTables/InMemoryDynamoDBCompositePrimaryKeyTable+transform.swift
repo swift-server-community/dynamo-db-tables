@@ -225,8 +225,8 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
     {
         let entryCount = entries.count + constraints.count
         if isTransaction, entryCount > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
-            throw DynamoDBTableError.transactionSizeExceeded(attemptedSize: entryCount,
-                                                             maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
+            throw DynamoDBTableError.itemCollectionSizeLimitExceeded(attemptedSize: entryCount,
+                                                                     maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
         }
 
         let savedStore = store
@@ -256,8 +256,8 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
         let entryCount = entryTransformResults.count + constraintTransformResults.count
 
         if isTransaction, entryCount > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
-            throw DynamoDBTableError.transactionSizeExceeded(attemptedSize: entryCount,
-                                                             maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
+            throw DynamoDBTableError.itemCollectionSizeLimitExceeded(attemptedSize: entryCount,
+                                                                     maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
         }
 
         let savedStore = store
@@ -282,7 +282,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
 
     func handleConstraints<AttributesType>(
         constraints: [InMemoryTransactionConstraintEntry<AttributesType>],
-        store: inout [String: [String: InMemoryDatabaseItem]], isTransaction: Bool)
+        store: inout [String: [String: InMemoryDatabaseItem]], isTransaction _: Bool)
         -> DynamoDBTableError?
     {
         let errors = constraints.compactMap { entry -> DynamoDBTableError? in
@@ -299,15 +299,9 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
                   let item = partition[compositePrimaryKey.sortKey],
                   item.rowStatus.rowVersion == existingItem.rowStatus.rowVersion
             else {
-                if isTransaction {
-                    return DynamoDBTableError.transactionConditionalCheckFailed(partitionKey: compositePrimaryKey.partitionKey,
-                                                                                sortKey: compositePrimaryKey.sortKey,
-                                                                                message: "Item doesn't exist or doesn't have correct version")
-                } else {
-                    return DynamoDBTableError.conditionalCheckFailed(partitionKey: compositePrimaryKey.partitionKey,
-                                                                     sortKey: compositePrimaryKey.sortKey,
-                                                                     message: "Item doesn't exist or doesn't have correct version")
-                }
+                return DynamoDBTableError.conditionalCheckFailed(partitionKey: compositePrimaryKey.partitionKey,
+                                                                 sortKey: compositePrimaryKey.sortKey,
+                                                                 message: "Item doesn't exist or doesn't have correct version")
             }
 
             return nil
@@ -321,7 +315,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
     }
 
     func handleConstraints(
-        transformResults: [Swift.Result<InMemoryPolymorphicTransactionConstraintTransform, DynamoDBTableError>], isTransaction: Bool,
+        transformResults: [Swift.Result<InMemoryPolymorphicTransactionConstraintTransform, DynamoDBTableError>], isTransaction _: Bool,
         store: inout [String: [String: InMemoryDatabaseItem]],
         context _: StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
             InMemoryPolymorphicTransactionConstraintTransform>)
@@ -340,15 +334,9 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
                   let item = partition[transform.sortKey],
                   item.rowStatus.rowVersion == transform.rowVersion
             else {
-                if isTransaction {
-                    return DynamoDBTableError.transactionConditionalCheckFailed(partitionKey: transform.partitionKey,
-                                                                                sortKey: transform.sortKey,
-                                                                                message: "Item doesn't exist or doesn't have correct version")
-                } else {
-                    return DynamoDBTableError.conditionalCheckFailed(partitionKey: transform.partitionKey,
-                                                                     sortKey: transform.sortKey,
-                                                                     message: "Item doesn't exist or doesn't have correct version")
-                }
+                return DynamoDBTableError.conditionalCheckFailed(partitionKey: transform.partitionKey,
+                                                                 sortKey: transform.sortKey,
+                                                                 message: "Item doesn't exist or doesn't have correct version")
             }
 
             return nil
@@ -385,8 +373,8 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
                         if message == itemAlreadyExistsMessage {
                             return .duplicateItem(partitionKey: partitionKey, sortKey: sortKey, message: message)
                         } else {
-                            return .transactionConditionalCheckFailed(partitionKey: partitionKey,
-                                                                      sortKey: sortKey, message: message)
+                            return .conditionalCheckFailed(partitionKey: partitionKey,
+                                                           sortKey: sortKey, message: message)
                         }
                     }
                     return typedError
@@ -403,7 +391,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
             if isTransaction {
                 return DynamoDBTableError.transactionCanceled(reasons: writeErrors)
             } else {
-                return DynamoDBTableError.batchErrorsReturned(errorCount: writeErrors.count, messageMap: [:])
+                return DynamoDBTableError.batchFailures(errors: writeErrors)
             }
         }
 
@@ -434,8 +422,8 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
                         if message == itemAlreadyExistsMessage {
                             return .duplicateItem(partitionKey: partitionKey, sortKey: sortKey, message: message)
                         } else {
-                            return .transactionConditionalCheckFailed(partitionKey: partitionKey,
-                                                                      sortKey: sortKey, message: message)
+                            return .conditionalCheckFailed(partitionKey: partitionKey,
+                                                           sortKey: sortKey, message: message)
                         }
                     }
                     return typedError
@@ -452,7 +440,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
             if isTransaction {
                 return DynamoDBTableError.transactionCanceled(reasons: writeErrors)
             } else {
-                return DynamoDBTableError.batchErrorsReturned(errorCount: writeErrors.count, messageMap: [:])
+                return DynamoDBTableError.batchFailures(errors: writeErrors)
             }
         }
 

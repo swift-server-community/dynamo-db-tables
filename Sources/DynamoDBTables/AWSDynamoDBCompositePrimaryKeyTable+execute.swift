@@ -74,8 +74,8 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         // ExecuteStatement API has a maximum limit on the number of decomposed read operations per request.
         // Caller of this function needs to handle pagination on their side.
         guard partitionKeys.count <= maximumKeysPerExecuteStatement else {
-            throw DynamoDBTableError.validationError(
-                reason: "Execute API has a maximum limit of \(maximumKeysPerExecuteStatement) partition keys per request.")
+            throw DynamoDBTableError.validation(partitionKey: nil, sortKey: nil,
+                                                message: "Execute API has a maximum limit of \(maximumKeysPerExecuteStatement) partition keys per request.")
         }
 
         let statement = self.getStatement(partitionKeys: partitionKeys,
@@ -143,8 +143,8 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         // ExecuteStatement API has a maximum limit on the number of decomposed read operations per request.
         // Caller of this function needs to handle pagination on their side.
         guard partitionKeys.count <= maximumKeysPerExecuteStatement else {
-            throw DynamoDBTableError.validationError(
-                reason: "Execute API has a maximum limit of \(maximumKeysPerExecuteStatement) partition keys per request.")
+            throw DynamoDBTableError.validation(partitionKey: nil, sortKey: nil,
+                                                message: "Execute API has a maximum limit of \(maximumKeysPerExecuteStatement) partition keys per request.")
         }
 
         let statement = self.getStatement(partitionKeys: partitionKeys,
@@ -253,6 +253,93 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         } else {
             // this is it, all results have been obtained
             return paginatedItems.0
+        }
+    }
+}
+
+extension DynamoDBClientTypes.BatchStatementError {
+    func asDynamoDBTableError(partitionKey: String, sortKey: String, entryCount: Int) -> DynamoDBTableError? {
+        guard let code = self.code else {
+            return nil
+        }
+
+        // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchStatementError.html
+        return switch code {
+        case .accessdenied:
+            DynamoDBTableError.accessDenied(message: self.message)
+        case .conditionalcheckfailed:
+            DynamoDBTableError.conditionalCheckFailed(partitionKey: partitionKey,
+                                                      sortKey: sortKey,
+                                                      message: self.message)
+        case .duplicateitem:
+            DynamoDBTableError.duplicateItem(partitionKey: partitionKey, sortKey: sortKey,
+                                             message: self.message)
+        case .internalservererror:
+            DynamoDBTableError.internalServerError(message: self.message)
+        case .itemcollectionsizelimitexceeded:
+            DynamoDBTableError.itemCollectionSizeLimitExceeded(attemptedSize: entryCount,
+                                                               maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
+        case .provisionedthroughputexceeded:
+            DynamoDBTableError.provisionedThroughputExceeded(message: self.message)
+        case .requestlimitexceeded:
+            DynamoDBTableError.requestLimitExceeded(message: self.message)
+        case .resourcenotfound:
+            DynamoDBTableError.resourceNotFound(partitionKey: partitionKey, sortKey: sortKey,
+                                                message: self.message)
+        case .throttlingerror:
+            DynamoDBTableError.throttling(message: self.message)
+        case .transactionconflict:
+            DynamoDBTableError.transactionConflict(message: self.message)
+        case .validationerror:
+            DynamoDBTableError.validation(partitionKey: partitionKey, sortKey: sortKey,
+                                          message: self.message)
+        case let .sdkUnknown(message):
+            DynamoDBTableError.unknown(code: message, partitionKey: partitionKey,
+                                       sortKey: sortKey, message: self.message)
+        }
+    }
+}
+
+extension [DynamoDBTableError] {
+    func removeDuplicates() -> [DynamoDBTableError] {
+        var seenAccessDenied = false
+        var seenInternalServerError = false
+        var seenRequestLimitExceeded = false
+        var seenStatementLengthExceeded = false
+        var seenItemCollectionSizeLimitExceeded = false
+        var seenProvisionedThroughputExceeded = false
+
+        func canPassThrough(state: inout Bool) -> Bool {
+            if state {
+                return false
+            } else {
+                state = true
+                return true
+            }
+        }
+
+        // iterate through all errors
+        return self.compactMap { error in
+            return switch error {
+            case .accessDenied:
+                canPassThrough(state: &seenAccessDenied) ? error : nil
+            case .internalServerError:
+                canPassThrough(state: &seenInternalServerError) ? error : nil
+            case .requestLimitExceeded:
+                canPassThrough(state: &seenRequestLimitExceeded) ? error : nil
+            case .statementLengthExceeded:
+                canPassThrough(state: &seenStatementLengthExceeded) ? error : nil
+            case .itemCollectionSizeLimitExceeded:
+                canPassThrough(state: &seenItemCollectionSizeLimitExceeded) ? error : nil
+            case .provisionedThroughputExceeded:
+                canPassThrough(state: &seenProvisionedThroughputExceeded) ? error : nil
+            case .conditionalCheckFailed, .duplicateItem, .concurrencyError, .validation, .throttling, .databaseError,
+                 .unexpectedError, .unexpectedResponse, .resourceNotFound, .typeMismatch, .batchAPIExceededRetries,
+                 .unexpectedType, .unableToUpdateError, .unrecognizedError, .multipleUnexpectedErrors, .transactionCanceled,
+                 .transactionConflict, .batchFailures, .unknown:
+                // always pass through these errors
+                error
+            }
         }
     }
 }

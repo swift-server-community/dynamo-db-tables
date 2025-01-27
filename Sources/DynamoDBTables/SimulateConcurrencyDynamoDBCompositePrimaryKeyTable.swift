@@ -151,13 +151,6 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         try await self.wrappedDynamoDBTable.bulkWriteWithFallback(entries)
     }
 
-    public func bulkWriteWithoutThrowing(
-        _ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
-        -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
-    {
-        try await self.wrappedDynamoDBTable.bulkWriteWithoutThrowing(entries)
-    }
-
     public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
         -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
     {

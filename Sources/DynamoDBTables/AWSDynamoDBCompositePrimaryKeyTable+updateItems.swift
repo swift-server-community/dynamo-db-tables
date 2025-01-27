@@ -117,39 +117,6 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         return DynamoDBClientTypes.BatchStatementRequest(consistentRead: false, statement: statement)
     }
 
-    func throwOnBatchExecuteStatementErrors(response: AWSDynamoDB.BatchExecuteStatementOutput) throws {
-        var errorMap: [String: Int] = [:]
-        var errorCount = 0
-        response.responses?.forEach { response in
-            if let error = response.error {
-                errorCount += 1
-
-                var messageElements: [String] = []
-                if let code = error.code {
-                    messageElements.append(code.rawValue)
-                }
-
-                if let message = error.message {
-                    messageElements.append(message)
-                }
-
-                if !messageElements.isEmpty {
-                    let message = messageElements.joined(separator: ":")
-                    var updatedErrorCount = errorMap[message] ?? 0
-                    updatedErrorCount += 1
-                    errorMap[message] = updatedErrorCount
-                }
-            }
-        }
-
-        guard errorCount > 0 else {
-            // no errors
-            return
-        }
-
-        throw DynamoDBTableError.batchErrorsReturned(errorCount: errorCount, messageMap: errorMap)
-    }
-
     private func writeTransactionItems<AttributesType, ItemType, TimeToLiveAttributesType>(
         _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
         constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]) async throws
@@ -250,8 +217,8 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         let entryCount = entries.count + constraints.count
 
         if entryCount > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
-            throw DynamoDBTableError.transactionSizeExceeded(attemptedSize: entryCount,
-                                                             maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
+            throw DynamoDBTableError.itemCollectionSizeLimitExceeded(attemptedSize: entryCount,
+                                                                     maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
         }
 
         let result: Swift.Result<Void, DynamoDBTableError>
@@ -283,29 +250,29 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                 case "None":
                     return nil
                 case "ConditionalCheckFailed":
-                    return DynamoDBTableError.transactionConditionalCheckFailed(partitionKey: partitionKey,
-                                                                                sortKey: sortKey,
-                                                                                message: cancellationReason.message)
+                    return DynamoDBTableError.conditionalCheckFailed(partitionKey: partitionKey,
+                                                                     sortKey: sortKey,
+                                                                     message: cancellationReason.message)
                 case "DuplicateItem":
                     return DynamoDBTableError.duplicateItem(partitionKey: partitionKey, sortKey: sortKey,
                                                             message: cancellationReason.message)
                 case "ItemCollectionSizeLimitExceeded":
-                    return DynamoDBTableError.transactionSizeExceeded(attemptedSize: entryCount,
-                                                                      maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
+                    return DynamoDBTableError.itemCollectionSizeLimitExceeded(attemptedSize: entryCount,
+                                                                              maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
                 case "TransactionConflict":
                     isTransactionConflict = true
 
                     return DynamoDBTableError.transactionConflict(message: cancellationReason.message)
                 case "ProvisionedThroughputExceeded":
-                    return DynamoDBTableError.transactionProvisionedThroughputExceeded(message: cancellationReason.message)
+                    return DynamoDBTableError.provisionedThroughputExceeded(message: cancellationReason.message)
                 case "ThrottlingError":
-                    return DynamoDBTableError.transactionThrottling(message: cancellationReason.message)
+                    return DynamoDBTableError.throttling(message: cancellationReason.message)
                 case "ValidationError":
-                    return DynamoDBTableError.transactionValidation(partitionKey: partitionKey, sortKey: sortKey,
-                                                                    message: cancellationReason.message)
+                    return DynamoDBTableError.validation(partitionKey: partitionKey, sortKey: sortKey,
+                                                         message: cancellationReason.message)
                 default:
-                    return DynamoDBTableError.transactionUnknown(code: cancellationReason.code, partitionKey: partitionKey,
-                                                                 sortKey: sortKey, message: cancellationReason.message)
+                    return DynamoDBTableError.unknown(code: cancellationReason.code, partitionKey: partitionKey,
+                                                      sortKey: sortKey, message: cancellationReason.message)
                 }
             }
 
@@ -351,10 +318,12 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         return try await self.transactWrite(entries, constraints: constraints, retriesRemaining: retriesRemaining - 1)
     }
 
-    private func polymorphicTransactWrite(_ transactionInput: ExecuteTransactionInput, inputKeys: [StandardCompositePrimaryKey?], retriesRemaining: Int) async throws {
+    private func polymorphicTransactWrite(_ transactionInput: ExecuteTransactionInput,
+                                          inputKeys: [StandardCompositePrimaryKey], retriesRemaining: Int) async throws
+    {
         if inputKeys.count > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
-            throw DynamoDBTableError.transactionSizeExceeded(attemptedSize: inputKeys.count,
-                                                             maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
+            throw DynamoDBTableError.itemCollectionSizeLimitExceeded(attemptedSize: inputKeys.count,
+                                                                     maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
         }
 
         let result: Swift.Result<Void, DynamoDBTableError>
@@ -376,37 +345,37 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                     key = nil
                 }
 
-                let partitionKey = key?.partitionKey ?? entryKey?.partitionKey
-                let sortKey = key?.sortKey ?? entryKey?.sortKey
+                let partitionKey = key?.partitionKey ?? entryKey.partitionKey
+                let sortKey = key?.sortKey ?? entryKey.sortKey
 
                 // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ExecuteTransaction.html
                 switch cancellationReason.code {
                 case "None":
                     return nil
                 case "ConditionalCheckFailed":
-                    return DynamoDBTableError.transactionConditionalCheckFailed(partitionKey: partitionKey,
-                                                                                sortKey: sortKey,
-                                                                                message: cancellationReason.message)
+                    return DynamoDBTableError.conditionalCheckFailed(partitionKey: partitionKey,
+                                                                     sortKey: sortKey,
+                                                                     message: cancellationReason.message)
                 case "DuplicateItem":
                     return DynamoDBTableError.duplicateItem(partitionKey: partitionKey, sortKey: sortKey,
                                                             message: cancellationReason.message)
                 case "ItemCollectionSizeLimitExceeded":
-                    return DynamoDBTableError.transactionSizeExceeded(attemptedSize: inputKeys.count,
-                                                                      maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
+                    return DynamoDBTableError.itemCollectionSizeLimitExceeded(attemptedSize: inputKeys.count,
+                                                                              maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
                 case "TransactionConflict":
                     isTransactionConflict = true
 
                     return DynamoDBTableError.transactionConflict(message: cancellationReason.message)
                 case "ProvisionedThroughputExceeded":
-                    return DynamoDBTableError.transactionProvisionedThroughputExceeded(message: cancellationReason.message)
+                    return DynamoDBTableError.provisionedThroughputExceeded(message: cancellationReason.message)
                 case "ThrottlingError":
-                    return DynamoDBTableError.transactionThrottling(message: cancellationReason.message)
+                    return DynamoDBTableError.throttling(message: cancellationReason.message)
                 case "ValidationError":
-                    return DynamoDBTableError.transactionValidation(partitionKey: partitionKey, sortKey: sortKey,
-                                                                    message: cancellationReason.message)
+                    return DynamoDBTableError.validation(partitionKey: partitionKey, sortKey: sortKey,
+                                                         message: cancellationReason.message)
                 default:
-                    return DynamoDBTableError.transactionUnknown(code: cancellationReason.code, partitionKey: partitionKey,
-                                                                 sortKey: sortKey, message: cancellationReason.message)
+                    return DynamoDBTableError.unknown(code: cancellationReason.code, partitionKey: partitionKey,
+                                                      sortKey: sortKey, message: cancellationReason.message)
                 }
             }
 
@@ -436,7 +405,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    private func retryPolymorphicTransactWrite(_ transactionInput: ExecuteTransactionInput, inputKeys: [StandardCompositePrimaryKey?], retriesRemaining: Int) async throws {
+    private func retryPolymorphicTransactWrite(_ transactionInput: ExecuteTransactionInput, inputKeys: [StandardCompositePrimaryKey], retriesRemaining: Int) async throws {
         // determine the required interval
         let retryInterval = Int(self.retryConfiguration.getRetryInterval(retriesRemaining: retriesRemaining))
 
@@ -448,10 +417,10 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         return try await self.polymorphicTransactWrite(transactionInput, inputKeys: inputKeys, retriesRemaining: retriesRemaining - 1)
     }
 
-    private func writeChunkedItems(_ entries: [some PolymorphicWriteEntry]) async throws {
+    private func writeChunkedItems(_ entries: [some PolymorphicWriteEntry]) async throws -> [DynamoDBClientTypes.BatchStatementResponse] {
         // if there are no items, there is nothing to update
         guard entries.count > 0 else {
-            return
+            return []
         }
 
         let context = StandardPolymorphicWriteEntryContext<AWSDynamoDBPolymorphicWriteEntryTransform,
@@ -466,22 +435,33 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         let executeInput = BatchExecuteStatementInput(statements: statements)
 
         let response = try await dynamodb.batchExecuteStatement(input: executeInput)
-        try self.throwOnBatchExecuteStatementErrors(response: response)
+        return response.responses ?? []
     }
 
     func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedEntries = entries.chunked(by: AWSDynamoDBLimits.maximumUpdatesPerExecuteStatement)
-        try await chunkedEntries.concurrentForEach { chunk in
-            try await self.writeChunkedItems(chunk)
+        let zippedResponses = try await chunkedEntries.concurrentFlatMap { chunk in
+            let responses = try await self.writeChunkedItems(chunk)
+
+            return zip(responses, chunk)
+        }
+
+        let errors = zippedResponses.compactMap { response, item in
+            response.error?.asDynamoDBTableError(partitionKey: item.compositePrimaryKey.partitionKey,
+                                                 sortKey: item.compositePrimaryKey.sortKey, entryCount: entries.count)
+        }
+
+        if !errors.isEmpty {
+            throw DynamoDBTableError.batchFailures(errors: errors.removeDuplicates())
         }
     }
 
-    private func writeChunkedItems(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
+    private func writeChunkedItems(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws -> [DynamoDBClientTypes.BatchStatementResponse] {
         // if there are no items, there is nothing to update
         guard entries.count > 0 else {
-            return
+            return []
         }
 
         let statements = try entries.map { entry -> DynamoDBClientTypes.BatchStatementRequest in
@@ -508,15 +488,26 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         let executeInput = BatchExecuteStatementInput(statements: statements)
 
         let response = try await dynamodb.batchExecuteStatement(input: executeInput)
-        try self.throwOnBatchExecuteStatementErrors(response: response)
+        return response.responses ?? []
     }
 
     func bulkWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedEntries = entries.chunked(by: AWSDynamoDBLimits.maximumUpdatesPerExecuteStatement)
-        try await chunkedEntries.concurrentForEach { chunk in
-            try await self.writeChunkedItems(chunk)
+        let zippedResponses = try await chunkedEntries.concurrentFlatMap { chunk in
+            let responses = try await self.writeChunkedItems(chunk)
+
+            return zip(responses, chunk)
+        }
+
+        let errors = zippedResponses.compactMap { response, item in
+            response.error?.asDynamoDBTableError(partitionKey: item.compositePrimaryKey.partitionKey,
+                                                 sortKey: item.compositePrimaryKey.sortKey, entryCount: entries.count)
+        }
+
+        if !errors.isEmpty {
+            throw DynamoDBTableError.batchFailures(errors: errors.removeDuplicates())
         }
     }
 
@@ -525,85 +516,35 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
     {
         // fall back to singel operation if the write entry exceeds the statement length limitation
         var bulkWriteEntries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>] = []
-        try await entries.concurrentForEach { entry in
+        let errors: [DynamoDBTableError] = try await entries.concurrentCompactMap { entry -> DynamoDBTableError? in
             do {
                 try self.validateEntry(entry: entry)
                 bulkWriteEntries.append(entry)
             } catch DynamoDBTableError.statementLengthExceeded {
-                switch entry {
-                case let .update(new: new, existing: existing):
-                    try await self.updateItem(newItem: new, existingItem: existing)
-                case let .insert(new: new):
-                    try await self.insertItem(new)
-                case let .deleteAtKey(key: key):
-                    try await self.deleteItem(forKey: key)
-                case let .deleteItem(existing: existing):
-                    try await self.deleteItem(existingItem: existing)
+                do {
+                    switch entry {
+                    case let .update(new: new, existing: existing):
+                        try await self.updateItem(newItem: new, existingItem: existing)
+                    case let .insert(new: new):
+                        try await self.insertItem(new)
+                    case let .deleteAtKey(key: key):
+                        try await self.deleteItem(forKey: key)
+                    case let .deleteItem(existing: existing):
+                        try await self.deleteItem(existingItem: existing)
+                    }
+                } catch let error as DynamoDBTableError {
+                    return error
                 }
             }
+
+            return nil
         }
 
-        return try await self.bulkWrite(bulkWriteEntries)
-    }
-
-    func writeChunkedItemsWithoutThrowing(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
-        -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
-    {
-        // if there are no items, there is nothing to update
-
-        guard entries.count > 0 else {
-            self.logger.trace("\(entries) with count = 0")
-
-            return []
+        do {
+            return try await self.bulkWrite(bulkWriteEntries)
+        } catch let DynamoDBTableError.batchFailures(bulkErrors) {
+            // combine all errors and re-throw
+            throw DynamoDBTableError.batchFailures(errors: (errors + bulkErrors).removeDuplicates())
         }
-
-        let statements: [DynamoDBClientTypes.BatchStatementRequest] = try entries.map { try self.entryToBatchStatementRequest($0) }
-        let executeInput = BatchExecuteStatementInput(statements: statements)
-        let result = try await dynamodb.batchExecuteStatement(input: executeInput)
-
-        var errorCodeSet: Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum> = Set()
-        // TODO: Remove errorCodeSet and return errorSet instead
-        var errorSet: Set<InternalBatchStatementError> = Set()
-        result.responses?.forEach { response in
-            if let error = response.error, let code = error.code {
-                errorCodeSet.insert(code)
-                errorSet.insert(.init(code: error.code, item: error.item, message: error.message))
-            }
-        }
-
-        // if there are errors
-        if !errorSet.isEmpty {
-            self.logger.error("Received BatchStatmentErrors from dynamodb are \(errorSet)")
-        }
-        return errorCodeSet
-    }
-
-    func bulkWriteWithoutThrowing(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
-        -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
-    {
-        // BatchExecuteStatement has a maximum of 25 statements
-        // This function handles pagination internally.
-        let chunkedEntries = entries.chunked(by: AWSDynamoDBLimits.maximumUpdatesPerExecuteStatement)
-
-        let results = try await chunkedEntries.concurrentMap { chunk in
-            try await self.writeChunkedItemsWithoutThrowing(chunk)
-        }
-
-        return results.reduce([]) { partialResult, currentResult in
-            partialResult.union(currentResult)
-        }
-    }
-}
-
-struct InternalBatchStatementError: Equatable {
-    var code: DynamoDBClientTypes.BatchStatementErrorCodeEnum?
-    var item: [Swift.String: DynamoDBClientTypes.AttributeValue]?
-    var message: Swift.String?
-}
-
-extension InternalBatchStatementError: Hashable {
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(self.code)
-        hasher.combine(self.message)
     }
 }

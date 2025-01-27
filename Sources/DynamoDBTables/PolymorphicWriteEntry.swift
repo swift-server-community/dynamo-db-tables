@@ -49,13 +49,7 @@ public protocol PolymorphicTransactionConstraintTransform {
 public protocol PolymorphicWriteEntry {
     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteEntryTransformType
 
-    var compositePrimaryKey: StandardCompositePrimaryKey? { get }
-}
-
-public extension PolymorphicWriteEntry {
-    var compositePrimaryKey: StandardCompositePrimaryKey? {
-        nil
-    }
+    var compositePrimaryKey: StandardCompositePrimaryKey { get }
 }
 
 public typealias StandardTransactionConstraintEntry<ItemType: Codable> =
@@ -77,17 +71,15 @@ public enum TransactionConstraintEntry<AttributesType: PrimaryKeyAttributes, Ite
 public protocol PolymorphicTransactionConstraintEntry {
     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteTransactionConstraintType
 
-    var compositePrimaryKey: StandardCompositePrimaryKey? { get }
-}
-
-public extension PolymorphicTransactionConstraintEntry {
-    var compositePrimaryKey: StandardCompositePrimaryKey? {
-        nil
-    }
+    var compositePrimaryKey: StandardCompositePrimaryKey { get }
 }
 
 public struct EmptyPolymorphicTransactionConstraintEntry: PolymorphicTransactionConstraintEntry {
     public func handle<Context: PolymorphicWriteEntryContext>(context _: Context) throws -> Context.WriteTransactionConstraintType {
+        fatalError("There are no items to transform")
+    }
+
+    public var compositePrimaryKey: StandardCompositePrimaryKey {
         fatalError("There are no items to transform")
     }
 }

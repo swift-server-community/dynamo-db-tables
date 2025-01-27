@@ -54,7 +54,7 @@ enum BaseEntryDiagnostic<Attributes: MacroAttributes>: String, DiagnosticMessage
 }
 
 enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
-    private static func getCases(caseMembers: [EnumCaseDeclSyntax], context: some MacroExpansionContext, passCompositePrimaryKey: Bool)
+    private static func getCases(caseMembers: [EnumCaseDeclSyntax], context: some MacroExpansionContext)
         -> (hasDiagnostics: Bool, handleCases: SwitchCaseListSyntax, compositePrimaryKeyCases: SwitchCaseListSyntax)
     {
         var handleCases: SwitchCaseListSyntax = []
@@ -81,15 +81,13 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
 
                 handleCases.append(handleCaseSyntax)
 
-                if passCompositePrimaryKey {
-                    let compositePrimaryKeyCaseSyntax = SwitchCaseListSyntax.Element(
-                        """
-                        case let .\(element.name)(writeEntry):
-                            return writeEntry.compositePrimaryKey
-                        """)
+                let compositePrimaryKeyCaseSyntax = SwitchCaseListSyntax.Element(
+                    """
+                    case let .\(element.name)(writeEntry):
+                        return writeEntry.compositePrimaryKey
+                    """)
 
-                    compositePrimaryKeyCases.append(compositePrimaryKeyCaseSyntax)
-                }
+                compositePrimaryKeyCases.append(compositePrimaryKeyCaseSyntax)
             }
         }
 
@@ -97,22 +95,12 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
     }
 
     static func expansion(
-        of node: AttributeSyntax,
+        of _: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext) throws -> [ExtensionDeclSyntax]
     {
-        let passCompositePrimaryKey: Bool
-        if let arguments = node.arguments, case let .argumentList(argumentList) = arguments, let firstArgument = argumentList.first, argumentList.count == 1,
-           firstArgument.label?.text == "passCompositePrimaryKey", let expression = firstArgument.expression.as(BooleanLiteralExprSyntax.self),
-           case let .keyword(keyword) = expression.literal.tokenKind, keyword == SwiftSyntax.Keyword.false
-        {
-            passCompositePrimaryKey = false
-        } else {
-            passCompositePrimaryKey = true
-        }
-
         // make sure this is attached to an enum
         guard let enumDeclaration = declaration as? EnumDeclSyntax else {
             context.diagnose(.init(node: declaration, message: BaseEntryDiagnostic<Attributes>.notAttachedToEnumDeclaration))
@@ -145,8 +133,7 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
             return []
         }
 
-        let (hasDiagnostics, handleCases, compositePrimaryKeyCases) = self.getCases(caseMembers: caseMembers, context: context,
-                                                                                    passCompositePrimaryKey: passCompositePrimaryKey)
+        let (hasDiagnostics, handleCases, compositePrimaryKeyCases) = self.getCases(caseMembers: caseMembers, context: context)
 
         if hasDiagnostics {
             return []
@@ -163,10 +150,8 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
                     SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: handleCases)
                 }
 
-                if passCompositePrimaryKey {
-                    try VariableDeclSyntax("var compositePrimaryKey: StandardCompositePrimaryKey?") {
-                        SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: compositePrimaryKeyCases)
-                    }
+                try VariableDeclSyntax("var compositePrimaryKey: StandardCompositePrimaryKey") {
+                    SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: compositePrimaryKeyCases)
                 }
             })
 

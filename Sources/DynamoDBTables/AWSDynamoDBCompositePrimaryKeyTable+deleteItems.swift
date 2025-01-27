@@ -33,10 +33,10 @@ private let maximumUpdatesPerExecuteStatement = 25
 
 /// DynamoDBTable conformance updateItems function
 public extension AWSDynamoDBCompositePrimaryKeyTable {
-    private func deleteChunkedItems(_ keys: [CompositePrimaryKey<some Any>]) async throws {
+    private func deleteChunkedItems(_ keys: [CompositePrimaryKey<some Any>]) async throws -> [DynamoDBClientTypes.BatchStatementResponse] {
         // if there are no keys, there is nothing to update
         guard keys.count > 0 else {
-            return
+            return []
         }
 
         let statements = try keys.map { existingKey -> DynamoDBClientTypes.BatchStatementRequest in
@@ -49,13 +49,15 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         let executeInput = BatchExecuteStatementInput(statements: statements)
 
         let response = try await self.dynamodb.batchExecuteStatement(input: executeInput)
-        try throwOnBatchExecuteStatementErrors(response: response)
+        return response.responses ?? []
     }
 
-    private func deleteChunkedItems(_ existingItems: [TypedTTLDatabaseItem<some Any, some Any, some Any>]) async throws {
+    private func deleteChunkedItems(_ existingItems: [TypedTTLDatabaseItem<some Any, some Any, some Any>]) async throws
+        -> [DynamoDBClientTypes.BatchStatementResponse]
+    {
         // if there are no items, there is nothing to update
         guard existingItems.count > 0 else {
-            return
+            return []
         }
 
         let statements = try existingItems.map { existingItem -> DynamoDBClientTypes.BatchStatementRequest in
@@ -68,15 +70,25 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         let executeInput = BatchExecuteStatementInput(statements: statements)
 
         let response = try await self.dynamodb.batchExecuteStatement(input: executeInput)
-        try throwOnBatchExecuteStatementErrors(response: response)
+        return response.responses ?? []
     }
 
     func deleteItems(forKeys keys: [CompositePrimaryKey<some Any>]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedKeys = keys.chunked(by: maximumUpdatesPerExecuteStatement)
-        try await chunkedKeys.concurrentForEach { chunk in
-            try await self.deleteChunkedItems(chunk)
+        let zippedResponses = try await chunkedKeys.concurrentFlatMap { chunk in
+            let responses = try await self.deleteChunkedItems(chunk)
+
+            return zip(responses, chunk)
+        }
+
+        let errors = zippedResponses.compactMap { response, key in
+            response.error?.asDynamoDBTableError(partitionKey: key.partitionKey, sortKey: key.sortKey, entryCount: keys.count)
+        }
+
+        if !errors.isEmpty {
+            throw DynamoDBTableError.batchFailures(errors: errors.removeDuplicates())
         }
     }
 
@@ -84,8 +96,19 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedItems = existingItems.chunked(by: maximumUpdatesPerExecuteStatement)
-        try await chunkedItems.concurrentForEach { chunk in
-            try await self.deleteChunkedItems(chunk)
+        let zippedResponses = try await chunkedItems.concurrentFlatMap { chunk in
+            let responses = try await self.deleteChunkedItems(chunk)
+
+            return zip(responses, chunk)
+        }
+
+        let errors = zippedResponses.compactMap { response, item in
+            response.error?.asDynamoDBTableError(partitionKey: item.compositePrimaryKey.partitionKey,
+                                                 sortKey: item.compositePrimaryKey.sortKey, entryCount: existingItems.count)
+        }
+
+        if !errors.isEmpty {
+            throw DynamoDBTableError.batchFailures(errors: errors.removeDuplicates())
         }
     }
 }

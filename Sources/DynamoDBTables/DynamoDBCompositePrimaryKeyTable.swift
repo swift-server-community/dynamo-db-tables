@@ -32,11 +32,15 @@ import Foundation
  Enumeration of the errors that can be thrown by a DynamoDBTable.
  */
 public enum DynamoDBTableError: Error {
+    case accessDenied(message: String?)
+    case internalServerError(message: String?)
+    case requestLimitExceeded(message: String?)
     case databaseError(reason: String)
     case unexpectedError(cause: Swift.Error)
     case unexpectedResponse(reason: String)
     case conditionalCheckFailed(partitionKey: String, sortKey: String, message: String?)
-    case duplicateItem(partitionKey: String?, sortKey: String?, message: String?)
+    case duplicateItem(partitionKey: String, sortKey: String, message: String?)
+    case resourceNotFound(partitionKey: String, sortKey: String, message: String?)
     case typeMismatch(expected: String, provided: String)
     case unexpectedType(provided: String)
     case concurrencyError(partitionKey: String, sortKey: String, message: String?)
@@ -44,16 +48,14 @@ public enum DynamoDBTableError: Error {
     case unrecognizedError(String, String?)
     case multipleUnexpectedErrors(cause: [Swift.Error])
     case batchAPIExceededRetries(retryCount: Int)
-    case validationError(reason: String)
-    case batchErrorsReturned(errorCount: Int, messageMap: [String: Int])
+    case batchFailures(errors: [DynamoDBTableError])
     case statementLengthExceeded(reason: String)
-    case transactionSizeExceeded(attemptedSize: Int, maximumSize: Int)
+    case itemCollectionSizeLimitExceeded(attemptedSize: Int, maximumSize: Int)
+    case provisionedThroughputExceeded(message: String?)
+    case throttling(message: String?)
+    case validation(partitionKey: String?, sortKey: String?, message: String?)
+    case unknown(code: String?, partitionKey: String?, sortKey: String?, message: String?)
     case transactionConflict(message: String?)
-    case transactionProvisionedThroughputExceeded(message: String?)
-    case transactionThrottling(message: String?)
-    case transactionConditionalCheckFailed(partitionKey: String?, sortKey: String?, message: String?)
-    case transactionValidation(partitionKey: String?, sortKey: String?, message: String?)
-    case transactionUnknown(code: String?, partitionKey: String?, sortKey: String?, message: String?)
     case transactionCanceled(reasons: [DynamoDBTableError])
 }
 
@@ -164,9 +166,6 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     func bulkWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
 
     func bulkWriteWithFallback(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
-
-    func bulkWriteWithoutThrowing(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
-        -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
 
     func polymorphicBulkWrite<WriteEntryType: PolymorphicWriteEntry>(_ entries: [WriteEntryType]) async throws
 
