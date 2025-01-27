@@ -49,7 +49,7 @@ public extension DynamoDBCompositePrimaryKeyTable {
         andHistoricalKey historicalKey: String,
         item: ItemType,
         primaryKeyType _: AttributesType.Type = StandardPrimaryKeyAttributes.self,
-        TimeToLiveAttributesType: TimeToLiveAttributesType.Type = StandardTimeToLiveAttributes.self,
+        timeToLiveAttributesType _: TimeToLiveAttributesType.Type = StandardTimeToLiveAttributes.self,
         generateSortKey: @escaping (Int) -> String) async throws
     {
         func primaryItemProvider(_ existingItem: TypedTTLDatabaseItem<AttributesType, RowWithItemVersion<ItemType>, TimeToLiveAttributesType>?)

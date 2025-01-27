@@ -49,21 +49,21 @@ public struct PolymorphicOperationReturnOption<AttributesType: PrimaryKeyAttribu
     {
         @Sendable
         func newDecodingPayloadHandler(decoder: Decoder) throws -> ReturnType {
-            let TypedTTLDatabaseItem: TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType> =
+            let typedTTLDatabaseItem: TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType> =
                 try TypedTTLDatabaseItem(from: decoder)
 
-            return payloadHandler(TypedTTLDatabaseItem)
+            return payloadHandler(typedTTLDatabaseItem)
         }
 
         @Sendable
         func newTypeConvertingPayloadHandler(input: Any) throws -> ReturnType {
-            guard let TypedTTLDatabaseItem = input as? TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType> else {
+            guard let typedTTLDatabaseItem = input as? TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType> else {
                 let description = "Expected to use item type \(TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>.self)."
                 let context = DecodingError.Context(codingPath: [], debugDescription: description)
                 throw DecodingError.typeMismatch(TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>.self, context)
             }
 
-            return payloadHandler(TypedTTLDatabaseItem)
+            return payloadHandler(typedTTLDatabaseItem)
         }
 
         self.decodingPayloadHandler = newDecodingPayloadHandler

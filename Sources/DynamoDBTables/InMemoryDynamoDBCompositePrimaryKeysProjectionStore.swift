@@ -30,16 +30,6 @@ import Foundation
 
 // MARK: - Store implementation
 
-public struct TypeErasedCompositePrimaryKey: Sendable {
-    public let partitionKey: String
-    public let sortKey: String
-
-    public init(partitionKey: String, sortKey: String) {
-        self.partitionKey = partitionKey
-        self.sortKey = sortKey
-    }
-}
-
 actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
     public var keys: [TypeErasedCompositePrimaryKey] = []
 

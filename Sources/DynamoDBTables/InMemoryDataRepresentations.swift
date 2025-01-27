@@ -13,18 +13,74 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  InMemoryDynamoDBCompositePrimaryKeyTableStore+sendable.swift
+//  InMemoryDataRepresentations.swift
 //  DynamoDBTables
 //
 
-// MARK: - Sendable InMemory Storage Helpers
+// MARK: - InMemory Data Representations
 
 @preconcurrency import AWSDynamoDB
 import Foundation
 
-public struct DatabaseItemMetadata: Sendable {
-    public var createDate: Date
-    public var rowStatus: RowStatus
+/**
+ In-memory Sendable representations of database rows and their metadata, allowing rows to be stored `InMemoryDynamoDBCompositePrimaryKeyTableStore`
+ without storing the potentially non-Sendable row types.
+ */
+
+/**
+ Representation of a `DatabaseItem` when stored in `InMemoryDynamoDBCompositePrimaryKeyTableStore`.
+ This type stores the serialised `DynamoDBClientTypes.AttributeValue` map
+ */
+public struct InMemoryDatabaseItem: Sendable {
+    public var item: [Swift.String: DynamoDBClientTypes.AttributeValue]
+    var metadata: DatabaseItemMetadata
+
+    var createDate: Date {
+        self.metadata.createDate
+    }
+
+    var rowStatus: RowStatus {
+        self.metadata.rowStatus
+    }
+
+    /**
+     De-serialises the `DynamoDBClientTypes.AttributeValue` map into an appropriate `TypedTTLDatabaseItem`.
+     */
+    public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>() throws
+        -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
+    {
+        do {
+            return try DynamoDBDecoder().decode(DynamoDBClientTypes.AttributeValue.m(self.item))
+        } catch {
+            throw error.asUnrecognizedDynamoDBTableError()
+        }
+    }
+}
+
+public struct TypeErasedCompositePrimaryKey: Sendable {
+    public let partitionKey: String
+    public let sortKey: String
+
+    public init(partitionKey: String, sortKey: String) {
+        self.partitionKey = partitionKey
+        self.sortKey = sortKey
+    }
+}
+
+// MARK: - Internal Storage Helpers
+
+extension TypedTTLDatabaseItem {
+    func inMemoryForm() throws
+        -> InMemoryDatabaseItem
+    {
+        let attributes = try getAttributes(forItem: self)
+        return .init(item: attributes, metadata: self.asMetadata())
+    }
+}
+
+struct DatabaseItemMetadata: Sendable {
+    var createDate: Date
+    var rowStatus: RowStatus
 }
 
 struct DatabaseItemMetadataWithKey<AttributesType: PrimaryKeyAttributes>: Sendable {
@@ -51,38 +107,6 @@ extension TypedTTLDatabaseItem {
         -> DatabaseItemMetadataWithKey<AttributesType>
     {
         .init(compositePrimaryKey: self.compositePrimaryKey, metadata: self.asMetadata())
-    }
-}
-
-public struct InMemoryDatabaseItem: Sendable {
-    public var item: [Swift.String: DynamoDBClientTypes.AttributeValue]
-    var metadata: DatabaseItemMetadata
-
-    var createDate: Date {
-        self.metadata.createDate
-    }
-
-    var rowStatus: RowStatus {
-        self.metadata.rowStatus
-    }
-
-    public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>() throws
-        -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
-    {
-        do {
-            return try DynamoDBDecoder().decode(DynamoDBClientTypes.AttributeValue.m(self.item))
-        } catch {
-            throw error.asUnrecognizedDynamoDBTableError()
-        }
-    }
-}
-
-extension TypedTTLDatabaseItem {
-    func inMemoryForm() throws
-        -> InMemoryDatabaseItem
-    {
-        let attributes = try getAttributes(forItem: self)
-        return .init(item: attributes, metadata: self.asMetadata())
     }
 }
 
