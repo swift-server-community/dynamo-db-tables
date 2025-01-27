@@ -42,8 +42,8 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
      monitors the unprocessed items returned in the response from DynamoDB and uses an exponential backoff algorithm to retry those items using
      the same retry configuration as the underlying DynamoDB client.
      */
-    private class GetItemsRetriable<AttributesType: PrimaryKeyAttributes, ItemType: Sendable & Codable> {
-        typealias OutputType = [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
+    private class GetItemsRetriable<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes> {
+        typealias OutputType = [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
 
         let dynamodb: AWSDynamoDB.DynamoDBClient
         let retryConfiguration: RetryConfiguration
@@ -74,7 +74,8 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                     do {
                         let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
 
-                        let decodedValue: TypedDatabaseItem<AttributesType, ItemType> = try DynamoDBDecoder().decode(attributeValue)
+                        let decodedValue: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+                            = try DynamoDBDecoder().decode(attributeValue)
                         let key = decodedValue.compositePrimaryKey
 
                         self.outputItems[key] = decodedValue
@@ -121,16 +122,16 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func getItems<AttributesType, ItemType>(
+    func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
         forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
-        -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
+        -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         let chunkedList = keys.chunked(by: maximumKeysPerGetItemBatch)
 
-        let maps = try await chunkedList.concurrentMap { chunk -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>] in
+        let maps = try await chunkedList.concurrentMap { chunk in
             let input = try self.getInputForBatchGetItem(forKeys: chunk)
 
-            let retriable = GetItemsRetriable<AttributesType, ItemType>(
+            let retriable = GetItemsRetriable<AttributesType, ItemType, TimeToLiveAttributesType>(
                 initialInput: input,
                 dynamodb: self.dynamodb,
                 retryConfiguration: self.retryConfiguration,
@@ -139,7 +140,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             return try await retriable.batchGetItem()
         }
 
-        // maps is of type [[CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]]
+        // maps is of type [[CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<some Any, some Any, some Any>]]
         // with each map coming from each chunk of the original key list
         return maps.reduce([:]) { partialMap, chunkMap in
             // reduce the maps from the chunks into a single map

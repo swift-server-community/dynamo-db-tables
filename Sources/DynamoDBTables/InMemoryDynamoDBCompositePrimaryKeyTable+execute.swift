@@ -1,17 +1,6 @@
-// swiftlint:disable cyclomatic_complexity
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the DynamoDBTables open source project
-//
-// This file is forked from
-// https://github.com/amzn/smoke-dynamodb/tree/main/Sources/SmokeDynamoDB/InMemoryDynamoDBCompositePrimaryKeyTableStore+execute.swift
-// Copyright 2018-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// Licensed under Apache License v2.0
-//
-// Changes specified by
-// https://github.com/swift-server-community/dynamo-db-tables/compare/9ab0e7a..main
-// Copyright (c) 2024 the DynamoDBTables authors
-// Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
 // See CONTRIBUTORS.txt for the list of DynamoDBTables authors
@@ -21,21 +10,22 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  InMemoryDynamoDBCompositePrimaryKeyTableStore+execute.swift
+//  InMemoryDynamoDBCompositePrimaryKeyTable+query.swift
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
+@preconcurrency import AWSDynamoDB
 import Foundation
 
-extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
+// MARK: - Execute implementations
+
+public extension InMemoryDynamoDBCompositePrimaryKeyTable {
     func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter _: [String]?,
-        additionalWhereClause: String?) throws
-        -> [ReturnedType]
+        additionalWhereClause: String?) async throws -> [ReturnedType]
     {
-        let items = self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
+        let items = await self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
 
         let returnedItems: [ReturnedType] = try items.map { item in
             try self.convertToQueryableType(input: item)
@@ -47,10 +37,10 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
     func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter _: [String]?,
-        additionalWhereClause: String?, nextToken _: String?) throws
+        additionalWhereClause: String?, nextToken _: String?) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
-        let items = self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
+        let items = await self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
 
         let returnedItems: [ReturnedType] = try items.map { item in
             try self.convertToQueryableType(input: item)
@@ -59,20 +49,19 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
         return (returnedItems, nil)
     }
 
-    func execute<AttributesType, ItemType>(
+    func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter _: [String]?,
-        additionalWhereClause: String?) throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
+        additionalWhereClause: String?) async throws -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
-        let items = self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
+        let items = await self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
 
-        let returnedItems: [TypedDatabaseItem<AttributesType, ItemType>] = try items.map { item in
-            guard let typedItem = item as? TypedDatabaseItem<AttributesType, ItemType> else {
+        let returnedItems: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try items.map { item in
+            guard let typedItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> = try item.getItem() else {
                 let foundType = type(of: item)
-                let description = "Expected to decode \(TypedDatabaseItem<AttributesType, ItemType>.self). Instead found \(foundType)."
+                let description = "Expected to decode \(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self). Instead found \(foundType)."
                 let context = DecodingError.Context(codingPath: [], debugDescription: description)
-                let error = DecodingError.typeMismatch(TypedDatabaseItem<AttributesType, ItemType>.self, context)
+                let error = DecodingError.typeMismatch(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self, context)
 
                 throw error
             }
@@ -83,20 +72,20 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
         return returnedItems
     }
 
-    func execute<AttributesType, ItemType>(
+    func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter _: [String]?,
-        additionalWhereClause: String?, nextToken _: String?) throws
-        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
+        additionalWhereClause: String?, nextToken _: String?) async throws
+        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
     {
-        let items = self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
+        let items = await self.getExecuteItems(partitionKeys: partitionKeys, additionalWhereClause: additionalWhereClause)
 
-        let returnedItems: [TypedDatabaseItem<AttributesType, ItemType>] = try items.map { item in
-            guard let typedItem = item as? TypedDatabaseItem<AttributesType, ItemType> else {
+        let returnedItems: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try items.map { item in
+            guard let typedItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> = try item.getItem() else {
                 let foundType = type(of: item)
-                let description = "Expected to decode \(TypedDatabaseItem<AttributesType, ItemType>.self). Instead found \(foundType)."
+                let description = "Expected to decode \(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self). Instead found \(foundType)."
                 let context = DecodingError.Context(codingPath: [], debugDescription: description)
-                let error = DecodingError.typeMismatch(TypedDatabaseItem<AttributesType, ItemType>.self, context)
+                let error = DecodingError.typeMismatch(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self, context)
 
                 throw error
             }
@@ -107,12 +96,14 @@ extension InMemoryDynamoDBCompositePrimaryKeyTableStore {
         return (returnedItems, nil)
     }
 
-    func getExecuteItems(partitionKeys: [String],
-                         additionalWhereClause: String?) -> [PolymorphicOperationReturnTypeConvertable]
+    internal func getExecuteItems(partitionKeys: [String],
+                                  additionalWhereClause: String?) async -> [InMemoryDatabaseItem]
     {
-        var items: [PolymorphicOperationReturnTypeConvertable] = []
+        let store = await self.store
+
+        var items: [InMemoryDatabaseItem] = []
         for partitionKey in partitionKeys {
-            guard let partition = self.store[partitionKey] else {
+            guard let partition = store[partitionKey] else {
                 // no such partition, continue
                 continue
             }

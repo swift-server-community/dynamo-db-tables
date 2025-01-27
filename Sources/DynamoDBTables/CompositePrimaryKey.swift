@@ -26,7 +26,7 @@
 
 import Foundation
 
-public protocol PrimaryKeyAttributes: Sendable {
+public protocol PrimaryKeyAttributes {
     static var partitionKeyAttributeName: String { get }
     static var sortKeyAttributeName: String { get }
     static var indexName: String? { get }
@@ -48,7 +48,10 @@ public struct StandardPrimaryKeyAttributes: PrimaryKeyAttributes {
     }
 }
 
-public typealias StandardTypedDatabaseItem<RowType: Codable> = TypedDatabaseItem<StandardPrimaryKeyAttributes, RowType>
+public typealias StandardTypedDatabaseItem<RowType: Codable> =
+    TypedDatabaseItem<StandardPrimaryKeyAttributes, RowType>
+public typealias TypedDatabaseItem<AttributesType: PrimaryKeyAttributes, RowType: Codable> =
+    TypedTTLDatabaseItem<AttributesType, RowType, StandardTimeToLiveAttributes>
 public typealias StandardCompositePrimaryKey = CompositePrimaryKey<StandardPrimaryKeyAttributes>
 
 struct DynamoDBAttributesTypeCodingKey: CodingKey {

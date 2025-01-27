@@ -34,16 +34,18 @@ public extension DynamoDBCompositePrimaryKeyTable {
      * Historical items exist across multiple rows. This method provides an interface to record all
      * rows in a single call.
      */
-    func insertItemWithHistoricalRow<AttributesType, ItemType>(primaryItem: TypedDatabaseItem<AttributesType, ItemType>,
-                                                               historicalItem: TypedDatabaseItem<AttributesType, ItemType>) async throws
+    func insertItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
+        primaryItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        historicalItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
     {
         try await insertItem(primaryItem)
         try await insertItem(historicalItem)
     }
 
-    func updateItemWithHistoricalRow<AttributesType, ItemType>(primaryItem: TypedDatabaseItem<AttributesType, ItemType>,
-                                                               existingItem: TypedDatabaseItem<AttributesType, ItemType>,
-                                                               historicalItem: TypedDatabaseItem<AttributesType, ItemType>) async throws
+    func updateItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
+        primaryItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        historicalItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
     {
         try await updateItem(newItem: primaryItem, existingItem: existingItem)
         try await insertItem(historicalItem)
@@ -61,9 +63,11 @@ public extension DynamoDBCompositePrimaryKeyTable {
      * Clobbering a historical item requires knowledge of existing rows to accurately record
      * historical data.
      */
-    func clobberItemWithHistoricalRow<AttributesType, ItemType>(
-        primaryItemProvider: @escaping (TypedDatabaseItem<AttributesType, ItemType>?) -> TypedDatabaseItem<AttributesType, ItemType>,
-        historicalItemProvider: @escaping (TypedDatabaseItem<AttributesType, ItemType>) -> TypedDatabaseItem<AttributesType, ItemType>,
+    func clobberItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
+        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?) ->
+            TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        historicalItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
+            TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         withRetries retries: Int = 10) async throws
     {
         let primaryItem = primaryItemProvider(nil)
@@ -74,10 +78,11 @@ public extension DynamoDBCompositePrimaryKeyTable {
                                                       message: "Unable to complete request to clobber versioned item in specified number of attempts")
         }
 
-        let existingItemOptional: TypedDatabaseItem<AttributesType, ItemType>? = try await getItem(forKey: primaryItem.compositePrimaryKey)
+        let existingItemOptional: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>? =
+            try await getItem(forKey: primaryItem.compositePrimaryKey)
 
         if let existingItem = existingItemOptional {
-            let newItem: TypedDatabaseItem<AttributesType, ItemType> = primaryItemProvider(existingItem)
+            let newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> = primaryItemProvider(existingItem)
 
             do {
                 try await self.updateItemWithHistoricalRow(primaryItem: newItem, existingItem: existingItem,
@@ -115,11 +120,13 @@ public extension DynamoDBCompositePrimaryKeyTable {
         - primaryItemProvider: Function to provide the updated item or throw if the current item can't be updated.
         - historicalItemProvider: Function to provide the historical item for the primary item.
      */
-    func conditionallyUpdateItemWithHistoricalRow<AttributesType, ItemType>(
+    func conditionallyUpdateItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
         compositePrimaryKey: CompositePrimaryKey<AttributesType>,
-        primaryItemProvider: @escaping (TypedDatabaseItem<AttributesType, ItemType>) async throws -> TypedDatabaseItem<AttributesType, ItemType>,
-        historicalItemProvider: @escaping (TypedDatabaseItem<AttributesType, ItemType>) -> TypedDatabaseItem<AttributesType, ItemType>,
-        withRetries retries: Int = 10) async throws -> TypedDatabaseItem<AttributesType, ItemType>
+        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws ->
+            TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        historicalItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
+            TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        withRetries retries: Int = 10) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
     {
         try await self.conditionallyUpdateItemWithHistoricalRowInternal(
             compositePrimaryKey: compositePrimaryKey,
@@ -130,11 +137,13 @@ public extension DynamoDBCompositePrimaryKeyTable {
 
     // Explicitly specify an overload with sync updatedPayloadProvider
     // to avoid the compiler matching a call site with such a provider with the EventLoopFuture-returning overload.
-    func conditionallyUpdateItemWithHistoricalRow<AttributesType, ItemType>(
+    func conditionallyUpdateItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
         compositePrimaryKey: CompositePrimaryKey<AttributesType>,
-        primaryItemProvider: @escaping (TypedDatabaseItem<AttributesType, ItemType>) throws -> TypedDatabaseItem<AttributesType, ItemType>,
-        historicalItemProvider: @escaping (TypedDatabaseItem<AttributesType, ItemType>) -> TypedDatabaseItem<AttributesType, ItemType>,
-        withRetries retries: Int = 10) async throws -> TypedDatabaseItem<AttributesType, ItemType>
+        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) throws ->
+            TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        historicalItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
+            TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        withRetries retries: Int = 10) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
     {
         try await self.conditionallyUpdateItemWithHistoricalRowInternal(
             compositePrimaryKey: compositePrimaryKey,
@@ -143,11 +152,13 @@ public extension DynamoDBCompositePrimaryKeyTable {
             withRetries: retries)
     }
 
-    private func conditionallyUpdateItemWithHistoricalRowInternal<AttributesType, ItemType>(
+    private func conditionallyUpdateItemWithHistoricalRowInternal<AttributesType, ItemType, TimeToLiveAttributesType>(
         compositePrimaryKey: CompositePrimaryKey<AttributesType>,
-        primaryItemProvider: @escaping (TypedDatabaseItem<AttributesType, ItemType>) async throws -> TypedDatabaseItem<AttributesType, ItemType>,
-        historicalItemProvider: @escaping (TypedDatabaseItem<AttributesType, ItemType>) -> TypedDatabaseItem<AttributesType, ItemType>,
-        withRetries retries: Int = 10) async throws -> TypedDatabaseItem<AttributesType, ItemType>
+        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws ->
+            TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        historicalItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
+            TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        withRetries retries: Int = 10) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
     {
         guard retries > 0 else {
             throw DynamoDBTableError.concurrencyError(partitionKey: compositePrimaryKey.partitionKey,
@@ -155,7 +166,8 @@ public extension DynamoDBCompositePrimaryKeyTable {
                                                       message: "Unable to complete request to update versioned item in specified number of attempts")
         }
 
-        let existingItemOptional: TypedDatabaseItem<AttributesType, ItemType>? = try await getItem(forKey: compositePrimaryKey)
+        let existingItemOptional: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>? =
+            try await getItem(forKey: compositePrimaryKey)
 
         guard let existingItem = existingItemOptional else {
             throw DynamoDBTableError.conditionalCheckFailed(partitionKey: compositePrimaryKey.partitionKey,

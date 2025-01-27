@@ -95,7 +95,8 @@ public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTa
 }
 
 extension AWSDynamoDBCompositePrimaryKeyTable {
-    func getInputForInsert<AttributesType>(_ item: TypedDatabaseItem<AttributesType, some Any>) throws
+    func getInputForInsert<AttributesType>(
+        _ item: TypedTTLDatabaseItem<AttributesType, some Any, some Any>) throws
         -> AWSDynamoDB.PutItemInput
     {
         let attributes = try getAttributes(forItem: item)
@@ -109,15 +110,15 @@ extension AWSDynamoDBCompositePrimaryKeyTable {
                                         tableName: self.targetTableName)
     }
 
-    func getInputForUpdateItem<AttributesType, ItemType>(
-        newItem: TypedDatabaseItem<AttributesType, ItemType>,
-        existingItem: TypedDatabaseItem<AttributesType, ItemType>) throws -> AWSDynamoDB.PutItemInput
+    func getInputForUpdateItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+        newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) throws -> AWSDynamoDB.PutItemInput
     {
         let attributes = try getAttributes(forItem: newItem)
 
         let expressionAttributeNames = [
             "#rowversion": RowStatus.CodingKeys.rowVersion.stringValue,
-            "#createdate": TypedDatabaseItem<AttributesType, ItemType>.CodingKeys.createDate.stringValue,
+            "#createdate": TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.CodingKeys.createDate.stringValue,
         ]
         let expressionAttributeValues = [
             ":versionnumber": DynamoDBClientTypes.AttributeValue.n(String(existingItem.rowStatus.rowVersion)),
@@ -175,8 +176,8 @@ extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func getInputForDeleteItem<AttributesType, ItemType>(
-        existingItem: TypedDatabaseItem<AttributesType, ItemType>) throws -> AWSDynamoDB.DeleteItemInput
+    func getInputForDeleteItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) throws -> AWSDynamoDB.DeleteItemInput
     {
         let attributeValue = try DynamoDBEncoder().encode(existingItem.compositePrimaryKey)
 
@@ -186,7 +187,7 @@ extension AWSDynamoDBCompositePrimaryKeyTable {
 
         let expressionAttributeNames = [
             "#rowversion": RowStatus.CodingKeys.rowVersion.stringValue,
-            "#createdate": TypedDatabaseItem<AttributesType, ItemType>.CodingKeys.createDate.stringValue,
+            "#createdate": TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.CodingKeys.createDate.stringValue,
         ]
         let expressionAttributeValues = [
             ":versionnumber": DynamoDBClientTypes.AttributeValue.n(String(existingItem.rowStatus.rowVersion)),

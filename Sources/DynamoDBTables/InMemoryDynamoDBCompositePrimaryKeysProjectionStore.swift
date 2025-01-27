@@ -31,10 +31,10 @@ import Foundation
 // MARK: - Store implementation
 
 actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
-    public var keys: [Sendable] = []
+    public var keys: [TypeErasedCompositePrimaryKey] = []
 
-    public init(keys: [Sendable] = []) {
-        self.keys = keys
+    public init(keys: [CompositePrimaryKey<some Any>] = []) {
+        self.keys = keys.map { .init(partitionKey: $0.partitionKey, sortKey: $0.sortKey) }
     }
 
     public func query<AttributesType>(forPartitionKey partitionKey: String,
@@ -43,9 +43,8 @@ actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
     {
         var items: [CompositePrimaryKey<AttributesType>] = []
 
-        let sortedKeys = self.keys.compactMap { $0 as? CompositePrimaryKey<AttributesType> }.sorted(by: { left, right -> Bool in
-            left.sortKey < right.sortKey
-        })
+        let sortedKeys: [CompositePrimaryKey<AttributesType>] = self.keys.compactMap { .init(partitionKey: $0.partitionKey, sortKey: $0.sortKey) }
+            .sorted(by: { left, right -> Bool in left.sortKey < right.sortKey })
 
         sortKeyIteration: for key in sortedKeys {
             if key.partitionKey != partitionKey {

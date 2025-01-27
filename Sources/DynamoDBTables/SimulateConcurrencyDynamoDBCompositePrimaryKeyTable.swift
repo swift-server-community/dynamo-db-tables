@@ -60,7 +60,7 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         self.simulateOnUpdateItem = simulateOnUpdateItem
     }
 
-    public func validateEntry(entry: WriteEntry<some Any, some Any>) throws {
+    public func validateEntry(entry: WriteEntry<some Any, some Any, some Any>) throws {
         let entryString = "\(entry)"
         if entryString.count > maxStatementLength {
             throw DynamoDBTableError.statementLengthExceeded(
@@ -68,7 +68,7 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         }
     }
 
-    public func insertItem(_ item: TypedDatabaseItem<some Any, some Any>) async throws {
+    public func insertItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         // if there are still modifications to be made and there is an existing row
         if self.simulateOnInsertItem, self.previousConcurrencyModifications < self.simulateConcurrencyModifications {
             // insert an item so the conditional check will fail
@@ -84,12 +84,13 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         try await self.wrappedDynamoDBTable.insertItem(item)
     }
 
-    public func clobberItem(_ item: TypedDatabaseItem<some Any, some Any>) async throws {
+    public func clobberItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         try await self.wrappedDynamoDBTable.clobberItem(item)
     }
 
-    public func updateItem<AttributesType, ItemType>(newItem: TypedDatabaseItem<AttributesType, ItemType>,
-                                                     existingItem: TypedDatabaseItem<AttributesType, ItemType>) async throws
+    public func updateItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+        newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
     {
         // if there are still modifications to be made and there is an existing row
         if self.simulateOnUpdateItem, self.previousConcurrencyModifications < self.simulateConcurrencyModifications {
@@ -106,31 +107,32 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         try await self.wrappedDynamoDBTable.updateItem(newItem: newItem, existingItem: existingItem)
     }
 
-    public func transactWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+    public func transactWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
         try await self.wrappedDynamoDBTable.transactWrite(entries)
     }
 
-    public func transactWrite<AttributesType, ItemType>(_ entries: [WriteEntry<AttributesType, ItemType>],
-                                                        constraints: [TransactionConstraintEntry<AttributesType, ItemType>]) async throws
+    public func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
+        _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
+        constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]) async throws
     {
         try await self.wrappedDynamoDBTable.transactWrite(entries, constraints: constraints)
     }
 
-    public func polymorphicTransactWrite(_ entries: sending [some PolymorphicWriteEntry]) async throws {
+    public func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         try await self.wrappedDynamoDBTable.polymorphicTransactWrite(entries)
     }
 
     public func polymorphicTransactWrite(
-        _ entries: sending [some PolymorphicWriteEntry], constraints: sending [some PolymorphicTransactionConstraintEntry]) async throws
+        _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
     {
         try await self.wrappedDynamoDBTable.polymorphicTransactWrite(entries, constraints: constraints)
     }
 
-    public func polymorphicBulkWrite(_ entries: sending [some PolymorphicWriteEntry]) async throws {
+    public func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         try await self.wrappedDynamoDBTable.polymorphicBulkWrite(entries)
     }
 
-    public func bulkWrite(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+    public func bulkWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
         try await entries.asyncForEach { entry in
             switch entry {
             case let .update(new: new, existing: existing):
@@ -145,19 +147,19 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         }
     }
 
-    public func bulkWriteWithFallback(_ entries: [WriteEntry<some Any, some Any>]) async throws {
+    public func bulkWriteWithFallback(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
         try await self.wrappedDynamoDBTable.bulkWriteWithFallback(entries)
     }
 
     public func bulkWriteWithoutThrowing(
-        _ entries: [WriteEntry<some Any, some Any>]) async throws
+        _ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
         -> Set<DynamoDBClientTypes.BatchStatementErrorCodeEnum>
     {
         try await self.wrappedDynamoDBTable.bulkWriteWithoutThrowing(entries)
     }
 
-    public func getItem<AttributesType, ItemType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
-        -> TypedDatabaseItem<AttributesType, ItemType>?
+    public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
+        -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
     {
         // simply delegate to the wrapped implementation
         try await self.wrappedDynamoDBTable.getItem(forKey: key)
@@ -176,7 +178,7 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         try await self.wrappedDynamoDBTable.deleteItem(forKey: key)
     }
 
-    public func deleteItem(existingItem: TypedDatabaseItem<some PrimaryKeyAttributes, some Decodable & Encodable>) async throws {
+    public func deleteItem(existingItem: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         try await self.wrappedDynamoDBTable.deleteItem(existingItem: existingItem)
     }
 
@@ -184,7 +186,7 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         try await self.wrappedDynamoDBTable.deleteItems(forKeys: keys)
     }
 
-    public func deleteItems(existingItems: [some DatabaseItem]) async throws {
+    public func deleteItems(existingItems: [TypedTTLDatabaseItem<some Any, some Any, some Any>]) async throws {
         try await self.wrappedDynamoDBTable.deleteItems(existingItems: existingItems)
     }
 
@@ -256,19 +258,19 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
                                                                nextToken: nextToken)
     }
 
-    public func getItems<AttributesType, ItemType>(
+    public func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
         forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
-        -> [CompositePrimaryKey<AttributesType>: TypedDatabaseItem<AttributesType, ItemType>]
+        -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         // simply delegate to the wrapped implementation
         try await self.wrappedDynamoDBTable.getItems(forKeys: keys)
     }
 
-    public func execute<AttributesType, ItemType>(
+    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
+        -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         // simply delegate to the wrapped implementation
         try await self.wrappedDynamoDBTable.execute(partitionKeys: partitionKeys,
@@ -276,11 +278,11 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
                                                     additionalWhereClause: additionalWhereClause)
     }
 
-    public func execute<AttributesType, ItemType>(
+    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?, nextToken: String?) async throws
-        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
+        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
     {
         // simply delegate to the wrapped implementation
         try await self.wrappedDynamoDBTable.execute(partitionKeys: partitionKeys,
@@ -289,10 +291,10 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
                                                     nextToken: nextToken)
     }
 
-    public func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                sortKeyCondition: AttributeCondition?,
-                                                consistentRead: Bool) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
+    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
+                                                                          sortKeyCondition: AttributeCondition?,
+                                                                          consistentRead: Bool) async throws
+        -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         // simply delegate to the wrapped implementation
         try await self.wrappedDynamoDBTable.query(forPartitionKey: partitionKey,
@@ -300,13 +302,13 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
                                                   consistentRead: consistentRead)
     }
 
-    public func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                                sortKeyCondition: AttributeCondition?,
-                                                limit: Int?,
-                                                scanIndexForward: Bool,
-                                                exclusiveStartKey: String?,
-                                                consistentRead: Bool) async throws
-        -> (items: [TypedDatabaseItem<AttributesType, ItemType>], lastEvaluatedKey: String?)
+    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
+                                                                          sortKeyCondition: AttributeCondition?,
+                                                                          limit: Int?,
+                                                                          scanIndexForward: Bool,
+                                                                          exclusiveStartKey: String?,
+                                                                          consistentRead: Bool) async throws
+        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
     {
         // simply delegate to the wrapped implementation
         try await self.wrappedDynamoDBTable.query(forPartitionKey: partitionKey,

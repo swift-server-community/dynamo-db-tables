@@ -44,21 +44,23 @@ public protocol DynamoDBCompositePrimaryKeyGSILogic {
     /**
      * Called when an item is inserted on the main table. Can be used to transform the provided item to the item that would be made available on the GSI.
      */
-    func onInsertItem<AttributesType, ItemType>(_ item: TypedDatabaseItem<AttributesType, ItemType>,
-                                                gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
+    func onInsertItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>,
+                      gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
 
     /**
      * Called when an item is clobbered on the main table. Can be used to transform the provided item to the item that would be made available on the GSI.
      */
-    func onClobberItem<AttributesType, ItemType>(_ item: TypedDatabaseItem<AttributesType, ItemType>,
-                                                 gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
+    func onClobberItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>,
+                       gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
 
     /**
      * Called when an item is updated on the main table. Can be used to transform the provided item to the item that would be made available on the GSI.
      */
-    func onUpdateItem<AttributesType, ItemType>(newItem: TypedDatabaseItem<AttributesType, ItemType>,
-                                                existingItem: TypedDatabaseItem<AttributesType, ItemType>,
-                                                gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
+    func onUpdateItem<AttributesType,
+        ItemType,
+        TimeToLiveAttributesType>(newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+                                  existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+                                  gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
 
     /**
      * Called when an item is delete on the main table. Can be used to also delete the corresponding item on the GSI.

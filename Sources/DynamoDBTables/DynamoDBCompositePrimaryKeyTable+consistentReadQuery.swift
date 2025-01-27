@@ -65,21 +65,21 @@ public extension DynamoDBCompositePrimaryKeyTable {
                                         consistentRead: self.consistentRead)
     }
 
-    func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                         sortKeyCondition: AttributeCondition?) async throws
-        -> [TypedDatabaseItem<AttributesType, ItemType>]
+    func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
+                                                                   sortKeyCondition: AttributeCondition?) async throws
+        -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         try await self.query(forPartitionKey: partitionKey,
                              sortKeyCondition: sortKeyCondition,
                              consistentRead: self.consistentRead)
     }
 
-    func query<AttributesType, ItemType>(forPartitionKey partitionKey: String,
-                                         sortKeyCondition: AttributeCondition?,
-                                         limit: Int?,
-                                         scanIndexForward: Bool,
-                                         exclusiveStartKey: String?) async throws
-        -> ([TypedDatabaseItem<AttributesType, ItemType>], String?)
+    func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
+                                                                   sortKeyCondition: AttributeCondition?,
+                                                                   limit: Int?,
+                                                                   scanIndexForward: Bool,
+                                                                   exclusiveStartKey: String?) async throws
+        -> ([TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], String?)
     {
         try await self.query(forPartitionKey: partitionKey,
                              sortKeyCondition: sortKeyCondition,

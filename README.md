@@ -120,7 +120,7 @@ An item can be retrieved from the DynamoDB table using the following-
 let retrievedItem: StandardTypedDatabaseItem<PayloadType>? = try await table.getItem(forKey: key)
 ```
 
-The `getItem` operation return an optional `TypedDatabaseItem` which will be nil if the item doesn't exist in the table. These operations will also fail if the *RowType* recorded in the database row doesn't match the type being requested.
+The `getItem` operation return an optional `TypedTTLDatabaseItem` which will be nil if the item doesn't exist in the table. These operations will also fail if the *RowType* recorded in the database row doesn't match the type being requested.
 
 ## Update
 
@@ -623,7 +623,7 @@ By default, this operation will fail if an item with the same partition key and 
 The main entities provided by this package are
 * *CompositePrimaryKey*: a struct that stores the partition and sort values for a composite primary key.
 * *TimeToLive*: a struct that stores TTL timestamp for a database item.
-* *TypedDatabaseItemWithTimeToLive*: a struct that manages decoding and encoding rows of a particular type along with any TTL settings from polymorphic database tables.
+* *TypedTTLDatabaseItem*: a struct that manages decoding and encoding rows of a particular type along with any TTL settings from polymorphic database tables.
 * *TypedDatabaseItem*: a typealias that points to `TypedDatabaseItemWithTimeToLive` with default `StandardTimeToLiveAttributes` generic type for backwards compatibility.
 * *PolymorphicDatabaseItem*: a struct that manages decoding rows that are one out of a number of types from polymorphic database tables.
 * *DynamoDBCompositePrimaryKeyTable*: a protocol for interacting with a DynamoDB database table.
@@ -647,15 +647,15 @@ The TimeToLive struct defines the TTL timestamp value for a row in the database.
 let timeToLive = StandardTimeToLive(timeToLiveTimestamp: 123456789)
 ```
 
-## TypedDatabaseItemWithTimeToLive
+## TypedTTLDatabaseItem
 
-The TypedDatabaseItemWithTimeToLive struct manages a number of attributes in the database table to enable decoding and encoding rows to and from the correct type. In addition it also manages other conveniences such as versioning. The attributes this struct will add to a database row are-
+The TypedTTLDatabaseItem struct manages a number of attributes in the database table to enable decoding and encoding rows to and from the correct type. In addition it also manages other conveniences such as versioning. The attributes this struct will add to a database row are-
 * *CreateDate*: The timestamp when the row was created.
 * *RowType*: Specifies the schema used by the other attributes of this row.
 * *RowVersion*: A version number for the values currently in this row. Used to enable optimistic locking.
 * *LastUpdatedDate*: The timestamp when the row was last updated.
 
-Similar to CompositePrimaryKey, this package provides a typealias called `StandardTypedDatabaseItem` that expects the standard partition, sort key, and TTL attribute names.
+Similar to CompositePrimaryKey, this package provides a typealias called `TypedDatabaseItem` that expects the standard partition, sort key, and TTL attribute names.
 
 This struct can be instantiated as shown-
 
@@ -683,7 +683,7 @@ or with TTL-
 let updatedDatabaseItem = newDatabaseItem.createUpdatedItem(withValue: updatedValue, andTimeToLive: updatedTimeToLive)
 ```
 
-This function will create a new instance of TypedDatabaseItemWithTimeToLive with the same key and updated LastUpdatedDate and RowVersion values. By default, performing a **PutItem** operation with this item on a table where this row already exists and the RowVersion isn't equal to the value of the original row will fail.
+This function will create a new instance of TypedTTLDatabaseItem with the same key and updated LastUpdatedDate and RowVersion values. By default, performing a **PutItem** operation with this item on a table where this row already exists and the RowVersion isn't equal to the value of the original row will fail.
 
 ## DynamoDBCompositePrimaryKeyTable
 
@@ -703,7 +703,7 @@ Internally `AWSDynamoDBCompositePrimaryKeyTable` uses a custom Decoder and Encod
 
 ## PrimaryKeyAttributes
 
-`CompositePrimaryKey`, `TypedDatabaseItemWithTimeToLive` and `PolymorphicDatabaseItem` are all generic to a type conforming to the `PrimaryKeyAttributes` protocol. This protocol can be used to use custom attribute names for the partition and sort keys.
+`CompositePrimaryKey`, `TypedTTLDatabaseItem` and `PolymorphicDatabaseItem` are all generic to a type conforming to the `PrimaryKeyAttributes` protocol. This protocol can be used to use custom attribute names for the partition and sort keys.
 
 ```swift
 public struct MyPrimaryKeyAttributes: PrimaryKeyAttributes {
@@ -718,7 +718,7 @@ public struct MyPrimaryKeyAttributes: PrimaryKeyAttributes {
 
 ## TimeToLiveAttributes
 
-`TimeToLive`, `TypedDatabaseItemWithTimeToLive` and `PolymorphicDatabaseItem` are all generic to a type conforming to the `TimeToLiveAttributes` protocol. This protocol can be used to use custom attribute names for the TTL timestamp.
+`TimeToLive`, `TypedTTLDatabaseItem` and `PolymorphicDatabaseItem` are all generic to a type conforming to the `TimeToLiveAttributes` protocol. This protocol can be used to use custom attribute names for the TTL timestamp.
 
 ```swift
 public struct MyTimeToLiveAttributes: TimeToLiveAttributes {
