@@ -208,7 +208,7 @@ guard let retrievedDatabaseItem2 = batch[key2] else {
 
 In addition to the `query` operation, there is a more complex API that allows retrieval of multiple rows that have different types.
 
-This API is most conveniently used in conjunction with an enum annotated with `@PolymorphicOperationReturnType` macro-
+This API is most conveniently used in conjunction with an enum annotated with the `@PolymorphicOperationReturnType` macro-
 
 ```swift
 @PolymorphicOperationReturnType
@@ -282,7 +282,7 @@ for databaseItem in queryItems {
 }
 ```
 
-and similarly for polymorphic queries, most conveniently used in conjunction with an enum annotated with `@PolymorphicOperationReturnType` macro-
+and similarly for polymorphic queries, most conveniently used in conjunction with an enum annotated with the `@PolymorphicOperationReturnType` macro-
 
 ```swift
 @PolymorphicOperationReturnType
