@@ -23,6 +23,7 @@
         let providingMacros: [Macro.Type] = [
             PolymorphicWriteEntryMacro.self,
             PolymorphicTransactionConstraintEntryMacro.self,
+            PolymorphicOperationReturnTypeMacro.self,
         ]
     }
 #endif

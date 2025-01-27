@@ -25,3 +25,9 @@ public macro PolymorphicTransactionConstraintEntry() =
     #externalMacro(
         module: "DynamoDBTablesMacros",
         type: "PolymorphicTransactionConstraintEntryMacro")
+
+@attached(extension, conformances: PolymorphicOperationReturnType, names: named(AttributesType), named(TimeToLiveAttributesType), named(types))
+public macro PolymorphicOperationReturnType(databaseItemType: String = "StandardTypedDatabaseItem") =
+    #externalMacro(
+        module: "DynamoDBTablesMacros",
+        type: "PolymorphicOperationReturnTypeMacro")

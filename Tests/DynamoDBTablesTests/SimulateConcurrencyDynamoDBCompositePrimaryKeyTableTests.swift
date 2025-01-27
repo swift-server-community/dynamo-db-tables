@@ -30,15 +30,11 @@ import Testing
 
 private typealias DatabaseRowType = StandardTypedDatabaseItem<TestTypeA>
 
-enum ExpectedQueryableTypes: PolymorphicOperationReturnType {
-    typealias AttributesType = StandardPrimaryKeyAttributes
-    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
+typealias CustomTypedDatabaseItem = StandardTypedDatabaseItem
 
-    static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] = [
-        (TestTypeA.self, .init { .testTypeA($0) }),
-    ]
-
-    case testTypeA(StandardTypedDatabaseItem<TestTypeA>)
+@PolymorphicOperationReturnType(databaseItemType: "CustomTypedDatabaseItem")
+enum ExpectedQueryableTypes {
+    case testTypeA(CustomTypedDatabaseItem<TestTypeA>)
 }
 
 struct SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests {

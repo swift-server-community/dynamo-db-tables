@@ -209,14 +209,8 @@ guard let retrievedDatabaseItem2 = batch[key2] else {
 In addition to the `query` operation, there is a more complex API that allows retrieval of multiple rows that have different types.
 
 ```swift
-enum TestPolymorphicOperationReturnType: PolymorphicOperationReturnType {
-    typealias AttributesType = StandardPrimaryKeyAttributes
-    
-    static let types: [(Codable.Type, PolymorphicOperationReturnOption<StandardPrimaryKeyAttributes, Self>)] = [
-        (TypeA.self, .init( {.typeA($0)} )),
-        (TypeB.self, .init( {.typeB($0)} )),
-        ]
-    
+@PolymorphicOperationReturnType
+enum TestPolymorphicOperationReturnType {
     case typeA(StandardTypedDatabaseItem<TypeA>)
     case typeB(StandardTypedDatabaseItem<TypeB>)
 }
@@ -289,14 +283,8 @@ for databaseItem in queryItems {
 and similarly for polymorphic queries-
 
 ```swift
-enum TestPolymorphicOperationReturnType: PolymorphicOperationReturnType {
-    typealias AttributesType = GSI1PrimaryKeyAttributes
-    
-    static var types: [(Codable.Type, PolymorphicOperationReturnOption<GSI1PrimaryKeyAttributes, Self>)] = [
-        (TypeA.self, .init( {.typeA($0)} )),
-        (TypeB.self, .init( {.typeB($0)} )),
-        ]
-    
+@PolymorphicOperationReturnType
+enum TestPolymorphicOperationReturnType {
     case typeA(StandardTypedDatabaseItem<TypeA>)
     case typeB(StandardTypedDatabaseItem<TypeB>)
 }
