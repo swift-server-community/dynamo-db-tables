@@ -28,8 +28,8 @@ import AWSDynamoDB
 import Foundation
 
 // Provide a default `PolymorphicWriteEntry` for the `DynamoDBCompositePrimaryKeyGSILogic` for backwards compatibility
-public struct NoOpPolymorphicWriteEntry: PolymorphicWriteEntry {
-    public var compositePrimaryKey: StandardCompositePrimaryKey {
+public struct NoOpPolymorphicWriteEntry<AttributesType: PrimaryKeyAttributes>: PolymorphicWriteEntry {
+    public var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
         fatalError("Unimplemented")
     }
 
@@ -43,7 +43,7 @@ public struct NoOpPolymorphicWriteEntry: PolymorphicWriteEntry {
  */
 public protocol DynamoDBCompositePrimaryKeyGSILogic {
     associatedtype GSIAttributesType: PrimaryKeyAttributes
-    associatedtype WriteEntryType: PolymorphicWriteEntry = NoOpPolymorphicWriteEntry
+    associatedtype WriteEntryType: PolymorphicWriteEntry = NoOpPolymorphicWriteEntry<GSIAttributesType>
 
     /**
      * Called when an item is inserted on the main table. Can be used to transform the provided item to the item that would be made available on the GSI.

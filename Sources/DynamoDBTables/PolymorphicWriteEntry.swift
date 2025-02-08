@@ -47,9 +47,11 @@ public protocol PolymorphicTransactionConstraintTransform {
 // Conforming types are provided by the application to express the different possible write entries
 // and how they can be converted to the table-provided transform type.
 public protocol PolymorphicWriteEntry {
+    associatedtype AttributesType: PrimaryKeyAttributes
+
     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteEntryTransformType
 
-    var compositePrimaryKey: StandardCompositePrimaryKey { get }
+    var compositePrimaryKey: CompositePrimaryKey<AttributesType> { get }
 }
 
 public typealias StandardTransactionConstraintEntry<ItemType: Codable> =
@@ -69,17 +71,19 @@ public enum TransactionConstraintEntry<AttributesType: PrimaryKeyAttributes, Ite
 // Conforming types are provided by the application to express the different possible constraint entries
 // and how they can be converted to the table-provided transform type.
 public protocol PolymorphicTransactionConstraintEntry {
+    associatedtype AttributesType: PrimaryKeyAttributes
+
     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteTransactionConstraintType
 
-    var compositePrimaryKey: StandardCompositePrimaryKey { get }
+    var compositePrimaryKey: CompositePrimaryKey<AttributesType> { get }
 }
 
-public struct EmptyPolymorphicTransactionConstraintEntry: PolymorphicTransactionConstraintEntry {
+public struct EmptyPolymorphicTransactionConstraintEntry<AttributesType: PrimaryKeyAttributes>: PolymorphicTransactionConstraintEntry {
     public func handle<Context: PolymorphicWriteEntryContext>(context _: Context) throws -> Context.WriteTransactionConstraintType {
         fatalError("There are no items to transform")
     }
 
-    public var compositePrimaryKey: StandardCompositePrimaryKey {
+    public var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
         fatalError("There are no items to transform")
     }
 }
