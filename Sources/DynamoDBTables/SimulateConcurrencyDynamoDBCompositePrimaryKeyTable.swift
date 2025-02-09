@@ -122,8 +122,10 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         try await self.wrappedDynamoDBTable.polymorphicTransactWrite(entries)
     }
 
-    public func polymorphicTransactWrite(
-        _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
+    public func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry,
+        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
+        _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType]) async throws
+        where WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
     {
         try await self.wrappedDynamoDBTable.polymorphicTransactWrite(entries, constraints: constraints)
     }

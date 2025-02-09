@@ -92,8 +92,10 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         try await self.primaryTable.polymorphicTransactWrite(entries)
     }
 
-    public func polymorphicTransactWrite(
-        _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
+    public func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry,
+        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
+        _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType]) async throws
+        where WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
     {
         try await self.primaryTable.polymorphicTransactWrite(entries, constraints: constraints)
     }

@@ -183,8 +183,8 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                                      retriesRemaining: self.retryConfiguration.numRetries)
     }
 
-    func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
-        let noConstraints: [EmptyPolymorphicTransactionConstraintEntry] = []
+    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry>(_ entries: [WriteEntryType]) async throws {
+        let noConstraints: [EmptyPolymorphicTransactionConstraintEntry<WriteEntryType.AttributesType>] = []
 
         guard let transactionInput = try getExecuteTransactionInput(entries, constraints: noConstraints) else {
             // nothing to do
@@ -196,8 +196,10 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                                                 retriesRemaining: self.retryConfiguration.numRetries)
     }
 
-    func polymorphicTransactWrite(
-        _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
+    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry,
+        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
+        _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType]) async throws
+        where WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
     {
         guard let transactionInput = try getExecuteTransactionInput(entries, constraints: constraints) else {
             // nothing to do
@@ -235,7 +237,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
 
             var isTransactionConflict = false
             let reasons = try zip(cancellationReasons, keys).compactMap { cancellationReason, entryKey -> DynamoDBTableError? in
-                let key: StandardCompositePrimaryKey?
+                let key: CompositePrimaryKey<AttributesType>?
                 if let item = cancellationReason.item {
                     key = try DynamoDBDecoder().decode(.m(item))
                 } else {
@@ -318,8 +320,8 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         return try await self.transactWrite(entries, constraints: constraints, retriesRemaining: retriesRemaining - 1)
     }
 
-    private func polymorphicTransactWrite(_ transactionInput: ExecuteTransactionInput,
-                                          inputKeys: [StandardCompositePrimaryKey], retriesRemaining: Int) async throws
+    private func polymorphicTransactWrite<AttributesType: PrimaryKeyAttributes>(_ transactionInput: ExecuteTransactionInput,
+                                                                                inputKeys: [CompositePrimaryKey<AttributesType>], retriesRemaining: Int) async throws
     {
         if inputKeys.count > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
             throw DynamoDBTableError.itemCollectionSizeLimitExceeded(attemptedSize: inputKeys.count,
@@ -338,7 +340,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
 
             var isTransactionConflict = false
             let reasons = try zip(cancellationReasons, inputKeys).compactMap { cancellationReason, entryKey -> DynamoDBTableError? in
-                let key: StandardCompositePrimaryKey?
+                let key: CompositePrimaryKey<AttributesType>?
                 if let item = cancellationReason.item {
                     key = try DynamoDBDecoder().decode(.m(item))
                 } else {
@@ -405,7 +407,10 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    private func retryPolymorphicTransactWrite(_ transactionInput: ExecuteTransactionInput, inputKeys: [StandardCompositePrimaryKey], retriesRemaining: Int) async throws {
+    private func retryPolymorphicTransactWrite(
+        _ transactionInput: ExecuteTransactionInput,
+        inputKeys: [CompositePrimaryKey<some PrimaryKeyAttributes>], retriesRemaining: Int) async throws
+    {
         // determine the required interval
         let retryInterval = Int(self.retryConfiguration.getRetryInterval(retriesRemaining: retriesRemaining))
 

@@ -157,8 +157,10 @@ public protocol DynamoDBCompositePrimaryKeyTable {
         _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
         constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]) async throws
 
-    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry, TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
+    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry,
+        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
         _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType]) async throws
+        where WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
 
     /**
      * Provides the ability to bulk write database rows

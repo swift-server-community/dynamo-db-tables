@@ -44,13 +44,15 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func polymorphicTransactWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
-        let noConstraints: [EmptyPolymorphicTransactionConstraintEntry] = []
+    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry>(_ entries: [WriteEntryType]) async throws {
+        let noConstraints: [EmptyPolymorphicTransactionConstraintEntry<WriteEntryType.AttributesType>] = []
         return try await self.polymorphicTransactWrite(entries, constraints: noConstraints)
     }
 
-    func polymorphicTransactWrite(
-        _ entries: [some PolymorphicWriteEntry], constraints: [some PolymorphicTransactionConstraintEntry]) async throws
+    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry,
+        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
+        _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType]) async throws
+        where WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
     {
         // if there is a transaction delegate and it wants to inject errors
         let inputKeys = entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
