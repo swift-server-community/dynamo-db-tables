@@ -1,13 +1,13 @@
 {
-  "originHash" : "edf0b6db3f42e8daec26dc3cc8707258b6201d6dfd66efbebc53c91788f31509",
+  "originHash" : "b120d97308bfcb4375008a4fc515973adf71389ccf711573d6fe5b8ba198937c",
   "pins" : [
     {
       "identity" : "aws-crt-swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/awslabs/aws-crt-swift",
       "state" : {
-        "revision" : "8b77a9ba5bf2ce328b3b6c551f211fa644d4b0f3",
-        "version" : "0.47.0"
+        "revision" : "74d970dde8a0d6b2fe1d8374767ca9793088ce2c",
+        "version" : "0.48.0"
       }
     },
     {
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/awslabs/aws-sdk-swift.git",
       "state" : {
-        "revision" : "1f049fdc5e845b75be11a1ae7c2040fd305bbce9",
-        "version" : "1.2.43"
+        "revision" : "06f133dfbfccd1236a4abab6a1db2a42e9d56fba",
+        "version" : "1.2.48"
       }
     },
     {
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/smithy-lang/smithy-swift",
       "state" : {
-        "revision" : "d2b74b108a82b606b68c5e79e62fde486da50437",
-        "version" : "0.124.0"
+        "revision" : "755367ae4e10004f8b5a94fbfdf3f638a1f225bc",
+        "version" : "0.125.0"
       }
     },
     {
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-syntax",
       "state" : {
-        "revision" : "0687f71944021d616d34d922343dcef086855920",
-        "version" : "600.0.1"
+        "revision" : "1103c45ece4f7fe160b8f75b4ea1ee2e5fac1841",
+        "version" : "601.0.0"
       }
     },
     {
