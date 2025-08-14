@@ -135,23 +135,6 @@ public extension DynamoDBCompositePrimaryKeyTable {
             withRetries: retries)
     }
 
-    // Explicitly specify an overload with sync updatedPayloadProvider
-    // to avoid the compiler matching a call site with such a provider with the EventLoopFuture-returning overload.
-    func conditionallyUpdateItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
-        compositePrimaryKey: CompositePrimaryKey<AttributesType>,
-        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) throws ->
-            TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        historicalItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
-            TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        withRetries retries: Int = 10) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
-    {
-        try await self.conditionallyUpdateItemWithHistoricalRowInternal(
-            compositePrimaryKey: compositePrimaryKey,
-            primaryItemProvider: primaryItemProvider,
-            historicalItemProvider: historicalItemProvider,
-            withRetries: retries)
-    }
-
     private func conditionallyUpdateItemWithHistoricalRowInternal<AttributesType, ItemType, TimeToLiveAttributesType>(
         compositePrimaryKey: CompositePrimaryKey<AttributesType>,
         primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws ->
@@ -182,13 +165,13 @@ public extension DynamoDBCompositePrimaryKeyTable {
             try await self.updateItemWithHistoricalRow(primaryItem: updatedItem,
                                                        existingItem: existingItem,
                                                        historicalItem: historicalItem)
+
+            return updatedItem
         } catch DynamoDBTableError.conditionalCheckFailed {
             // try again
-            return try await self.conditionallyUpdateItemWithHistoricalRow(compositePrimaryKey: compositePrimaryKey,
-                                                                           primaryItemProvider: primaryItemProvider,
-                                                                           historicalItemProvider: historicalItemProvider, withRetries: retries - 1)
+            return try await self.conditionallyUpdateItemWithHistoricalRowInternal(compositePrimaryKey: compositePrimaryKey,
+                                                                                   primaryItemProvider: primaryItemProvider,
+                                                                                   historicalItemProvider: historicalItemProvider, withRetries: retries - 1)
         }
-
-        return updatedItem
     }
 }

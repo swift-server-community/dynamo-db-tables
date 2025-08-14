@@ -106,16 +106,6 @@ public enum WriteEntry<AttributesType: PrimaryKeyAttributes, ItemType: Codable, 
 public typealias StandardWriteEntry<ItemType: Codable> = WriteEntry<StandardPrimaryKeyAttributes, ItemType, StandardTimeToLiveAttributes>
 
 public protocol DynamoDBCompositePrimaryKeyTable {
-    // This property doesn't really belong on the protocol but provides
-    // access to the property for the protocol's extensions
-    var consistentRead: Bool { get }
-
-    /**
-     * PartiQL string attributes cannot contain single quotes. Otherwise, PartiQL statement is consider to be invalid.
-     * This property controls if single quotes are escaped while formatting PartiQL statements.
-     */
-    var escapeSingleQuoteInPartiQL: Bool { get }
-
     /**
      * Insert item is a non-destructive API. If an item already exists with the specified key this
      * API should fail.
@@ -143,8 +133,8 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      */
     func transactWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
 
-    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry>(
-        _ entries: [WriteEntryType]) async throws
+    func polymorphicTransactWrite(
+        _ entries: [some PolymorphicWriteEntry]) async throws
 
     /**
      * Provides the ability to bulk write database rows in a transaction.
@@ -169,7 +159,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
 
     func bulkWriteWithFallback(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
 
-    func polymorphicBulkWrite<WriteEntryType: PolymorphicWriteEntry>(_ entries: [WriteEntryType]) async throws
+    func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws
 
     /**
      * Retrieves an item from the database table. Returns nil if the item doesn't exist.
@@ -188,7 +178,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      * Removes an item from the database table. Is an idempotent operation; running it multiple times
      * on the same item or attribute does not result in an error response.
      */
-    func deleteItem<AttributesType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
+    func deleteItem(forKey key: CompositePrimaryKey<some Any>) async throws
 
     /**
      * Removes an item from the database table. Is an idempotent operation; running it multiple times
@@ -201,7 +191,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      * Removes items from the database table. Is an idempotent operation; running it multiple times
      * on the same item or attribute does not result in an error response.
      */
-    func deleteItems<AttributesType>(forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
+    func deleteItems(forKeys keys: [CompositePrimaryKey<some Any>]) async throws
 
     /**
      * Removes items from the database table. Is an idempotent operation; running it multiple times
@@ -217,8 +207,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
        the query.
      */
     func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                        sortKeyCondition: AttributeCondition?,
-                                                                        consistentRead: Bool) async throws
+                                                                        sortKeyCondition: AttributeCondition?) async throws
         -> [ReturnedType]
 
     /**
@@ -229,8 +218,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
                                                                         sortKeyCondition: AttributeCondition?,
                                                                         limit: Int?,
-                                                                        exclusiveStartKey: String?,
-                                                                        consistentRead: Bool) async throws
+                                                                        exclusiveStartKey: String?) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
 
     /**
@@ -242,8 +230,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
                                                                         sortKeyCondition: AttributeCondition?,
                                                                         limit: Int?,
                                                                         scanIndexForward: Bool,
-                                                                        exclusiveStartKey: String?,
-                                                                        consistentRead: Bool) async throws
+                                                                        exclusiveStartKey: String?) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
 
     /**
@@ -287,8 +274,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
        the query.
      */
     func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
-                                                                   sortKeyCondition: AttributeCondition?,
-                                                                   consistentRead: Bool) async throws
+                                                                   sortKeyCondition: AttributeCondition?) async throws
         -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
 
     /**
@@ -301,8 +287,7 @@ public protocol DynamoDBCompositePrimaryKeyTable {
         sortKeyCondition: AttributeCondition?,
         limit: Int?,
         scanIndexForward: Bool,
-        exclusiveStartKey: String?,
-        consistentRead: Bool) async throws
+        exclusiveStartKey: String?) async throws
         -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
 
     /**
@@ -329,18 +314,4 @@ public protocol DynamoDBCompositePrimaryKeyTable {
         attributesFilter: [String]?,
         additionalWhereClause: String?, nextToken: String?) async throws
         -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
-}
-
-public extension DynamoDBCompositePrimaryKeyTable {
-    // provide a default value for the table's `consistentRead`
-    // maintains backwards compatibility
-    var consistentRead: Bool {
-        true
-    }
-
-    // provide a default value for the table's `escapeSingleQuoteInPartiQL`
-    // maintains backwards compatibility
-    var escapeSingleQuoteInPartiQL: Bool {
-        false
-    }
 }

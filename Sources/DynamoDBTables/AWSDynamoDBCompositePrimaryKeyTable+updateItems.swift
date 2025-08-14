@@ -113,8 +113,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
     {
         let statement: String = try entryToStatement(entry)
 
-        // doesn't require read consistency as no items are being read
-        return DynamoDBClientTypes.BatchStatementRequest(consistentRead: false, statement: statement)
+        return DynamoDBClientTypes.BatchStatementRequest(consistentRead: self.tableConfiguration.consistentRead, statement: statement)
     }
 
     private func writeTransactionItems<AttributesType, ItemType, TimeToLiveAttributesType>(
@@ -172,7 +171,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
 
     func transactWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
         try await self.transactWrite(entries, constraints: [],
-                                     retriesRemaining: self.retryConfiguration.numRetries)
+                                     retriesRemaining: self.tableConfiguration.retry.numRetries)
     }
 
     func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
@@ -180,7 +179,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]) async throws
     {
         try await self.transactWrite(entries, constraints: constraints,
-                                     retriesRemaining: self.retryConfiguration.numRetries)
+                                     retriesRemaining: self.tableConfiguration.retry.numRetries)
     }
 
     func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry>(_ entries: [WriteEntryType]) async throws {
@@ -193,7 +192,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         let inputKeys = entries.map(\.compositePrimaryKey)
 
         try await self.polymorphicTransactWrite(transactionInput, inputKeys: inputKeys,
-                                                retriesRemaining: self.retryConfiguration.numRetries)
+                                                retriesRemaining: self.tableConfiguration.retry.numRetries)
     }
 
     func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry,
@@ -208,7 +207,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         let inputKeys = entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
 
         try await self.polymorphicTransactWrite(transactionInput, inputKeys: inputKeys,
-                                                retriesRemaining: self.retryConfiguration.numRetries)
+                                                retriesRemaining: self.tableConfiguration.retry.numRetries)
     }
 
     private func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
@@ -293,7 +292,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             result = .failure(DynamoDBTableError.transactionCanceled(reasons: [reason]))
         }
 
-        let retryCount = self.retryConfiguration.numRetries - retriesRemaining
+        let retryCount = self.tableConfiguration.retry.numRetries - retriesRemaining
         self.tableMetrics.transactWriteRetryCountRecorder?.record(retryCount)
 
         switch result {
@@ -310,7 +309,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         retriesRemaining: Int) async throws
     {
         // determine the required interval
-        let retryInterval = Int(self.retryConfiguration.getRetryInterval(retriesRemaining: retriesRemaining))
+        let retryInterval = Int(self.tableConfiguration.retry.getRetryInterval(retriesRemaining: retriesRemaining))
 
         logger.warning(
             "Transaction retried due to conflict. Remaining retries: \(retriesRemaining). Retrying in \(retryInterval) ms.")
@@ -396,7 +395,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             result = .failure(DynamoDBTableError.transactionCanceled(reasons: [reason]))
         }
 
-        let retryCount = self.retryConfiguration.numRetries - retriesRemaining
+        let retryCount = self.tableConfiguration.retry.numRetries - retriesRemaining
         self.tableMetrics.transactWriteRetryCountRecorder?.record(retryCount)
 
         switch result {
@@ -412,7 +411,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         inputKeys: [CompositePrimaryKey<some PrimaryKeyAttributes>], retriesRemaining: Int) async throws
     {
         // determine the required interval
-        let retryInterval = Int(self.retryConfiguration.getRetryInterval(retriesRemaining: retriesRemaining))
+        let retryInterval = Int(self.tableConfiguration.retry.getRetryInterval(retriesRemaining: retriesRemaining))
 
         logger.warning(
             "Transaction retried due to conflict. Remaining retries: \(retriesRemaining). Retrying in \(retryInterval) ms.")
@@ -434,7 +433,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             let transform: AWSDynamoDBPolymorphicWriteEntryTransform = try entry.handle(context: context)
             let statement = transform.statement
 
-            return DynamoDBClientTypes.BatchStatementRequest(consistentRead: true, statement: statement)
+            return DynamoDBClientTypes.BatchStatementRequest(consistentRead: self.tableConfiguration.consistentRead, statement: statement)
         }
 
         let executeInput = BatchExecuteStatementInput(statements: statements)
@@ -487,7 +486,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                                                     existingItem: existing)
             }
 
-            return DynamoDBClientTypes.BatchStatementRequest(consistentRead: true, statement: statement)
+            return DynamoDBClientTypes.BatchStatementRequest(consistentRead: self.tableConfiguration.consistentRead, statement: statement)
         }
 
         let executeInput = BatchExecuteStatementInput(statements: statements)

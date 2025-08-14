@@ -186,37 +186,32 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
     }
 
     public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                               sortKeyCondition: AttributeCondition?,
-                                                                               consistentRead: Bool) async throws
+                                                                               sortKeyCondition: AttributeCondition?) async throws
         -> [ReturnedType]
     {
         // simply delegate to the wrapped implementation
         try await self.wrappedDynamoDBTable.polymorphicQuery(forPartitionKey: partitionKey,
-                                                             sortKeyCondition: sortKeyCondition,
-                                                             consistentRead: consistentRead)
+                                                             sortKeyCondition: sortKeyCondition)
     }
 
     public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
                                                                                sortKeyCondition: AttributeCondition?,
                                                                                limit: Int?,
-                                                                               exclusiveStartKey: String?,
-                                                                               consistentRead: Bool) async throws
+                                                                               exclusiveStartKey: String?) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
         // simply delegate to the wrapped implementation
         try await self.wrappedDynamoDBTable.polymorphicQuery(forPartitionKey: partitionKey,
                                                              sortKeyCondition: sortKeyCondition,
                                                              limit: limit,
-                                                             exclusiveStartKey: exclusiveStartKey,
-                                                             consistentRead: consistentRead)
+                                                             exclusiveStartKey: exclusiveStartKey)
     }
 
     public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
                                                                                sortKeyCondition: AttributeCondition?,
                                                                                limit: Int?,
                                                                                scanIndexForward: Bool,
-                                                                               exclusiveStartKey: String?,
-                                                                               consistentRead: Bool) async throws
+                                                                               exclusiveStartKey: String?) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
         // simply delegate to the wrapped implementation
@@ -224,8 +219,7 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
                                                              sortKeyCondition: sortKeyCondition,
                                                              limit: limit,
                                                              scanIndexForward: scanIndexForward,
-                                                             exclusiveStartKey: exclusiveStartKey,
-                                                             consistentRead: consistentRead)
+                                                             exclusiveStartKey: exclusiveStartKey)
     }
 
     public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
@@ -287,22 +281,19 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
     }
 
     public func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
-                                                                          sortKeyCondition: AttributeCondition?,
-                                                                          consistentRead: Bool) async throws
+                                                                          sortKeyCondition: AttributeCondition?) async throws
         -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         // simply delegate to the wrapped implementation
         try await self.wrappedDynamoDBTable.query(forPartitionKey: partitionKey,
-                                                  sortKeyCondition: sortKeyCondition,
-                                                  consistentRead: consistentRead)
+                                                  sortKeyCondition: sortKeyCondition)
     }
 
     public func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
                                                                           sortKeyCondition: AttributeCondition?,
                                                                           limit: Int?,
                                                                           scanIndexForward: Bool,
-                                                                          exclusiveStartKey: String?,
-                                                                          consistentRead: Bool) async throws
+                                                                          exclusiveStartKey: String?) async throws
         -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
     {
         // simply delegate to the wrapped implementation
@@ -310,7 +301,6 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
                                                   sortKeyCondition: sortKeyCondition,
                                                   limit: limit,
                                                   scanIndexForward: scanIndexForward,
-                                                  exclusiveStartKey: exclusiveStartKey,
-                                                  consistentRead: consistentRead)
+                                                  exclusiveStartKey: exclusiveStartKey)
     }
 }

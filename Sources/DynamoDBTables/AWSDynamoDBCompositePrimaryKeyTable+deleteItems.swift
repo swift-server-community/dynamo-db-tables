@@ -43,7 +43,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             let statement = try getDeleteExpression(tableName: self.targetTableName,
                                                     existingKey: existingKey)
 
-            return DynamoDBClientTypes.BatchStatementRequest(consistentRead: true, statement: statement)
+            return DynamoDBClientTypes.BatchStatementRequest(consistentRead: self.tableConfiguration.consistentRead, statement: statement)
         }
 
         let executeInput = BatchExecuteStatementInput(statements: statements)
@@ -64,7 +64,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             let statement = try getDeleteExpression(tableName: self.targetTableName,
                                                     existingItem: existingItem)
 
-            return DynamoDBClientTypes.BatchStatementRequest(consistentRead: true, statement: statement)
+            return DynamoDBClientTypes.BatchStatementRequest(consistentRead: self.tableConfiguration.consistentRead, statement: statement)
         }
 
         let executeInput = BatchExecuteStatementInput(statements: statements)

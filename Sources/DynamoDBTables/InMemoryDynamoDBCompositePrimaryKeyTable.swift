@@ -41,22 +41,19 @@ public protocol InMemoryTransactionDelegate: Sendable {
     /**
       Inject errors into a `transactWrite` or `polymorphicTransactWrite` call.
      */
-    func injectErrors<AttributesType>(
-        inputKeys: [CompositePrimaryKey<AttributesType>?], table: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
+    func injectErrors(
+        inputKeys: [CompositePrimaryKey<some Any>?], table: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
 }
 
 public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable, Sendable {
-    public let escapeSingleQuoteInPartiQL: Bool
     public let transactionDelegate: InMemoryTransactionDelegate?
     public let executeItemFilter: ExecuteItemFilterType?
     let storeWrapper: InMemoryDynamoDBCompositePrimaryKeyTableStore
 
     public init(executeItemFilter: ExecuteItemFilterType? = nil,
-                escapeSingleQuoteInPartiQL: Bool = false,
                 transactionDelegate: InMemoryTransactionDelegate? = nil)
     {
         self.storeWrapper = InMemoryDynamoDBCompositePrimaryKeyTableStore()
-        self.escapeSingleQuoteInPartiQL = escapeSingleQuoteInPartiQL
         self.transactionDelegate = transactionDelegate
         self.executeItemFilter = executeItemFilter
     }

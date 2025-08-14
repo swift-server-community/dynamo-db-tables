@@ -93,7 +93,7 @@ public extension AWSDynamoDBCompositePrimaryKeysProjection {
                                                                         primaryKeyType: AttributesType.self,
                                                                         sortKeyCondition: sortKeyCondition, limit: limit,
                                                                         scanIndexForward: scanIndexForward, exclusiveStartKey: exclusiveStartKey,
-                                                                        consistentRead: false)
+                                                                        consistentRead: self.tableConfiguration.consistentRead)
 
         let logMessage = "dynamodb.query with partitionKey: \(partitionKey), " +
             "sortKeyCondition: \(sortKeyCondition.debugDescription), and table name \(targetTableName)."

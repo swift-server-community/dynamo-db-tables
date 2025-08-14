@@ -70,8 +70,8 @@ public protocol DynamoDBCompositePrimaryKeyGSILogic {
      * Called when an item is delete on the main table. Can be used to also delete the corresponding item on the GSI.
 
      */
-    func onDeleteItem<AttributesType>(forKey key: CompositePrimaryKey<AttributesType>,
-                                      gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
+    func onDeleteItem(forKey key: CompositePrimaryKey<some Any>,
+                      gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
 
     /**
      * Called when an transact write in the main table. Can be used to also transact write the corresponding item on the GSI.

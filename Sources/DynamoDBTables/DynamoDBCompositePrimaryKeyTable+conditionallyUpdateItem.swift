@@ -60,25 +60,6 @@ public extension DynamoDBCompositePrimaryKeyTable {
             updatedItemProvider: updatedItemProvider)
     }
 
-    // Explicitly specify an overload with sync updatedPayloadProvider
-    // to avoid the compiler matching a call site with such a provider with the EventLoopFuture-returning overload.
-    func conditionallyUpdateItem<AttributesType, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
-        forKey key: CompositePrimaryKey<AttributesType>,
-        withRetries retries: Int = 10,
-        timeToLiveAttributesType _: TimeToLiveAttributesType.Type = StandardTimeToLiveAttributes.self,
-        updatedPayloadProvider: @escaping (ItemType) throws -> ItemType) async throws
-    {
-        let updatedItemProvider: (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
-            -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> = { existingItem in
-                let updatedPayload = try updatedPayloadProvider(existingItem.rowValue)
-                return existingItem.createUpdatedItem(withValue: updatedPayload)
-            }
-        try await self.conditionallyUpdateItemInternal(
-            forKey: key,
-            withRetries: retries,
-            updatedItemProvider: updatedItemProvider)
-    }
-
     /**
      Method to conditionally update an item at the specified key for a number of retries.
      This method is useful for database rows that may be updated simultaneously by different clients
@@ -97,20 +78,6 @@ public extension DynamoDBCompositePrimaryKeyTable {
         forKey key: CompositePrimaryKey<AttributesType>,
         withRetries retries: Int = 10,
         updatedItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
-            -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
-    {
-        try await self.conditionallyUpdateItemInternal(
-            forKey: key,
-            withRetries: retries,
-            updatedItemProvider: updatedItemProvider)
-    }
-
-    // Explicitly specify an overload with sync updatedItemProvider
-    // to avoid the compiler matching a call site with such a provider with the EventLoopFuture-returning overload.
-    func conditionallyUpdateItem<AttributesType, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
-        forKey key: CompositePrimaryKey<AttributesType>,
-        withRetries retries: Int = 10,
-        updatedItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) throws
             -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
     {
         try await self.conditionallyUpdateItemInternal(
