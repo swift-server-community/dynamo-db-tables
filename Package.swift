@@ -46,6 +46,7 @@ let package = Package(
         .package(url: "https://github.com/JohnSundell/CollectionConcurrencyKit", from: "0.2.0"),
         .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.53.9"),
         .package(url: "https://github.com/apple/swift-syntax", from: "601.0.0"),
+        .package(url: "https://github.com/tachyonics/smockable", from: "0.3.0"),
     ],
     targets: [
         .macro(name: "DynamoDBTablesMacros", dependencies: [
@@ -59,6 +60,7 @@ let package = Package(
                 .product(name: "Metrics", package: "swift-metrics"),
                 .product(name: "AWSDynamoDB", package: "aws-sdk-swift"),
                 .product(name: "CollectionConcurrencyKit", package: "CollectionConcurrencyKit"),
+                .product(name: "Smockable", package: "smockable"),
             ],
             swiftSettings: swiftSettings),
         .testTarget(

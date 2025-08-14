@@ -29,7 +29,7 @@ import Foundation
 import Logging
 
 /// DynamoDBTable conformance async functions
-public extension AWSDynamoDBCompositePrimaryKeyTable {
+public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
     func insertItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         let putItemInput = try getInputForInsert(item)
 

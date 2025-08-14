@@ -34,7 +34,7 @@ private let maximumKeysPerGetItemBatch = 100
 private let millisecondsToNanoSeconds: UInt64 = 1_000_000
 
 /// DynamoDBTable conformance polymorphicGetItems function
-public extension AWSDynamoDBCompositePrimaryKeyTable {
+public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
     /**
      Helper type that manages the state of a polymorphicGetItems request.
 
@@ -42,10 +42,10 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
      monitors the unprocessed items returned in the response from DynamoDB and uses an exponential backoff algorithm to retry those items using
      the same retry configuration as the underlying DynamoDB client.
      */
-    private class PolymorphicGetItemsRetriable<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType> {
+    private class PolymorphicGetItemsRetriable<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType, DynamoClient: DynamoDBClientProtocol> {
         typealias OutputType = [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
 
-        let dynamodb: AWSDynamoDB.DynamoDBClient
+        let dynamodb: DynamoClient
         let retryConfiguration: RetryConfiguration
         let logger: Logging.Logger
 
@@ -54,7 +54,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         var outputItems: OutputType = [:]
 
         init(initialInput: BatchGetItemInput,
-             dynamodb: AWSDynamoDB.DynamoDBClient,
+             dynamodb: DynamoClient,
              retryConfiguration: RetryConfiguration,
              logger: Logging.Logger)
         {
@@ -131,7 +131,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
         let maps = try await chunkedList.concurrentMap { chunk -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType] in
             let input = try self.getInputForBatchGetItem(forKeys: chunk)
 
-            let retriable = PolymorphicGetItemsRetriable<ReturnedType>(
+            let retriable = PolymorphicGetItemsRetriable<ReturnedType, Client>(
                 initialInput: input,
                 dynamodb: self.dynamodb,
                 retryConfiguration: self.tableConfiguration.retry,

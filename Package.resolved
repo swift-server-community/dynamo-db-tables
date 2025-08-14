@@ -1,5 +1,5 @@
 {
-  "originHash" : "a8b37d4d2368118713e93162ea8f45b3e7b9755653b81aba5afd200c9405b6a1",
+  "originHash" : "13b2eb8b8f0d979ce0d4c53cbf8649c671c922ab761e78916e46299bee6ea407",
   "pins" : [
     {
       "identity" : "aws-crt-swift",
@@ -62,6 +62,15 @@
       "state" : {
         "revision" : "0385f9a487e80add7d1b7522ffcac9015bca7b9b",
         "version" : "0.153.0"
+      }
+    },
+    {
+      "identity" : "smockable",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tachyonics/smockable",
+      "state" : {
+        "revision" : "2ebc2a33ba83f2bf87e784346ad8b70794150379",
+        "version" : "0.3.0"
       }
     },
     {

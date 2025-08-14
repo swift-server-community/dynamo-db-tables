@@ -55,8 +55,33 @@ public struct AWSDynamoDBTableConfiguration {
     }
 }
 
-public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable {
-    let dynamodb: AWSDynamoDB.DynamoDBClient
+/// A type alias for `GenericAWSDynamoDBCompositePrimaryKeyTable` specialized with the AWS DynamoDB client.
+///
+/// This provides a convenient way to use the DynamoDB table implementation with the standard AWS DynamoDB client
+/// without needing to specify the generic parameter explicitly.
+///
+/// ## Usage
+///
+/// Use this type alias when working with the real AWS DynamoDB service:
+///
+/// ```swift
+/// // Create a table using region-based initialization
+/// let table = try AWSDynamoDBCompositePrimaryKeyTable(
+///     tableName: "MyTable",
+///     region: "us-east-1"
+/// )
+///
+/// // Create a table with an existing AWS client
+/// let awsClient = AWSDynamoDB.DynamoDBClient(config: config)
+/// let table = AWSDynamoDBCompositePrimaryKeyTable(
+///     tableName: "MyTable",
+///     client: awsClient
+/// )
+/// ```
+public typealias AWSDynamoDBCompositePrimaryKeyTable = GenericAWSDynamoDBCompositePrimaryKeyTable<AWSDynamoDB.DynamoDBClient>
+
+public struct GenericAWSDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientProtocol>: DynamoDBCompositePrimaryKeyTable {
+    let dynamodb: Client
     let targetTableName: String
     public let tableConfiguration: AWSDynamoDBTableConfiguration
     public let tableMetrics: AWSDynamoDBTableMetrics
@@ -67,7 +92,7 @@ public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTa
                 httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
                 tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
                 tableMetrics: AWSDynamoDBTableMetrics = .init(),
-                logger: Logging.Logger? = nil) throws
+                logger: Logging.Logger? = nil) throws where Client == AWSDynamoDB.DynamoDBClient
     {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeyTable")
         let config = try DynamoDBClient.DynamoDBClientConfiguration(
@@ -83,7 +108,7 @@ public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTa
     }
 
     public init(tableName: String,
-                client: AWSDynamoDB.DynamoDBClient,
+                client: Client,
                 tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
                 tableMetrics: AWSDynamoDBTableMetrics = .init(),
                 logger: Logging.Logger? = nil)
@@ -98,7 +123,7 @@ public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTa
     }
 }
 
-extension AWSDynamoDBCompositePrimaryKeyTable {
+extension GenericAWSDynamoDBCompositePrimaryKeyTable {
     func getInputForInsert<AttributesType>(
         _ item: TypedTTLDatabaseItem<AttributesType, some Any, some Any>) throws
         -> AWSDynamoDB.PutItemInput

@@ -38,8 +38,8 @@ public enum AWSDynamoDBLimits {
     public static let maxStatementLength = 8192
 }
 
-private struct AWSDynamoDBPolymorphicWriteEntryTransform: PolymorphicWriteEntryTransform {
-    typealias TableType = AWSDynamoDBCompositePrimaryKeyTable
+private struct AWSDynamoDBPolymorphicWriteEntryTransform<Client: DynamoDBClientProtocol>: PolymorphicWriteEntryTransform {
+    typealias TableType = GenericAWSDynamoDBCompositePrimaryKeyTable<Client>
 
     let statement: String
 
@@ -48,8 +48,8 @@ private struct AWSDynamoDBPolymorphicWriteEntryTransform: PolymorphicWriteEntryT
     }
 }
 
-private struct AWSDynamoDBPolymorphicTransactionConstraintTransform: PolymorphicTransactionConstraintTransform {
-    typealias TableType = AWSDynamoDBCompositePrimaryKeyTable
+private struct AWSDynamoDBPolymorphicTransactionConstraintTransform<Client: DynamoDBClientProtocol>: PolymorphicTransactionConstraintTransform {
+    typealias TableType = GenericAWSDynamoDBCompositePrimaryKeyTable<Client>
 
     let statement: String
 
@@ -61,7 +61,7 @@ private struct AWSDynamoDBPolymorphicTransactionConstraintTransform: Polymorphic
 }
 
 /// DynamoDBTable conformance updateItems function
-public extension AWSDynamoDBCompositePrimaryKeyTable {
+public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
     func validateEntry(entry: WriteEntry<some Any, some Any, some Any>) throws {
         let statement: String = try entryToStatement(entry)
 
@@ -150,17 +150,17 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             return nil
         }
 
-        let context = StandardPolymorphicWriteEntryContext<AWSDynamoDBPolymorphicWriteEntryTransform,
-            AWSDynamoDBPolymorphicTransactionConstraintTransform>(table: self)
+        let context = StandardPolymorphicWriteEntryContext<AWSDynamoDBPolymorphicWriteEntryTransform<Client>,
+            AWSDynamoDBPolymorphicTransactionConstraintTransform<Client>>(table: self)
         let entryStatements = try entries.map { entry -> DynamoDBClientTypes.ParameterizedStatement in
-            let transform: AWSDynamoDBPolymorphicWriteEntryTransform = try entry.handle(context: context)
+            let transform: AWSDynamoDBPolymorphicWriteEntryTransform<Client> = try entry.handle(context: context)
             let statement = transform.statement
 
             return DynamoDBClientTypes.ParameterizedStatement(statement: statement)
         }
 
         let requiredItemsStatements = try constraints.map { entry -> DynamoDBClientTypes.ParameterizedStatement in
-            let transform: AWSDynamoDBPolymorphicTransactionConstraintTransform = try entry.handle(context: context)
+            let transform: AWSDynamoDBPolymorphicTransactionConstraintTransform<Client> = try entry.handle(context: context)
             let statement = transform.statement
 
             return DynamoDBClientTypes.ParameterizedStatement(statement: statement)
@@ -427,10 +427,10 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             return []
         }
 
-        let context = StandardPolymorphicWriteEntryContext<AWSDynamoDBPolymorphicWriteEntryTransform,
-            AWSDynamoDBPolymorphicTransactionConstraintTransform>(table: self)
+        let context = StandardPolymorphicWriteEntryContext<AWSDynamoDBPolymorphicWriteEntryTransform<Client>,
+            AWSDynamoDBPolymorphicTransactionConstraintTransform<Client>>(table: self)
         let statements = try entries.map { entry -> DynamoDBClientTypes.BatchStatementRequest in
-            let transform: AWSDynamoDBPolymorphicWriteEntryTransform = try entry.handle(context: context)
+            let transform: AWSDynamoDBPolymorphicWriteEntryTransform<Client> = try entry.handle(context: context)
             let statement = transform.statement
 
             return DynamoDBClientTypes.BatchStatementRequest(consistentRead: self.tableConfiguration.consistentRead, statement: statement)
