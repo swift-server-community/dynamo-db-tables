@@ -23,10 +23,6 @@ import Smockable
 
 /// A protocol that abstracts DynamoDB client operations to enable testability and flexibility.
 ///
-/// This protocol defines the interface for all DynamoDB operations used by `AWSDynamoDBCompositePrimaryKeyTable`.
-/// By programming against this protocol instead of the concrete `AWSDynamoDB.DynamoDBClient`, the table
-/// implementation becomes testable and allows for different client implementations.
-///
 /// ## Usage
 ///
 /// The protocol is designed to be implemented by DynamoDB clients that can perform the core operations
@@ -41,14 +37,6 @@ import Smockable
 /// let mockClient = MockDynamoDBClient()
 /// let table = AWSDynamoDBCompositePrimaryKeyTable(tableName: "TestTable", client: mockClient)
 /// ```
-///
-/// ## Supported Operations
-///
-/// The protocol covers all DynamoDB operations used by the table implementation:
-/// - **Single Item Operations**: `putItem`, `getItem`, `deleteItem`
-/// - **Query Operations**: `query` for partition-based queries
-/// - **Batch Operations**: `batchGetItem`, `batchExecuteStatement`
-/// - **Advanced Operations**: `executeStatement` for PartiQL, `executeTransaction` for transactions
 ///
 /// ## Error Handling
 ///
@@ -233,17 +221,6 @@ public protocol DynamoDBClientProtocol {
 // MARK: - AWS DynamoDB Client Conformance
 
 /// Retroactive conformance of AWS DynamoDB Client to the protocol.
-///
-/// This extension makes the concrete AWS DynamoDB client conform to `DynamoDBClientProtocol`
-/// without requiring any additional implementation, since the client already provides all
-/// the required methods with matching signatures.
-///
-/// This conformance enables seamless use of the real AWS client with the generic table implementation:
-///
-/// ```swift
-/// let awsClient = AWSDynamoDB.DynamoDBClient(config: config)
-/// let table = AWSDynamoDBCompositePrimaryKeyTable(tableName: "MyTable", client: awsClient)
-/// ```
 extension AWSDynamoDB.DynamoDBClient: DynamoDBClientProtocol {
     // No implementation needed - the client already has all required methods
 }
