@@ -44,7 +44,6 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0" ..< "3.0.0"),
         .package(url: "https://github.com/JohnSundell/CollectionConcurrencyKit", from: "0.2.0"),
-        .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.53.9"),
         .package(url: "https://github.com/apple/swift-syntax", from: "601.0.0"),
     ],
     targets: [

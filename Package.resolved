@@ -1,5 +1,5 @@
 {
-  "originHash" : "a8b37d4d2368118713e93162ea8f45b3e7b9755653b81aba5afd200c9405b6a1",
+  "originHash" : "4bcae3039f19c82e98ed8f0ca8dce84381c43f63abd674faff0ff363b0a789b2",
   "pins" : [
     {
       "identity" : "aws-crt-swift",
@@ -260,15 +260,6 @@
       "state" : {
         "revision" : "890830fff1a577dc83134890c7984020c5f6b43b",
         "version" : "1.6.2"
-      }
-    },
-    {
-      "identity" : "swiftformat",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/nicklockwood/SwiftFormat",
-      "state" : {
-        "revision" : "b83a8f132ff5430f3b6ff7d912baa407caea9e29",
-        "version" : "0.57.2"
       }
     },
     {
