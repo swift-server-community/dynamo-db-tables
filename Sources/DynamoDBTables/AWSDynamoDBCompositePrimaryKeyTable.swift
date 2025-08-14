@@ -41,22 +41,32 @@ public struct AWSDynamoDBTableMetrics {
     }
 }
 
+public struct AWSDynamoDBTableConfiguration {
+    public let consistentRead: Bool
+    public let escapeSingleQuoteInPartiQL: Bool
+    public let retry: RetryConfiguration
+
+    public init(consistentRead: Bool = true, escapeSingleQuoteInPartiQL: Bool = false,
+                retry: RetryConfiguration = .default)
+    {
+        self.consistentRead = consistentRead
+        self.escapeSingleQuoteInPartiQL = escapeSingleQuoteInPartiQL
+        self.retry = retry
+    }
+}
+
 public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable {
     let dynamodb: AWSDynamoDB.DynamoDBClient
     let targetTableName: String
-    public let consistentRead: Bool
-    public let escapeSingleQuoteInPartiQL: Bool
+    public let tableConfiguration: AWSDynamoDBTableConfiguration
     public let tableMetrics: AWSDynamoDBTableMetrics
-    let retryConfiguration: RetryConfiguration
     let logger: Logging.Logger
 
     public init(tableName: String, region: Swift.String,
                 awsCredentialIdentityResolver: (any SmithyIdentity.AWSCredentialIdentityResolver)? = nil,
                 httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
-                consistentRead: Bool = true,
-                escapeSingleQuoteInPartiQL: Bool = false,
+                tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
                 tableMetrics: AWSDynamoDBTableMetrics = .init(),
-                retryConfiguration: RetryConfiguration = .default,
                 logger: Logging.Logger? = nil) throws
     {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeyTable")
@@ -66,29 +76,23 @@ public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTa
             httpClientConfiguration: httpClientConfiguration)
         self.dynamodb = AWSDynamoDB.DynamoDBClient(config: config)
         self.targetTableName = tableName
-        self.consistentRead = consistentRead
-        self.escapeSingleQuoteInPartiQL = escapeSingleQuoteInPartiQL
+        self.tableConfiguration = tableConfiguration
         self.tableMetrics = tableMetrics
-        self.retryConfiguration = retryConfiguration
 
         self.logger.trace("AWSDynamoDBCompositePrimaryKeyTable created with region '\(region)'")
     }
 
     public init(tableName: String,
                 client: AWSDynamoDB.DynamoDBClient,
-                consistentRead: Bool = true,
-                escapeSingleQuoteInPartiQL: Bool = false,
+                tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
                 tableMetrics: AWSDynamoDBTableMetrics = .init(),
-                retryConfiguration: RetryConfiguration = .default,
                 logger: Logging.Logger? = nil)
     {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeyTable")
         self.dynamodb = client
         self.targetTableName = tableName
-        self.consistentRead = consistentRead
-        self.escapeSingleQuoteInPartiQL = escapeSingleQuoteInPartiQL
+        self.tableConfiguration = tableConfiguration
         self.tableMetrics = tableMetrics
-        self.retryConfiguration = retryConfiguration
 
         self.logger.trace("AWSDynamoDBCompositePrimaryKeyTable created with existing client")
     }
@@ -138,7 +142,7 @@ extension AWSDynamoDBCompositePrimaryKeyTable {
         let attributeValue = try DynamoDBEncoder().encode(key)
 
         if case let .m(keyAttributes) = attributeValue {
-            return AWSDynamoDB.GetItemInput(consistentRead: self.consistentRead,
+            return AWSDynamoDB.GetItemInput(consistentRead: self.tableConfiguration.consistentRead,
                                             key: keyAttributes,
                                             tableName: self.targetTableName)
         } else {
@@ -159,7 +163,7 @@ extension AWSDynamoDBCompositePrimaryKeyTable {
             }
         }
 
-        let keysAndAttributes = DynamoDBClientTypes.KeysAndAttributes(consistentRead: self.consistentRead,
+        let keysAndAttributes = DynamoDBClientTypes.KeysAndAttributes(consistentRead: self.tableConfiguration.consistentRead,
                                                                       keys: keys)
 
         return AWSDynamoDB.BatchGetItemInput(requestItems: [self.targetTableName: keysAndAttributes])

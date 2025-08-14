@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  DynamoDBCompositePrimaryKeyTable+bulkUpdateSupport.swift
+//  AWSDynamoDBCompositePrimaryKeyTable+bulkUpdateSupport.swift
 //  DynamoDBTables
 //
 
@@ -60,7 +60,7 @@ func getAttributes(forItem item: TypedTTLDatabaseItem<some Any, some Any, some A
     return attributes
 }
 
-extension DynamoDBCompositePrimaryKeyTable {
+extension AWSDynamoDBCompositePrimaryKeyTable {
     func getUpdateExpression<AttributesType, ItemType, TimeToLiveAttributesType>(
         tableName: String,
         newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
@@ -309,7 +309,7 @@ extension DynamoDBCompositePrimaryKeyTable {
     /// does not know where the string should end. Therefore, need to escape
     /// single quote by doubling it. E.g. 'foo'bar' becomes 'foo''bar'.
     private func sanitizeString(_ string: String) -> String {
-        if self.escapeSingleQuoteInPartiQL {
+        if self.tableConfiguration.escapeSingleQuoteInPartiQL {
             return string.replacingOccurrences(of: "'", with: "''")
         } else {
             return string

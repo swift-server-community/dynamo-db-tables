@@ -34,6 +34,7 @@ import SmithyIdentity
 public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimaryKeysProjection {
     let dynamodb: AWSDynamoDB.DynamoDBClient
     let targetTableName: String
+    public let tableConfiguration: AWSDynamoDBTableConfiguration
     let logger: Logging.Logger
 
     class QueryPaginationResults<AttributesType: PrimaryKeyAttributes> {
@@ -44,6 +45,7 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
     public init(tableName: String, region: Swift.String,
                 awsCredentialIdentityResolver: (any SmithyIdentity.AWSCredentialIdentityResolver)? = nil,
                 httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
+                tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
                 logger: Logging.Logger? = nil) throws
     {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeysProjection")
@@ -52,6 +54,7 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
             region: region,
             httpClientConfiguration: httpClientConfiguration)
         self.dynamodb = AWSDynamoDB.DynamoDBClient(config: config)
+        self.tableConfiguration = tableConfiguration
         self.targetTableName = tableName
 
         self.logger.trace("AWSDynamoDBCompositePrimaryKeysProjection created with region '\(region)'")
@@ -59,10 +62,12 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
 
     public init(tableName: String,
                 client: AWSDynamoDB.DynamoDBClient,
+                tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
                 logger: Logging.Logger? = nil)
     {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeysProjection")
         self.dynamodb = client
+        self.tableConfiguration = tableConfiguration
         self.targetTableName = tableName
 
         self.logger.trace("AWSDynamoDBCompositePrimaryKeysProjection created with existing client")

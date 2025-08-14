@@ -76,7 +76,7 @@ public struct PolymorphicOperationReturnOption<AttributesType: PrimaryKeyAttribu
 }
 
 struct ReturnTypeDecodable<ReturnType: PolymorphicOperationReturnType>: Decodable {
-    public let decodedValue: ReturnType
+    let decodedValue: ReturnType
 
     enum CodingKeys: String, CodingKey {
         case rowType = "RowType"
@@ -86,7 +86,7 @@ struct ReturnTypeDecodable<ReturnType: PolymorphicOperationReturnType>: Decodabl
         self.decodedValue = decodedValue
     }
 
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let storedRowTypeName = try values.decode(String.self, forKey: .rowType)
 

@@ -134,7 +134,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
             let retriable = PolymorphicGetItemsRetriable<ReturnedType>(
                 initialInput: input,
                 dynamodb: self.dynamodb,
-                retryConfiguration: self.retryConfiguration,
+                retryConfiguration: self.tableConfiguration.retry,
                 logger: self.logger)
 
             return try await retriable.batchGetItem()

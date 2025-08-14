@@ -115,6 +115,11 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         }
     }
 
+    func getTable(escapeSingleQuoteInPartiQL: Bool = false) throws -> AWSDynamoDBCompositePrimaryKeyTable {
+        try AWSDynamoDBCompositePrimaryKeyTable(tableName: "DummyTable", region: "us-west-2",
+                                                tableConfiguration: .init(escapeSingleQuoteInPartiQL: escapeSingleQuoteInPartiQL))
+    }
+
     @Test
     func stringFieldDifference() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
@@ -126,7 +131,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -147,7 +152,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable(escapeSingleQuoteInPartiQL: true)
+        let table = try getTable(escapeSingleQuoteInPartiQL: true)
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -168,7 +173,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -190,7 +195,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -212,7 +217,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable(escapeSingleQuoteInPartiQL: true)
+        let table = try getTable(escapeSingleQuoteInPartiQL: true)
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -233,7 +238,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -259,7 +264,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -286,7 +291,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable(escapeSingleQuoteInPartiQL: true)
+        let table = try getTable(escapeSingleQuoteInPartiQL: true)
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -309,7 +314,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -330,7 +335,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -351,7 +356,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -380,7 +385,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -401,7 +406,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -422,7 +427,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -443,7 +448,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -464,7 +469,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let differences = try table.diffItems(newItem: databaseItemB,
                                               existingItem: databaseItemA)
@@ -486,7 +491,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let expression = try table.getUpdateExpression(tableName: tableName,
                                                        newItem: databaseItemB,
@@ -513,7 +518,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable(escapeSingleQuoteInPartiQL: true)
+        let table = try getTable(escapeSingleQuoteInPartiQL: true)
 
         let expression = try table.getUpdateExpression(tableName: tableName,
                                                        newItem: databaseItemB,
@@ -538,7 +543,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let expression = try table.getUpdateExpression(tableName: tableName,
                                                        newItem: databaseItemB,
@@ -561,7 +566,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let expression = try table.getUpdateExpression(tableName: tableName,
                                                        newItem: databaseItemB,
@@ -582,7 +587,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
                                                        sortKey: "sortKey")
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let expression = try table.getDeleteExpression(tableName: tableName,
                                                        existingItem: databaseItemA)
@@ -601,7 +606,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
                                                        sortKey: "sort'''Key")
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable(escapeSingleQuoteInPartiQL: true)
+        let table = try getTable(escapeSingleQuoteInPartiQL: true)
 
         let expression = try table.getDeleteExpression(tableName: tableName,
                                                        existingItem: databaseItemA)
@@ -620,7 +625,7 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
                                                        sortKey: "sortKey")
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
 
-        let table = InMemoryDynamoDBCompositePrimaryKeyTable()
+        let table = try getTable()
 
         let expression = try table.getDeleteExpression(tableName: tableName,
                                                        existingItem: databaseItemA)

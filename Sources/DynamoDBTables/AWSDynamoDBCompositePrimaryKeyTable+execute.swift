@@ -82,7 +82,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                                           attributesFilter: attributesFilter,
                                           partitionKeyAttributeName: ReturnedType.AttributesType.partitionKeyAttributeName,
                                           additionalWhereClause: additionalWhereClause)
-        let executeInput = ExecuteStatementInput(consistentRead: true, nextToken: nextToken, statement: statement)
+        let executeInput = ExecuteStatementInput(consistentRead: self.tableConfiguration.consistentRead, nextToken: nextToken, statement: statement)
 
         let executeOutput = try await self.dynamodb.executeStatement(input: executeInput)
 
@@ -151,7 +151,7 @@ public extension AWSDynamoDBCompositePrimaryKeyTable {
                                           attributesFilter: attributesFilter,
                                           partitionKeyAttributeName: AttributesType.partitionKeyAttributeName,
                                           additionalWhereClause: additionalWhereClause)
-        let executeInput = ExecuteStatementInput(consistentRead: true, nextToken: nextToken, statement: statement)
+        let executeInput = ExecuteStatementInput(consistentRead: self.tableConfiguration.consistentRead, nextToken: nextToken, statement: statement)
 
         let executeOutput = try await self.dynamodb.executeStatement(input: executeInput)
 

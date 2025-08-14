@@ -31,8 +31,8 @@ import AWSDynamoDB
 public protocol PolymorphicWriteEntryTransform {
     associatedtype TableType
 
-    init<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
-        _ entry: WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>, table: TableType) throws
+    init(
+        _ entry: WriteEntry<some PrimaryKeyAttributes, some Codable, some TimeToLiveAttributes>, table: TableType) throws
 }
 
 // Conforming types are provided by the Table implementation to convert a `WriteEntry` into
@@ -40,8 +40,8 @@ public protocol PolymorphicWriteEntryTransform {
 public protocol PolymorphicTransactionConstraintTransform {
     associatedtype TableType
 
-    init<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
-        _ entry: TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>, table: TableType) throws
+    init(
+        _ entry: TransactionConstraintEntry<some PrimaryKeyAttributes, some Codable, some TimeToLiveAttributes>, table: TableType) throws
 }
 
 // Conforming types are provided by the application to express the different possible write entries
@@ -93,12 +93,12 @@ public protocol PolymorphicWriteEntryContext {
     associatedtype WriteEntryTransformType: PolymorphicWriteEntryTransform
     associatedtype WriteTransactionConstraintType: PolymorphicTransactionConstraintTransform
 
-    func transform<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
-        _ entry: WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>) throws
+    func transform(
+        _ entry: WriteEntry<some PrimaryKeyAttributes, some Codable, some TimeToLiveAttributes>) throws
         -> WriteEntryTransformType
 
-    func transform<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
-        _ entry: TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>) throws
+    func transform(
+        _ entry: TransactionConstraintEntry<some PrimaryKeyAttributes, some Codable, some TimeToLiveAttributes>) throws
         -> WriteTransactionConstraintType
 }
 

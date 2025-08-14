@@ -4,7 +4,7 @@
 //
 // This source file is part of the DynamoDBTables open source project
 //
-// This file is forked from 
+// This file is forked from
 // https://github.com/amzn/smoke-dynamodb/Package.swift.
 // Copyright 2018-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // Licensed under Apache License v2.0
@@ -29,8 +29,11 @@ let swiftSettings: [SwiftSetting] = []
 let package = Package(
     name: "dynamo-db-tables",
     platforms: [
-        .macOS(.v10_15), .iOS(.v13), .watchOS(.v6), .tvOS(.v13)
-        ],
+        .macOS(.v12),
+        .iOS(.v13),
+        .tvOS(.v13),
+        .watchOS(.v6),
+    ],
     products: [
         .library(
             name: "DynamoDBTables",
@@ -39,8 +42,8 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
-        .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
-        .package(url: "https://github.com/JohnSundell/CollectionConcurrencyKit", from :"0.2.0"),
+        .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0" ..< "3.0.0"),
+        .package(url: "https://github.com/JohnSundell/CollectionConcurrencyKit", from: "0.2.0"),
         .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.53.9"),
         .package(url: "https://github.com/apple/swift-syntax", from: "601.0.0"),
     ],
@@ -64,5 +67,4 @@ let package = Package(
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ],
             swiftSettings: swiftSettings),
-    ]
-)
+    ])

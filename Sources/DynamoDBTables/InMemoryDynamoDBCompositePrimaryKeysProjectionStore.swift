@@ -31,14 +31,14 @@ import Foundation
 // MARK: - Store implementation
 
 actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
-    public var keys: [TypeErasedCompositePrimaryKey] = []
+    var keys: [TypeErasedCompositePrimaryKey] = []
 
-    public init(keys: [CompositePrimaryKey<some Any>] = []) {
+    init(keys: [CompositePrimaryKey<some Any>] = []) {
         self.keys = keys.map { .init(partitionKey: $0.partitionKey, sortKey: $0.sortKey) }
     }
 
-    public func query<AttributesType>(forPartitionKey partitionKey: String,
-                                      sortKeyCondition: AttributeCondition?) async throws
+    func query<AttributesType>(forPartitionKey partitionKey: String,
+                               sortKeyCondition: AttributeCondition?) async throws
         -> [CompositePrimaryKey<AttributesType>]
     {
         var items: [CompositePrimaryKey<AttributesType>] = []
@@ -100,10 +100,10 @@ actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
         return items
     }
 
-    public func query<AttributesType>(forPartitionKey partitionKey: String,
-                                      sortKeyCondition: AttributeCondition?,
-                                      limit: Int?,
-                                      exclusiveStartKey: String?) async throws
+    func query<AttributesType>(forPartitionKey partitionKey: String,
+                               sortKeyCondition: AttributeCondition?,
+                               limit: Int?,
+                               exclusiveStartKey: String?) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
     {
         try await self.query(forPartitionKey: partitionKey,
@@ -113,11 +113,11 @@ actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
                              exclusiveStartKey: exclusiveStartKey)
     }
 
-    public func query<AttributesType>(forPartitionKey partitionKey: String,
-                                      sortKeyCondition: AttributeCondition?,
-                                      limit: Int?,
-                                      scanIndexForward: Bool,
-                                      exclusiveStartKey: String?) async throws
+    func query<AttributesType>(forPartitionKey partitionKey: String,
+                               sortKeyCondition: AttributeCondition?,
+                               limit: Int?,
+                               scanIndexForward: Bool,
+                               exclusiveStartKey: String?) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
     {
         // get all the results
