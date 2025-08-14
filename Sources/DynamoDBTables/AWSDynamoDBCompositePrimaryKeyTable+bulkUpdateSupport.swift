@@ -60,7 +60,7 @@ func getAttributes(forItem item: TypedTTLDatabaseItem<some Any, some Any, some A
     return attributes
 }
 
-extension AWSDynamoDBCompositePrimaryKeyTable {
+extension GenericAWSDynamoDBCompositePrimaryKeyTable {
     func getUpdateExpression<AttributesType, ItemType, TimeToLiveAttributesType>(
         tableName: String,
         newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,

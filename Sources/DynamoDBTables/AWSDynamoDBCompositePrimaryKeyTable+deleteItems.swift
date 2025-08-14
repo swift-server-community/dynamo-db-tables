@@ -32,7 +32,7 @@ import Logging
 private let maximumUpdatesPerExecuteStatement = 25
 
 /// DynamoDBTable conformance updateItems function
-public extension AWSDynamoDBCompositePrimaryKeyTable {
+public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
     private func deleteChunkedItems(_ keys: [CompositePrimaryKey<some Any>]) async throws -> [DynamoDBClientTypes.BatchStatementResponse] {
         // if there are no keys, there is nothing to update
         guard keys.count > 0 else {
