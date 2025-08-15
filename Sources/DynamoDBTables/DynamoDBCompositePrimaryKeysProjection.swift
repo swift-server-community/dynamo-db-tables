@@ -27,10 +27,8 @@
 import AWSDynamoDB
 import Foundation
 
-/**
- Protocol presenting a Keys Only projection of a DynamoDB table such as a Keys Only GSI projection.
- Provides the ability to query the projection to get the list of keys without attempting to decode the row into a particular data type.
- */
+/// Protocol presenting a Keys Only projection of a DynamoDB table such as a Keys Only GSI projection.
+/// Provides the ability to query the projection to get the list of keys without attempting to decode the row into a particular data type.
 public protocol DynamoDBCompositePrimaryKeysProjection {
     /**
      * Queries a partition in the database table and optionally a sort key condition. If the
@@ -38,8 +36,10 @@ public protocol DynamoDBCompositePrimaryKeysProjection {
        function will potentially make multiple calls to DynamoDB to retrieve all results for
        the query.
      */
-    func query<AttributesType>(forPartitionKey partitionKey: String,
-                               sortKeyCondition: AttributeCondition?) async throws
+    func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?
+    ) async throws
         -> [CompositePrimaryKey<AttributesType>]
 
     /**
@@ -47,16 +47,20 @@ public protocol DynamoDBCompositePrimaryKeysProjection {
        partition doesn't exist, this operation will return an empty list as a response. This
        function will return paginated results based on the limit and exclusiveStartKey provided.
      */
-    func query<AttributesType>(forPartitionKey partitionKey: String,
-                               sortKeyCondition: AttributeCondition?,
-                               limit: Int?,
-                               exclusiveStartKey: String?) async throws
+    func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        exclusiveStartKey: String?
+    ) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
 
-    func query<AttributesType>(forPartitionKey partitionKey: String,
-                               sortKeyCondition: AttributeCondition?,
-                               limit: Int?,
-                               scanIndexForward: Bool,
-                               exclusiveStartKey: String?) async throws
+    func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        scanIndexForward: Bool,
+        exclusiveStartKey: String?
+    ) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
 }

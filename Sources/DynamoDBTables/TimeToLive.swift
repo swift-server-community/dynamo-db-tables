@@ -51,11 +51,17 @@ public struct TimeToLive<AttributesType: TimeToLiveAttributes>: Sendable, Codabl
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: DynamoDBAttributesTypeCodingKey.self)
-        self.timeToLiveTimestamp = try values.decode(Int64.self, forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.timeToLiveAttributeName)!)
+        self.timeToLiveTimestamp = try values.decode(
+            Int64.self,
+            forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.timeToLiveAttributeName)!
+        )
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: DynamoDBAttributesTypeCodingKey.self)
-        try container.encode(self.timeToLiveTimestamp, forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.timeToLiveAttributeName)!)
+        try container.encode(
+            self.timeToLiveTimestamp,
+            forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.timeToLiveAttributeName)!
+        )
     }
 }

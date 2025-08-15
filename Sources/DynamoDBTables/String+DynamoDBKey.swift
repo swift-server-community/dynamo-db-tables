@@ -27,15 +27,15 @@
 import Foundation
 
 /// Extension for Arrays of Strings
-public extension [String] {
+extension [String] {
     // Transforms the Array into a Dynamo key - putting dots between each element.
-    var dynamodbKey: String {
+    public var dynamodbKey: String {
         // return all elements joined with dots
         self.joined(separator: ".")
     }
 
     // Transforms an Array into a DynamoDB key prefix - a DynamoDB key with a dot on the end.
-    var dynamodbKeyPrefix: String {
+    public var dynamodbKeyPrefix: String {
         let dynamodbKey = self.dynamodbKey
         if dynamodbKey.count == 0 {
             return ""
@@ -48,7 +48,7 @@ public extension [String] {
      dot) corresponding to this array dropped as a prefix. Returns nil
      if the provided string doesn't have the prefix.
      */
-    func dropAsDynamoDBKeyPrefix(from string: String) -> String? {
+    public func dropAsDynamoDBKeyPrefix(from string: String) -> String? {
         let prefix = self.dynamodbKeyPrefix
 
         guard string.hasPrefix(prefix) else {
@@ -61,13 +61,13 @@ public extension [String] {
     /**
      Transforms the Array into a DynamoDB key - putting dots between each element - with a prefix
      element specifying the version.
-
+    
      - Parameters:
         - versionNumber: The version number to prefix.
         - minimumFieldWidth: the minimum field width of the version field. Leading
         zeros will be padded if required.
      */
-    func dynamodbKeyWithPrefixedVersion(_ versionNumber: Int, minimumFieldWidth: Int) -> String {
+    public func dynamodbKeyWithPrefixedVersion(_ versionNumber: Int, minimumFieldWidth: Int) -> String {
         let versionAsString = String(format: "%0\(minimumFieldWidth)d", versionNumber)
         return (["v\(versionAsString)"] + self).dynamodbKey
     }

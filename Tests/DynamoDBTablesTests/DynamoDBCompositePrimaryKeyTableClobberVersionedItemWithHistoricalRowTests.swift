@@ -24,9 +24,10 @@
 //  DynamoDBTablesTests
 //
 
-@testable import DynamoDBTables
 import Foundation
 import Testing
+
+@testable import DynamoDBTables
 
 struct DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTests {
     @Test
@@ -43,11 +44,13 @@ struct DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTest
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        try await table.clobberVersionedItemWithHistoricalRow(forPrimaryKey: partitionKey,
-                                                              andHistoricalKey: historicalPartitionKey,
-                                                              item: payload1,
-                                                              primaryKeyType: StandardPrimaryKeyAttributes.self,
-                                                              generateSortKey: generateSortKey)
+        try await table.clobberVersionedItemWithHistoricalRow(
+            forPrimaryKey: partitionKey,
+            andHistoricalKey: historicalPartitionKey,
+            item: payload1,
+            primaryKeyType: StandardPrimaryKeyAttributes.self,
+            generateSortKey: generateSortKey
+        )
 
         // the v0 row, copy of version 1
         let key1 = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: generateSortKey(withVersion: 0))
@@ -57,7 +60,10 @@ struct DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTest
         #expect(payload1 == item1.rowValue.rowValue)
 
         // the v1 row, has version 1
-        let key2 = StandardCompositePrimaryKey(partitionKey: historicalPartitionKey, sortKey: generateSortKey(withVersion: 1))
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: historicalPartitionKey,
+            sortKey: generateSortKey(withVersion: 1)
+        )
         let item2: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key2)!
         #expect(item2.rowValue.itemVersion == 1)
         #expect(item2.rowStatus.rowVersion == 1)
@@ -65,11 +71,13 @@ struct DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTest
 
         let payload2 = TestTypeA(firstly: "thirdly", secondly: "fourthly")
 
-        try await table.clobberVersionedItemWithHistoricalRow(forPrimaryKey: partitionKey,
-                                                              andHistoricalKey: historicalPartitionKey,
-                                                              item: payload2,
-                                                              primaryKeyType: StandardPrimaryKeyAttributes.self,
-                                                              generateSortKey: generateSortKey)
+        try await table.clobberVersionedItemWithHistoricalRow(
+            forPrimaryKey: partitionKey,
+            andHistoricalKey: historicalPartitionKey,
+            item: payload2,
+            primaryKeyType: StandardPrimaryKeyAttributes.self,
+            generateSortKey: generateSortKey
+        )
 
         // the v0 row, copy of version 2
         let key3 = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: generateSortKey(withVersion: 0))
@@ -79,14 +87,20 @@ struct DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTest
         #expect(payload2 == item3.rowValue.rowValue)
 
         // the v1 row, still has version 1
-        let key4 = StandardCompositePrimaryKey(partitionKey: historicalPartitionKey, sortKey: generateSortKey(withVersion: 1))
+        let key4 = StandardCompositePrimaryKey(
+            partitionKey: historicalPartitionKey,
+            sortKey: generateSortKey(withVersion: 1)
+        )
         let item4: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key4)!
         #expect(item4.rowValue.itemVersion == 1)
         #expect(item4.rowStatus.rowVersion == 1)
         #expect(payload1 == item4.rowValue.rowValue)
 
         // the v2 row, has version 2
-        let key5 = StandardCompositePrimaryKey(partitionKey: historicalPartitionKey, sortKey: generateSortKey(withVersion: 2))
+        let key5 = StandardCompositePrimaryKey(
+            partitionKey: historicalPartitionKey,
+            sortKey: generateSortKey(withVersion: 2)
+        )
         let item5: StandardTypedDatabaseItem<RowWithItemVersion<TestTypeA>> = try await table.getItem(forKey: key5)!
         #expect(item5.rowValue.itemVersion == 2)
         #expect(item5.rowStatus.rowVersion == 1)

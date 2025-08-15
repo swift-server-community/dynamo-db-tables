@@ -37,14 +37,18 @@ actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
         self.keys = keys.map { .init(partitionKey: $0.partitionKey, sortKey: $0.sortKey) }
     }
 
-    func query<AttributesType>(forPartitionKey partitionKey: String,
-                               sortKeyCondition: AttributeCondition?) async throws
+    func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?
+    ) async throws
         -> [CompositePrimaryKey<AttributesType>]
     {
         var items: [CompositePrimaryKey<AttributesType>] = []
 
-        let sortedKeys: [CompositePrimaryKey<AttributesType>] = self.keys.compactMap { .init(partitionKey: $0.partitionKey, sortKey: $0.sortKey) }
-            .sorted(by: { left, right -> Bool in left.sortKey < right.sortKey })
+        let sortedKeys: [CompositePrimaryKey<AttributesType>] = self.keys.compactMap {
+            .init(partitionKey: $0.partitionKey, sortKey: $0.sortKey)
+        }
+        .sorted(by: { left, right -> Bool in left.sortKey < right.sortKey })
 
         sortKeyIteration: for key in sortedKeys {
             if key.partitionKey != partitionKey {
@@ -100,34 +104,43 @@ actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
         return items
     }
 
-    func query<AttributesType>(forPartitionKey partitionKey: String,
-                               sortKeyCondition: AttributeCondition?,
-                               limit: Int?,
-                               exclusiveStartKey: String?) async throws
+    func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        exclusiveStartKey: String?
+    ) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
     {
-        try await self.query(forPartitionKey: partitionKey,
-                             sortKeyCondition: sortKeyCondition,
-                             limit: limit,
-                             scanIndexForward: true,
-                             exclusiveStartKey: exclusiveStartKey)
+        try await self.query(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition,
+            limit: limit,
+            scanIndexForward: true,
+            exclusiveStartKey: exclusiveStartKey
+        )
     }
 
-    func query<AttributesType>(forPartitionKey partitionKey: String,
-                               sortKeyCondition: AttributeCondition?,
-                               limit: Int?,
-                               scanIndexForward: Bool,
-                               exclusiveStartKey: String?) async throws
+    func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        scanIndexForward: Bool,
+        exclusiveStartKey: String?
+    ) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
     {
         // get all the results
-        let rawItems: [CompositePrimaryKey<AttributesType>] = try await query(forPartitionKey: partitionKey,
-                                                                              sortKeyCondition: sortKeyCondition)
-        let items: [CompositePrimaryKey<AttributesType>] = if !scanIndexForward {
-            rawItems.reversed()
-        } else {
-            rawItems
-        }
+        let rawItems: [CompositePrimaryKey<AttributesType>] = try await query(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition
+        )
+        let items: [CompositePrimaryKey<AttributesType>] =
+            if !scanIndexForward {
+                rawItems.reversed()
+            } else {
+                rawItems
+            }
 
         let startIndex: Int
         // if there is an exclusiveStartKey
@@ -151,6 +164,6 @@ actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
             lastEvaluatedKey = nil
         }
 
-        return (Array(items[startIndex ..< endIndex]), lastEvaluatedKey)
+        return (Array(items[startIndex..<endIndex]), lastEvaluatedKey)
     }
 }

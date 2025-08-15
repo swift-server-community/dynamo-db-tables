@@ -24,8 +24,9 @@
 //  DynamoDBTablesTests
 //
 
-@testable import DynamoDBTables
 import Testing
+
+@testable import DynamoDBTables
 
 struct CoreAccountAttributes: Codable {
     var description: String
@@ -59,13 +60,17 @@ struct DynamoDBEncoderDecoderTests {
     let attributes = CoreAccountAttributes(
         description: "Description",
         mappedValues: ["A": "one", "B": "two"],
-        notificationTargets: NotificationTargets(currentIDs: [], maximum: 20))
+        notificationTargets: NotificationTargets(currentIDs: [], maximum: 20)
+    )
 
     @Test
     func encoderDecoder() throws {
         // create key and database item to create
         let key = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: sortKey)
-        let newDatabaseItem: DatabaseItemType = StandardTypedDatabaseItem.newItem(withKey: key, andValue: self.attributes)
+        let newDatabaseItem: DatabaseItemType = StandardTypedDatabaseItem.newItem(
+            withKey: key,
+            andValue: self.attributes
+        )
 
         let encodedAttributeValue = try DynamoDBEncoder().encode(newDatabaseItem)
 
@@ -88,7 +93,8 @@ struct DynamoDBEncoderDecoderTests {
         let newDatabaseItem: DatabaseItemType = StandardTypedDatabaseItem.newItem(
             withKey: key,
             andValue: self.attributes,
-            andTimeToLive: timeToLive)
+            andTimeToLive: timeToLive
+        )
 
         let encodedAttributeValue = try DynamoDBEncoder().encode(newDatabaseItem)
 

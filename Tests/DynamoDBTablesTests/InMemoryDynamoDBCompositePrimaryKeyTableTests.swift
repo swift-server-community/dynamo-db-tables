@@ -25,8 +25,9 @@
 //
 
 import AWSDynamoDB
-@testable import DynamoDBTables
 import Testing
+
+@testable import DynamoDBTables
 
 @PolymorphicOperationReturnType
 enum TestPolymorphicOperationReturnType {
@@ -38,8 +39,10 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func insertAndUpdate() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -66,8 +69,10 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func doubleInsert() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -87,15 +92,19 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func updateWithoutInsert() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let updatedPayload = TestTypeA(firstly: "firstlyX2", secondly: "secondlyX2")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
         do {
-            try await table.updateItem(newItem: databaseItem.createUpdatedItem(withValue: updatedPayload),
-                                       existingItem: databaseItem)
+            try await table.updateItem(
+                newItem: databaseItem.createUpdatedItem(withValue: updatedPayload),
+                existingItem: databaseItem
+            )
             Issue.record()
         } catch DynamoDBTableError.conditionalCheckFailed {
             // expected error
@@ -111,9 +120,11 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         var items: [StandardTypedDatabaseItem<TestTypeA>] = []
 
         // add to the database a lot of items - a number that isn't a multiple of the pagination page size
-        for index in 0 ..< 1376 {
-            let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                                  sortKey: "sortId_\(index)")
+        for index in 0..<1376 {
+            let key = StandardCompositePrimaryKey(
+                partitionKey: "partitionId",
+                sortKey: "sortId_\(index)"
+            )
             let payload = TestTypeA(firstly: "firstly_\(index)", secondly: "secondly_\(index)")
             let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -128,10 +139,12 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         // get everything back from the database
         while true {
             let paginatedItems: ([TestPolymorphicOperationReturnType], String?) =
-                try await table.polymorphicQuery(forPartitionKey: "partitionId",
-                                                 sortKeyCondition: nil,
-                                                 limit: 100,
-                                                 exclusiveStartKey: exclusiveStartKey)
+                try await table.polymorphicQuery(
+                    forPartitionKey: "partitionId",
+                    sortKeyCondition: nil,
+                    limit: 100,
+                    exclusiveStartKey: exclusiveStartKey
+                )
 
             retrievedItems += paginatedItems.0
 
@@ -146,9 +159,11 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
 
         #expect(items.count == retrievedItems.count)
         // items are returned in sorted order
-        let sortedItems = items.sorted { left, right in left.compositePrimaryKey.sortKey < right.compositePrimaryKey.sortKey }
+        let sortedItems = items.sorted { left, right in
+            left.compositePrimaryKey.sortKey < right.compositePrimaryKey.sortKey
+        }
 
-        for index in 0 ..< sortedItems.count {
+        for index in 0..<sortedItems.count {
             let originalItem = sortedItems[index]
             let retrievedItem = retrievedItems[index]
 
@@ -171,9 +186,11 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         var items: [StandardTypedDatabaseItem<TestTypeA>] = []
 
         // add to the database a lot of items - a number that isn't a multiple of the pagination page size
-        for index in 0 ..< 1376 {
-            let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                                  sortKey: "sortId_\(index)")
+        for index in 0..<1376 {
+            let key = StandardCompositePrimaryKey(
+                partitionKey: "partitionId",
+                sortKey: "sortId_\(index)"
+            )
             let payload = TestTypeA(firstly: "firstly_\(index)", secondly: "secondly_\(index)")
             let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -188,11 +205,13 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         // get everything back from the database
         while true {
             let paginatedItems: ([TestPolymorphicOperationReturnType], String?) =
-                try await table.polymorphicQuery(forPartitionKey: "partitionId",
-                                                 sortKeyCondition: nil,
-                                                 limit: 100,
-                                                 scanIndexForward: false,
-                                                 exclusiveStartKey: exclusiveStartKey)
+                try await table.polymorphicQuery(
+                    forPartitionKey: "partitionId",
+                    sortKeyCondition: nil,
+                    limit: 100,
+                    scanIndexForward: false,
+                    exclusiveStartKey: exclusiveStartKey
+                )
 
             retrievedItems += paginatedItems.0
 
@@ -207,9 +226,11 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
 
         #expect(items.count == retrievedItems.count)
         // items are returned in reversed sorted order
-        let sortedItems = items.sorted { left, right in left.compositePrimaryKey.sortKey > right.compositePrimaryKey.sortKey }
+        let sortedItems = items.sorted { left, right in
+            left.compositePrimaryKey.sortKey > right.compositePrimaryKey.sortKey
+        }
 
-        for index in 0 ..< sortedItems.count {
+        for index in 0..<sortedItems.count {
             let originalItem = sortedItems[index]
             let retrievedItem = retrievedItems[index]
 
@@ -232,9 +253,11 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         var items: [StandardTypedDatabaseItem<TestTypeA>] = []
 
         // add to the database a lot of items - a number that isn't a multiple of the pagination page size
-        for index in 0 ..< 1376 {
-            let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                                  sortKey: "sortId_\(index)")
+        for index in 0..<1376 {
+            let key = StandardCompositePrimaryKey(
+                partitionKey: "partitionId",
+                sortKey: "sortId_\(index)"
+            )
             let payload = TestTypeA(firstly: "firstly_\(index)", secondly: "secondly_\(index)")
             let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -243,12 +266,14 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         }
 
         let retrievedItems: [TestPolymorphicOperationReturnType] =
-            try await table.polymorphicQuery(forPartitionKey: "partitionId",
-                                             sortKeyCondition: nil)
+            try await table.polymorphicQuery(
+                forPartitionKey: "partitionId",
+                sortKeyCondition: nil
+            )
 
         #expect(items.count == retrievedItems.count)
 
-        for index in 0 ..< items.count {
+        for index in 0..<items.count {
             let originalItem = items[index]
             let retrievedItem = items[index]
 
@@ -265,9 +290,11 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         var items: [StandardTypedDatabaseItem<TestTypeA>] = []
 
         // add to the database a lot of items - a number that isn't a multiple of the pagination page size
-        for index in 0 ..< 1376 {
-            let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                                  sortKey: "sortId_\(index)")
+        for index in 0..<1376 {
+            let key = StandardCompositePrimaryKey(
+                partitionKey: "partitionId",
+                sortKey: "sortId_\(index)"
+            )
             let payload = TestTypeA(firstly: "firstly_\(index)", secondly: "secondly_\(index)")
             let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -276,12 +303,14 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         }
 
         let retrievedItems: [StandardTypedDatabaseItem<TestTypeA>] =
-            try await table.query(forPartitionKey: "partitionId",
-                                  sortKeyCondition: nil)
+            try await table.query(
+                forPartitionKey: "partitionId",
+                sortKeyCondition: nil
+            )
 
         #expect(items.count == retrievedItems.count)
 
-        for index in 0 ..< items.count {
+        for index in 0..<items.count {
             let originalItem = items[index]
             let retrievedItem = items[index]
 
@@ -295,8 +324,10 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func deleteForKey() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -315,8 +346,10 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func deleteForExistingItem() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -335,8 +368,10 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func deleteForExistingItemAfterUpdate() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let updatedPayload = TestTypeA(firstly: "firstlyX2", secondly: "secondlyX2")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
@@ -364,8 +399,10 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func deleteForExistingItemAfterRecreation() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -401,10 +438,14 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func polymorphicGetItems() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let payload2 = TestTypeB(thirdly: "thirdly", fourthly: "fourthly")
 
@@ -414,7 +455,9 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         _ = try await table.insertItem(databaseItem1)
         _ = try await table.insertItem(databaseItem2)
 
-        let batch: [StandardCompositePrimaryKey: TestQueryableTypes] = try await table.polymorphicGetItems(forKeys: [key1, key2])
+        let batch: [StandardCompositePrimaryKey: TestQueryableTypes] = try await table.polymorphicGetItems(forKeys: [
+            key1, key2,
+        ])
 
         guard case let .testTypeA(retrievedDatabaseItem1) = batch[key1] else {
             Issue.record()
@@ -434,10 +477,14 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func getItems() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let payload2 = TestTypeA(firstly: "thirdly", secondly: "fourthly")
 
@@ -447,8 +494,8 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         _ = try await table.insertItem(databaseItem1)
         _ = try await table.insertItem(databaseItem2)
 
-        let batch: [StandardCompositePrimaryKey: StandardTypedDatabaseItem<TestTypeA>]
-            = try await table.getItems(forKeys: [key1, key2])
+        let batch: [StandardCompositePrimaryKey: StandardTypedDatabaseItem<TestTypeA>] = try await table.getItems(
+            forKeys: [key1, key2])
 
         guard let retrievedDatabaseItem1 = batch[key1] else {
             Issue.record()
@@ -468,13 +515,17 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func transactWrite() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly1", secondly: "secondly1")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeA(firstly: "firstly2", secondly: "secondly2")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
@@ -502,23 +553,31 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func transactWriteWithMissingRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly1", secondly: "secondly1")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeA(firstly: "firstly2", secondly: "secondly2")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
-        let key3 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId3")
+        let key3 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId3"
+        )
         let payload3 = TestTypeA(firstly: "firstly1A", secondly: "secondly1A")
         let databaseItem3 = StandardTypedDatabaseItem.newItem(withKey: key3, andValue: payload3)
 
-        let key4 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId4")
+        let key4 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId4"
+        )
         let payload4 = TestTypeA(firstly: "firstly2A", secondly: "secondly2A")
         let databaseItem4 = StandardTypedDatabaseItem.newItem(withKey: key4, andValue: payload4)
 
@@ -548,23 +607,31 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func transactWriteTransactWriteWithExistingRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly1", secondly: "secondly1")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeA(firstly: "firstly2", secondly: "secondly2")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
-        let key3 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId3")
+        let key3 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId3"
+        )
         let payload3 = TestTypeA(firstly: "firstly1A", secondly: "secondly1A")
         let databaseItem3 = StandardTypedDatabaseItem.newItem(withKey: key3, andValue: payload3)
 
-        let key4 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId4")
+        let key4 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId4"
+        )
         let payload4 = TestTypeA(firstly: "firstly2A", secondly: "secondly2A")
         let databaseItem4 = StandardTypedDatabaseItem.newItem(withKey: key4, andValue: payload4)
 
@@ -600,23 +667,31 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func transactWriteWithIncorrectVersionForRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly1", secondly: "secondly1")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeA(firstly: "firstly2", secondly: "secondly2")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
-        let key3 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId3")
+        let key3 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId3"
+        )
         let payload3 = TestTypeA(firstly: "firstly1A", secondly: "secondly1A")
         let databaseItem3 = StandardTypedDatabaseItem.newItem(withKey: key3, andValue: payload3)
 
-        let key4 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId4")
+        let key4 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId4"
+        )
         let payload4 = TestTypeA(firstly: "firstly2A", secondly: "secondly2A")
         let databaseItem4 = StandardTypedDatabaseItem.newItem(withKey: key4, andValue: payload4)
 
@@ -660,13 +735,17 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func transactWriteWithIncorrectVersionForUpdate() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly1", secondly: "secondly1")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeA(firstly: "firstly2", secondly: "secondly2")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
         try await table.insertItem(databaseItem2)
@@ -675,8 +754,10 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         let databaseItem3 = databaseItem2.createUpdatedItem(withValue: payload3)
         try await table.updateItem(newItem: databaseItem3, existingItem: databaseItem2)
 
-        let key4 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId4")
+        let key4 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId4"
+        )
         let payload4 = TestTypeA(firstly: "firstly2A", secondly: "secondly2A")
         let databaseItem4 = StandardTypedDatabaseItem.newItem(withKey: key4, andValue: payload4)
 
@@ -708,13 +789,17 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func polymorphicTransactWrite() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeB(thirdly: "thirdly", fourthly: "fourthly")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
@@ -742,23 +827,31 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func polymorphicTransactWriteWithMissingRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeB(thirdly: "thirdly", fourthly: "fourthly")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
-        let key3 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId3")
+        let key3 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId3"
+        )
         let payload3 = TestTypeA(firstly: "firstlyB", secondly: "secondlyB")
         let databaseItem3 = StandardTypedDatabaseItem.newItem(withKey: key3, andValue: payload3)
 
-        let key4 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId4")
+        let key4 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId4"
+        )
         let payload4 = TestTypeB(thirdly: "thirdlyB", fourthly: "fourthlyB")
         let databaseItem4 = StandardTypedDatabaseItem.newItem(withKey: key4, andValue: payload4)
 
@@ -788,23 +881,31 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func polymorphicTransactWriteTransactWriteWithExistingRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeB(thirdly: "thirdly", fourthly: "fourthly")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
-        let key3 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId3")
+        let key3 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId3"
+        )
         let payload3 = TestTypeA(firstly: "firstlyB", secondly: "secondlyB")
         let databaseItem3 = StandardTypedDatabaseItem.newItem(withKey: key3, andValue: payload3)
 
-        let key4 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId4")
+        let key4 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId4"
+        )
         let payload4 = TestTypeB(thirdly: "thirdlyB", fourthly: "fourthlyB")
         let databaseItem4 = StandardTypedDatabaseItem.newItem(withKey: key4, andValue: payload4)
 
@@ -840,23 +941,31 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func polymorphicTransactWriteWithIncorrectVersionForRequired() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeB(thirdly: "thirdly", fourthly: "fourthly")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
-        let key3 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId3")
+        let key3 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId3"
+        )
         let payload3 = TestTypeA(firstly: "firstlyB", secondly: "secondlyB")
         let databaseItem3 = StandardTypedDatabaseItem.newItem(withKey: key3, andValue: payload3)
 
-        let key4 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId4")
+        let key4 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId4"
+        )
         let payload4 = TestTypeB(thirdly: "thirdlyB", fourthly: "fourthlyB")
         let databaseItem4 = StandardTypedDatabaseItem.newItem(withKey: key4, andValue: payload4)
 
@@ -900,13 +1009,17 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func polymorphicTransactWriteWithIncorrectVersionForUpdate() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeB(thirdly: "thirdly", fourthly: "fourthly")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
         try await table.insertItem(databaseItem2)
@@ -950,8 +1063,9 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         }
 
         func injectErrors(
-            inputKeys _: [CompositePrimaryKey<some Any>?], table _: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
-        {
+            inputKeys _: [CompositePrimaryKey<some Any>?],
+            table _: InMemoryDynamoDBCompositePrimaryKeyTable
+        ) async throws -> [DynamoDBTableError] {
             self.errors
         }
     }
@@ -960,25 +1074,35 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func transactWriteWithInjectedErrors() async throws {
         let errors = [DynamoDBTableError.transactionConflict(message: "There is a Conflict!!")]
         let transactionDelegate = TestInMemoryTransactionDelegate(errors: errors)
-        let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable(transactionDelegate: transactionDelegate)
+        let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable(
+            transactionDelegate: transactionDelegate
+        )
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly1", secondly: "secondly1")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeA(firstly: "firstly2", secondly: "secondly2")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
-        let key3 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId3")
+        let key3 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId3"
+        )
         let payload3 = TestTypeA(firstly: "firstly1A", secondly: "secondly1A")
         let databaseItem3 = StandardTypedDatabaseItem.newItem(withKey: key3, andValue: payload3)
 
-        let key4 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId4")
+        let key4 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId4"
+        )
         let payload4 = TestTypeA(firstly: "firstly2A", secondly: "secondly2A")
         let databaseItem4 = StandardTypedDatabaseItem.newItem(withKey: key4, andValue: payload4)
 
@@ -1017,13 +1141,17 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func transactWriteWithExistingItem() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeA(firstly: "firstly2", secondly: "secondly2")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
@@ -1057,25 +1185,35 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func polymorphicTransactWriteWithInjectedErrors() async throws {
         let errors = [DynamoDBTableError.transactionConflict(message: "There is a Conflict!!")]
         let transactionDelegate = TestInMemoryTransactionDelegate(errors: errors)
-        let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable(transactionDelegate: transactionDelegate)
+        let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable(
+            transactionDelegate: transactionDelegate
+        )
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeB(thirdly: "thirdly", fourthly: "fourthly")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
-        let key3 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId3")
+        let key3 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId3"
+        )
         let payload3 = TestTypeA(firstly: "firstlyB", secondly: "secondlyB")
         let databaseItem3 = StandardTypedDatabaseItem.newItem(withKey: key3, andValue: payload3)
 
-        let key4 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId4")
+        let key4 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId4"
+        )
         let payload4 = TestTypeB(thirdly: "thirdlyB", fourthly: "fourthlyB")
         let databaseItem4 = StandardTypedDatabaseItem.newItem(withKey: key4, andValue: payload4)
 
@@ -1114,13 +1252,17 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func polymorphicTransactWriteWithExistingItem() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeB(thirdly: "thirdly", fourthly: "fourthly")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
@@ -1154,13 +1296,17 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func bulkWrite() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeA(firstly: "firstly2", secondly: "secondly2")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
@@ -1188,13 +1334,17 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func bulkWriteWithExistingItem() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeA(firstly: "firstly2", secondly: "secondly2")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
@@ -1226,13 +1376,17 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func polymorphicBulkWrite() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeB(thirdly: "thirdly", fourthly: "fourthly")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
@@ -1260,13 +1414,17 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func polymorphicBulkWriteWithExistingItem() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeB(thirdly: "thirdly", fourthly: "fourthly")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
@@ -1298,21 +1456,28 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func transactWriteForKeys() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly1", secondly: "secondly1")
         let payload3 = TestTypeA(firstly: "firstly3", secondly: "secondly3")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeA(firstly: "firstly2", secondly: "secondly2")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
         try await table.insertItem(databaseItem1)
 
         @Sendable
-        func writeEntryProvider(key: StandardCompositePrimaryKey, existingItem: StandardTypedDatabaseItem<TestTypeA>?) throws
+        func writeEntryProvider(
+            key: StandardCompositePrimaryKey,
+            existingItem: StandardTypedDatabaseItem<TestTypeA>?
+        ) throws
             -> StandardWriteEntry<TestTypeA>?
         {
             if key == key1 {
@@ -1348,21 +1513,28 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
     func polymorphicTransactWriteForKeys() async throws {
         let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key1 = StandardCompositePrimaryKey(partitionKey: "partitionId1",
-                                               sortKey: "sortId1")
+        let key1 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId1",
+            sortKey: "sortId1"
+        )
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let payload3 = TestTypeA(firstly: "firstly3", secondly: "secondly3")
         let databaseItem1 = StandardTypedDatabaseItem.newItem(withKey: key1, andValue: payload1)
 
-        let key2 = StandardCompositePrimaryKey(partitionKey: "partitionId2",
-                                               sortKey: "sortId2")
+        let key2 = StandardCompositePrimaryKey(
+            partitionKey: "partitionId2",
+            sortKey: "sortId2"
+        )
         let payload2 = TestTypeB(thirdly: "thirdly", fourthly: "fourthly")
         let databaseItem2 = StandardTypedDatabaseItem.newItem(withKey: key2, andValue: payload2)
 
         try await table.insertItem(databaseItem1)
 
         @Sendable
-        func writeEntryProvider(key: StandardCompositePrimaryKey, existingItem: TestQueryableTypes?) throws
+        func writeEntryProvider(
+            key: StandardCompositePrimaryKey,
+            existingItem: TestQueryableTypes?
+        ) throws
             -> TestPolymorphicWriteEntry?
         {
             if key == key1 {

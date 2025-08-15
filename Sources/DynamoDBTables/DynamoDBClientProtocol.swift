@@ -173,7 +173,9 @@ public protocol DynamoDBClientProtocol {
     /// let batchInput = BatchExecuteStatementInput(statements: statements)
     /// let response = try await client.batchExecuteStatement(input: batchInput)
     /// ```
-    func batchExecuteStatement(input: AWSDynamoDB.BatchExecuteStatementInput) async throws -> AWSDynamoDB.BatchExecuteStatementOutput
+    func batchExecuteStatement(
+        input: AWSDynamoDB.BatchExecuteStatementInput
+    ) async throws -> AWSDynamoDB.BatchExecuteStatementOutput
 
     // MARK: - Advanced Operations
 
@@ -214,7 +216,9 @@ public protocol DynamoDBClientProtocol {
     /// let transactionInput = ExecuteTransactionInput(transactStatements: statements)
     /// let response = try await client.executeTransaction(input: transactionInput)
     /// ```
-    func executeTransaction(input: AWSDynamoDB.ExecuteTransactionInput) async throws -> AWSDynamoDB.ExecuteTransactionOutput
+    func executeTransaction(
+        input: AWSDynamoDB.ExecuteTransactionInput
+    ) async throws -> AWSDynamoDB.ExecuteTransactionOutput
 }
 
 // MARK: - AWS DynamoDB Client Conformance

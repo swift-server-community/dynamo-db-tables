@@ -24,8 +24,9 @@
 //  DynamoDBTablesTests
 //
 
-@testable import DynamoDBTables
 import Foundation
+
+@testable import DynamoDBTables
 
 struct TestTypeA: Codable, Equatable {
     let firstly: String

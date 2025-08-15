@@ -45,32 +45,46 @@ public struct InMemoryDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositeP
         }
     }
 
-    public func query<AttributesType>(forPartitionKey partitionKey: String,
-                                      sortKeyCondition: AttributeCondition?) async throws
+    public func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?
+    ) async throws
         -> [CompositePrimaryKey<AttributesType>]
     {
         try await self.keysWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition)
     }
 
-    public func query<AttributesType>(forPartitionKey partitionKey: String,
-                                      sortKeyCondition: AttributeCondition?,
-                                      limit: Int?,
-                                      exclusiveStartKey: String?) async throws
+    public func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        exclusiveStartKey: String?
+    ) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
     {
-        try await self.keysWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                         limit: limit, exclusiveStartKey: exclusiveStartKey)
+        try await self.keysWrapper.query(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition,
+            limit: limit,
+            exclusiveStartKey: exclusiveStartKey
+        )
     }
 
-    public func query<AttributesType>(forPartitionKey partitionKey: String,
-                                      sortKeyCondition: AttributeCondition?,
-                                      limit: Int?,
-                                      scanIndexForward: Bool,
-                                      exclusiveStartKey: String?) async throws
+    public func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        scanIndexForward: Bool,
+        exclusiveStartKey: String?
+    ) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
     {
-        try await self.keysWrapper.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition,
-                                         limit: limit, scanIndexForward: scanIndexForward,
-                                         exclusiveStartKey: exclusiveStartKey)
+        try await self.keysWrapper.query(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition,
+            limit: limit,
+            scanIndexForward: scanIndexForward,
+            exclusiveStartKey: exclusiveStartKey
+        )
     }
 }

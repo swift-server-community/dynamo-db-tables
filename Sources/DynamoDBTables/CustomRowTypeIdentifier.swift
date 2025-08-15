@@ -31,15 +31,15 @@ public protocol CustomRowTypeIdentifier {
 }
 
 func getTypeRowIdentifier(type: Any.Type) -> String {
-    let typeRowIdentifier: String
-        // if this type has a custom row identity
-        = if let customAttributesTypeType = type as? CustomRowTypeIdentifier.Type,
-        let identifier = customAttributesTypeType.rowTypeIdentifier
-    {
-        identifier
-    } else {
-        String(describing: type)
-    }
+    let typeRowIdentifier: String// if this type has a custom row identity
+    =
+        if let customAttributesTypeType = type as? CustomRowTypeIdentifier.Type,
+            let identifier = customAttributesTypeType.rowTypeIdentifier
+        {
+            identifier
+        } else {
+            String(describing: type)
+        }
 
     return typeRowIdentifier
 }

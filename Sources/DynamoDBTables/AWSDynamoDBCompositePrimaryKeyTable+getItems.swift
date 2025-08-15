@@ -34,16 +34,23 @@ private let maximumKeysPerGetItemBatch = 100
 private let millisecondsToNanoSeconds: UInt64 = 1_000_000
 
 /// DynamoDBTable conformance getItems function
-public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
+extension GenericAWSDynamoDBCompositePrimaryKeyTable {
     /**
      Helper type that manages the state of a getItems request.
-
+    
      As suggested here - https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html - this helper type
      monitors the unprocessed items returned in the response from DynamoDB and uses an exponential backoff algorithm to retry those items using
      the same retry configuration as the underlying DynamoDB client.
      */
-    private class GetItemsRetriable<AttributesType: PrimaryKeyAttributes, ItemType: Codable & Sendable, TimeToLiveAttributesType: TimeToLiveAttributes, DynamoClient: DynamoDBClientProtocol> {
-        typealias OutputType = [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
+    private class GetItemsRetriable<
+        AttributesType: PrimaryKeyAttributes,
+        ItemType: Codable & Sendable,
+        TimeToLiveAttributesType: TimeToLiveAttributes,
+        DynamoClient: DynamoDBClientProtocol
+    > {
+        typealias OutputType = [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<
+            AttributesType, ItemType, TimeToLiveAttributesType
+        >]
 
         let dynamodb: DynamoClient
         let retryConfiguration: RetryConfiguration
@@ -53,11 +60,12 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         var input: BatchGetItemInput
         var outputItems: OutputType = [:]
 
-        init(initialInput: BatchGetItemInput,
-             dynamodb: DynamoClient,
-             retryConfiguration: RetryConfiguration,
-             logger: Logging.Logger)
-        {
+        init(
+            initialInput: BatchGetItemInput,
+            dynamodb: DynamoClient,
+            retryConfiguration: RetryConfiguration,
+            logger: Logging.Logger
+        ) {
             self.dynamodb = dynamodb
             self.retryConfiguration = retryConfiguration
             self.retriesRemaining = retryConfiguration.numRetries
@@ -69,22 +77,23 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
             // submit the asynchronous request
             let output = try await self.dynamodb.batchGetItem(input: self.input)
 
-            let errors = output.responses?.flatMap { _, itemList -> [Error] in
-                return itemList.compactMap { values -> Error? in
-                    do {
-                        let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
+            let errors =
+                output.responses?.flatMap { _, itemList -> [Error] in
+                    return itemList.compactMap { values -> Error? in
+                        do {
+                            let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
 
-                        let decodedValue: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
-                            = try DynamoDBDecoder().decode(attributeValue)
-                        let key = decodedValue.compositePrimaryKey
+                            let decodedValue: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> =
+                                try DynamoDBDecoder().decode(attributeValue)
+                            let key = decodedValue.compositePrimaryKey
 
-                        self.outputItems[key] = decodedValue
-                        return nil
-                    } catch {
-                        return error
+                            self.outputItems[key] = decodedValue
+                            return nil
+                        } catch {
+                            return error
+                        }
                     }
-                }
-            } ?? []
+                } ?? []
 
             if !errors.isEmpty {
                 throw DynamoDBTableError.multipleUnexpectedErrors(cause: errors)
@@ -103,7 +112,9 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
             // if there are retries remaining
             if self.retriesRemaining > 0 {
                 // determine the required interval
-                let retryInterval = Int(self.retryConfiguration.getRetryInterval(retriesRemaining: self.retriesRemaining))
+                let retryInterval = Int(
+                    self.retryConfiguration.getRetryInterval(retriesRemaining: self.retriesRemaining)
+                )
 
                 let currentRetriesRemaining = self.retriesRemaining
                 self.retriesRemaining -= 1
@@ -111,7 +122,8 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
                 let remainingKeysCount = self.input.requestItems?.count ?? 0
 
                 self.logger.warning(
-                    "Request retried for remaining items: \(remainingKeysCount). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
+                    "Request retried for remaining items: \(remainingKeysCount). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms."
+                )
                 try await Task.sleep(nanoseconds: UInt64(retryInterval) * millisecondsToNanoSeconds)
 
                 self.logger.trace("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
@@ -122,9 +134,12 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
-        forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
-        -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
+    public func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forKeys keys: [CompositePrimaryKey<AttributesType>]
+    ) async throws
+        -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<
+            AttributesType, ItemType, TimeToLiveAttributesType
+        >]
     {
         let chunkedList = keys.chunked(by: maximumKeysPerGetItemBatch)
 
@@ -135,7 +150,8 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
                 initialInput: input,
                 dynamodb: self.dynamodb,
                 retryConfiguration: self.tableConfiguration.retry,
-                logger: self.logger)
+                logger: self.logger
+            )
 
             return try await retriable.batchGetItem()
         }

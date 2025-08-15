@@ -15,15 +15,15 @@
 //
 
 #if canImport(SwiftCompilerPlugin)
-    import SwiftCompilerPlugin
-    import SwiftSyntaxMacros
+import SwiftCompilerPlugin
+import SwiftSyntaxMacros
 
-    @main
-    struct DynamoDBTablesMacrosCompilerPlugin: CompilerPlugin {
-        let providingMacros: [Macro.Type] = [
-            PolymorphicWriteEntryMacro.self,
-            PolymorphicTransactionConstraintEntryMacro.self,
-            PolymorphicOperationReturnTypeMacro.self,
-        ]
-    }
+@main
+struct DynamoDBTablesMacrosCompilerPlugin: CompilerPlugin {
+    let providingMacros: [Macro.Type] = [
+        PolymorphicWriteEntryMacro.self,
+        PolymorphicTransactionConstraintEntryMacro.self,
+        PolymorphicOperationReturnTypeMacro.self,
+    ]
+}
 #endif

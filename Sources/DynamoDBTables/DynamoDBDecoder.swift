@@ -34,13 +34,18 @@ public class DynamoDBDecoder {
         self.attributeNameTransform = attributeNameTransform
     }
 
-    public func decode<T: Swift.Decodable>(_ value: DynamoDBClientTypes.AttributeValue, userInfo: [CodingUserInfoKey: Any] = [:]) throws
+    public func decode<T: Swift.Decodable>(
+        _ value: DynamoDBClientTypes.AttributeValue,
+        userInfo: [CodingUserInfoKey: Any] = [:]
+    ) throws
         -> T
     {
-        let container = InternalSingleValueDecodingContainer(attributeValue: value,
-                                                             codingPath: [],
-                                                             userInfo: userInfo,
-                                                             attributeNameTransform: attributeNameTransform)
+        let container = InternalSingleValueDecodingContainer(
+            attributeValue: value,
+            codingPath: [],
+            userInfo: userInfo,
+            attributeNameTransform: attributeNameTransform
+        )
 
         return try T(from: container)
     }

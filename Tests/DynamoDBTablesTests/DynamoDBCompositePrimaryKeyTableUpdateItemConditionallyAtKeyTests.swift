@@ -24,8 +24,9 @@
 //  DynamoDBTablesTests
 //
 
-@testable import DynamoDBTables
 import Testing
+
+@testable import DynamoDBTables
 
 struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
     func updatedPayloadProvider(item _: TestTypeA) -> TestTypeA {
@@ -34,19 +35,24 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
 
     typealias TestTypeADatabaseItem = StandardTypedDatabaseItem<TestTypeA>
     func updatedItemProvider(item _: TestTypeADatabaseItem) -> TestTypeADatabaseItem {
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         return TestTypeADatabaseItem.newItem(
             withKey: key,
-            andValue: TestTypeA(firstly: "firstlyX2", secondly: "secondlyX2"))
+            andValue: TestTypeA(firstly: "firstlyX2", secondly: "secondlyX2")
+        )
     }
 
     @Test
     func updateItemConditionallyAtKey() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -71,8 +77,10 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
     func updateItemConditionallyAtKeyWithItemProvider() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -96,12 +104,16 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
     @Test
     func updateItemConditionallyAtKeyWithAcceptableConcurrency() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
-        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(wrappedDynamoDBTable: wrappedTable,
-                                                                        simulateConcurrencyModifications: 5,
-                                                                        simulateOnInsertItem: false)
+        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
+            wrappedDynamoDBTable: wrappedTable,
+            simulateConcurrencyModifications: 5,
+            simulateOnInsertItem: false
+        )
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -125,12 +137,16 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
     @Test
     func updateItemConditionallyAtKeyWithAcceptableConcurrencyWithItemProvider() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
-        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(wrappedDynamoDBTable: wrappedTable,
-                                                                        simulateConcurrencyModifications: 5,
-                                                                        simulateOnInsertItem: false)
+        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
+            wrappedDynamoDBTable: wrappedTable,
+            simulateConcurrencyModifications: 5,
+            simulateOnInsertItem: false
+        )
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -154,12 +170,16 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
     @Test
     func updateItemConditionallyAtKeyWithUnacceptableConcurrency() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
-        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(wrappedDynamoDBTable: wrappedTable,
-                                                                        simulateConcurrencyModifications: 100,
-                                                                        simulateOnInsertItem: false)
+        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
+            wrappedDynamoDBTable: wrappedTable,
+            simulateConcurrencyModifications: 100,
+            simulateOnInsertItem: false
+        )
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -192,12 +212,16 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
     @Test
     func updateItemConditionallyAtKeyWithUnacceptableConcurrencyWithItemProvider() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
-        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(wrappedDynamoDBTable: wrappedTable,
-                                                                        simulateConcurrencyModifications: 100,
-                                                                        simulateOnInsertItem: false)
+        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
+            wrappedDynamoDBTable: wrappedTable,
+            simulateConcurrencyModifications: 100,
+            simulateOnInsertItem: false
+        )
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -230,12 +254,16 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
     @Test
     func updateItemConditionallyAtKeyWithUnacceptableConcurrencyWithPayloadProvider() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
-        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(wrappedDynamoDBTable: wrappedTable,
-                                                                        simulateConcurrencyModifications: 100,
-                                                                        simulateOnInsertItem: false)
+        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
+            wrappedDynamoDBTable: wrappedTable,
+            simulateConcurrencyModifications: 100,
+            simulateOnInsertItem: false
+        )
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -272,12 +300,16 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
     @Test
     func updateItemConditionallyAtKeyWithFailingUpdate() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
-        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(wrappedDynamoDBTable: wrappedTable,
-                                                                        simulateConcurrencyModifications: 100,
-                                                                        simulateOnInsertItem: false)
+        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
+            wrappedDynamoDBTable: wrappedTable,
+            simulateConcurrencyModifications: 100,
+            simulateOnInsertItem: false
+        )
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -322,12 +354,16 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
     @Test
     func updateItemConditionallyAtKeyWithFailingUpdateWithItemProvider() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
-        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(wrappedDynamoDBTable: wrappedTable,
-                                                                        simulateConcurrencyModifications: 100,
-                                                                        simulateOnInsertItem: false)
+        let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
+            wrappedDynamoDBTable: wrappedTable,
+            simulateConcurrencyModifications: 100,
+            simulateOnInsertItem: false
+        )
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
         let payload = TestTypeA(firstly: "firstly", secondly: "secondly")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload)
 
@@ -344,11 +380,14 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         func failingUpdatedItemProvider(item _: TestTypeADatabaseItem) throws -> TestTypeADatabaseItem {
             if passCount < 5 {
                 passCount += 1
-                let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                                      sortKey: "sortId")
+                let key = StandardCompositePrimaryKey(
+                    partitionKey: "partitionId",
+                    sortKey: "sortId"
+                )
                 return TestTypeADatabaseItem.newItem(
                     withKey: key,
-                    andValue: TestTypeA(firstly: "firstlyX2", secondly: "secondlyX2"))
+                    andValue: TestTypeA(firstly: "firstlyX2", secondly: "secondlyX2")
+                )
             } else {
                 // fail before the retry limit with a custom error
                 throw TestError.everythingIsWrong
@@ -377,8 +416,10 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
     func updateItemConditionallyAtKeyWithUnknownItem() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
 
         do {
             try await table.conditionallyUpdateItem(forKey: key, updatedPayloadProvider: self.updatedPayloadProvider)
@@ -399,8 +440,10 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
     func updateItemConditionallyAtKeyWithUnknownItemWithItemProvider() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let key = StandardCompositePrimaryKey(partitionKey: "partitionId",
-                                              sortKey: "sortId")
+        let key = StandardCompositePrimaryKey(
+            partitionKey: "partitionId",
+            sortKey: "sortId"
+        )
 
         do {
             try await table.conditionallyUpdateItem(forKey: key, updatedItemProvider: self.updatedItemProvider)

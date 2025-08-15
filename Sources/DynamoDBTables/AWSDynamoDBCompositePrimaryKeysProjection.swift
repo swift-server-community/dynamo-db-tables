@@ -24,8 +24,8 @@
 //  DynamoDBTables
 //
 
-import AwsCommonRuntimeKit
 import AWSDynamoDB
+import AwsCommonRuntimeKit
 import ClientRuntime
 import Foundation
 import Logging
@@ -42,17 +42,20 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
         var exclusiveStartKey: String?
     }
 
-    public init(tableName: String, region: Swift.String,
-                awsCredentialIdentityResolver: (any SmithyIdentity.AWSCredentialIdentityResolver)? = nil,
-                httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
-                tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
-                logger: Logging.Logger? = nil) throws
-    {
+    public init(
+        tableName: String,
+        region: Swift.String,
+        awsCredentialIdentityResolver: (any SmithyIdentity.AWSCredentialIdentityResolver)? = nil,
+        httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
+        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
+        logger: Logging.Logger? = nil
+    ) throws {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeysProjection")
         let config = try DynamoDBClient.DynamoDBClientConfiguration(
             awsCredentialIdentityResolver: awsCredentialIdentityResolver,
             region: region,
-            httpClientConfiguration: httpClientConfiguration)
+            httpClientConfiguration: httpClientConfiguration
+        )
         self.dynamodb = AWSDynamoDB.DynamoDBClient(config: config)
         self.tableConfiguration = tableConfiguration
         self.targetTableName = tableName
@@ -60,11 +63,12 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
         self.logger.trace("AWSDynamoDBCompositePrimaryKeysProjection created with region '\(region)'")
     }
 
-    public init(tableName: String,
-                client: AWSDynamoDB.DynamoDBClient,
-                tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
-                logger: Logging.Logger? = nil)
-    {
+    public init(
+        tableName: String,
+        client: AWSDynamoDB.DynamoDBClient,
+        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
+        logger: Logging.Logger? = nil
+    ) {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeysProjection")
         self.dynamodb = client
         self.tableConfiguration = tableConfiguration

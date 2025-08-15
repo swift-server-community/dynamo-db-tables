@@ -29,24 +29,24 @@ import AWSDynamoDB
 import Foundation
 import Logging
 
-public extension DynamoDBCompositePrimaryKeyTable {
+extension DynamoDBCompositePrimaryKeyTable {
     /**
      * Historical items exist across multiple rows. This method provides an interface to record all
      * rows in a single call.
      */
-    func insertItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
+    public func insertItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
         primaryItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        historicalItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
-    {
+        historicalItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+    ) async throws {
         try await insertItem(primaryItem)
         try await insertItem(historicalItem)
     }
 
-    func updateItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
+    public func updateItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
         primaryItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        historicalItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
-    {
+        historicalItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+    ) async throws {
         try await updateItem(newItem: primaryItem, existingItem: existingItem)
         try await insertItem(historicalItem)
     }
@@ -63,44 +63,57 @@ public extension DynamoDBCompositePrimaryKeyTable {
      * Clobbering a historical item requires knowledge of existing rows to accurately record
      * historical data.
      */
-    func clobberItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
+    public func clobberItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
         primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?) ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         historicalItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        withRetries retries: Int = 10) async throws
-    {
+        withRetries retries: Int = 10
+    ) async throws {
         let primaryItem = primaryItemProvider(nil)
 
         guard retries > 0 else {
-            throw DynamoDBTableError.concurrencyError(partitionKey: primaryItem.compositePrimaryKey.partitionKey,
-                                                      sortKey: primaryItem.compositePrimaryKey.sortKey,
-                                                      message: "Unable to complete request to clobber versioned item in specified number of attempts")
+            throw DynamoDBTableError.concurrencyError(
+                partitionKey: primaryItem.compositePrimaryKey.partitionKey,
+                sortKey: primaryItem.compositePrimaryKey.sortKey,
+                message: "Unable to complete request to clobber versioned item in specified number of attempts"
+            )
         }
 
         let existingItemOptional: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>? =
             try await getItem(forKey: primaryItem.compositePrimaryKey)
 
         if let existingItem = existingItemOptional {
-            let newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> = primaryItemProvider(existingItem)
+            let newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> = primaryItemProvider(
+                existingItem
+            )
 
             do {
-                try await self.updateItemWithHistoricalRow(primaryItem: newItem, existingItem: existingItem,
-                                                           historicalItem: historicalItemProvider(newItem))
+                try await self.updateItemWithHistoricalRow(
+                    primaryItem: newItem,
+                    existingItem: existingItem,
+                    historicalItem: historicalItemProvider(newItem)
+                )
             } catch {
-                try await self.clobberItemWithHistoricalRow(primaryItemProvider: primaryItemProvider,
-                                                            historicalItemProvider: historicalItemProvider,
-                                                            withRetries: retries - 1)
+                try await self.clobberItemWithHistoricalRow(
+                    primaryItemProvider: primaryItemProvider,
+                    historicalItemProvider: historicalItemProvider,
+                    withRetries: retries - 1
+                )
                 return
             }
         } else {
             do {
-                try await self.insertItemWithHistoricalRow(primaryItem: primaryItem,
-                                                           historicalItem: historicalItemProvider(primaryItem))
+                try await self.insertItemWithHistoricalRow(
+                    primaryItem: primaryItem,
+                    historicalItem: historicalItemProvider(primaryItem)
+                )
             } catch {
-                try await self.clobberItemWithHistoricalRow(primaryItemProvider: primaryItemProvider,
-                                                            historicalItemProvider: historicalItemProvider,
-                                                            withRetries: retries - 1)
+                try await self.clobberItemWithHistoricalRow(
+                    primaryItemProvider: primaryItemProvider,
+                    historicalItemProvider: historicalItemProvider,
+                    withRetries: retries - 1
+                )
                 return
             }
         }
@@ -114,64 +127,76 @@ public extension DynamoDBCompositePrimaryKeyTable {
       row is unable to be updated. The `historicalItemProvider` is called to
       provide the historical item based on the primary item that was
       inserted into the database table.
-
+    
      - Parameters:
         - compositePrimaryKey: The composite key for the version to update.
         - primaryItemProvider: Function to provide the updated item or throw if the current item can't be updated.
         - historicalItemProvider: Function to provide the historical item for the primary item.
      */
-    func conditionallyUpdateItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
+    public func conditionallyUpdateItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
         compositePrimaryKey: CompositePrimaryKey<AttributesType>,
-        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws ->
+        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
+            async throws ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         historicalItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        withRetries retries: Int = 10) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
-    {
+        withRetries retries: Int = 10
+    ) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> {
         try await self.conditionallyUpdateItemWithHistoricalRowInternal(
             compositePrimaryKey: compositePrimaryKey,
             primaryItemProvider: primaryItemProvider,
             historicalItemProvider: historicalItemProvider,
-            withRetries: retries)
+            withRetries: retries
+        )
     }
 
     private func conditionallyUpdateItemWithHistoricalRowInternal<AttributesType, ItemType, TimeToLiveAttributesType>(
         compositePrimaryKey: CompositePrimaryKey<AttributesType>,
-        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws ->
+        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
+            async throws ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         historicalItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        withRetries retries: Int = 10) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
-    {
+        withRetries retries: Int = 10
+    ) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> {
         guard retries > 0 else {
-            throw DynamoDBTableError.concurrencyError(partitionKey: compositePrimaryKey.partitionKey,
-                                                      sortKey: compositePrimaryKey.sortKey,
-                                                      message: "Unable to complete request to update versioned item in specified number of attempts")
+            throw DynamoDBTableError.concurrencyError(
+                partitionKey: compositePrimaryKey.partitionKey,
+                sortKey: compositePrimaryKey.sortKey,
+                message: "Unable to complete request to update versioned item in specified number of attempts"
+            )
         }
 
         let existingItemOptional: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>? =
             try await getItem(forKey: compositePrimaryKey)
 
         guard let existingItem = existingItemOptional else {
-            throw DynamoDBTableError.conditionalCheckFailed(partitionKey: compositePrimaryKey.partitionKey,
-                                                            sortKey: compositePrimaryKey.sortKey,
-                                                            message: "Item not present in database.")
+            throw DynamoDBTableError.conditionalCheckFailed(
+                partitionKey: compositePrimaryKey.partitionKey,
+                sortKey: compositePrimaryKey.sortKey,
+                message: "Item not present in database."
+            )
         }
 
         let updatedItem = try await primaryItemProvider(existingItem)
         let historicalItem = historicalItemProvider(updatedItem)
 
         do {
-            try await self.updateItemWithHistoricalRow(primaryItem: updatedItem,
-                                                       existingItem: existingItem,
-                                                       historicalItem: historicalItem)
+            try await self.updateItemWithHistoricalRow(
+                primaryItem: updatedItem,
+                existingItem: existingItem,
+                historicalItem: historicalItem
+            )
 
             return updatedItem
         } catch DynamoDBTableError.conditionalCheckFailed {
             // try again
-            return try await self.conditionallyUpdateItemWithHistoricalRowInternal(compositePrimaryKey: compositePrimaryKey,
-                                                                                   primaryItemProvider: primaryItemProvider,
-                                                                                   historicalItemProvider: historicalItemProvider, withRetries: retries - 1)
+            return try await self.conditionallyUpdateItemWithHistoricalRowInternal(
+                compositePrimaryKey: compositePrimaryKey,
+                primaryItemProvider: primaryItemProvider,
+                historicalItemProvider: historicalItemProvider,
+                withRetries: retries - 1
+            )
         }
     }
 }

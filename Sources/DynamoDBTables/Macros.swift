@@ -18,16 +18,30 @@
 public macro PolymorphicWriteEntry() =
     #externalMacro(
         module: "DynamoDBTablesMacros",
-        type: "PolymorphicWriteEntryMacro")
+        type: "PolymorphicWriteEntryMacro"
+    )
 
-@attached(extension, conformances: PolymorphicTransactionConstraintEntry, names: named(handle(context:)), named(compositePrimaryKey))
+@attached(
+    extension,
+    conformances: PolymorphicTransactionConstraintEntry,
+    names: named(handle(context:)),
+    named(compositePrimaryKey)
+)
 public macro PolymorphicTransactionConstraintEntry() =
     #externalMacro(
         module: "DynamoDBTablesMacros",
-        type: "PolymorphicTransactionConstraintEntryMacro")
+        type: "PolymorphicTransactionConstraintEntryMacro"
+    )
 
-@attached(extension, conformances: PolymorphicOperationReturnType, names: named(AttributesType), named(TimeToLiveAttributesType), named(types))
+@attached(
+    extension,
+    conformances: PolymorphicOperationReturnType,
+    names: named(AttributesType),
+    named(TimeToLiveAttributesType),
+    named(types)
+)
 public macro PolymorphicOperationReturnType(databaseItemType: String = "StandardTypedDatabaseItem") =
     #externalMacro(
         module: "DynamoDBTablesMacros",
-        type: "PolymorphicOperationReturnTypeMacro")
+        type: "PolymorphicOperationReturnTypeMacro"
+    )

@@ -40,23 +40,30 @@ public struct RowWithItemVersion<RowType: Codable & Sendable>: Codable, Sendable
     public let itemVersion: Int
     public let rowValue: RowType
 
-    public static func newItem(withVersion itemVersion: Int = 1,
-                               withValue rowValue: RowType) -> RowWithItemVersion<RowType>
-    {
-        RowWithItemVersion<RowType>(itemVersion: itemVersion,
-                                    rowValue: rowValue)
+    public static func newItem(
+        withVersion itemVersion: Int = 1,
+        withValue rowValue: RowType
+    ) -> RowWithItemVersion<RowType> {
+        RowWithItemVersion<RowType>(
+            itemVersion: itemVersion,
+            rowValue: rowValue
+        )
     }
 
-    public func createUpdatedItem(withVersion itemVersion: Int? = nil,
-                                  withValue newRowValue: RowType) -> RowWithItemVersion<RowType>
-    {
-        RowWithItemVersion<RowType>(itemVersion: itemVersion != nil ? itemVersion! : self.itemVersion + 1,
-                                    rowValue: newRowValue)
+    public func createUpdatedItem(
+        withVersion itemVersion: Int? = nil,
+        withValue newRowValue: RowType
+    ) -> RowWithItemVersion<RowType> {
+        RowWithItemVersion<RowType>(
+            itemVersion: itemVersion != nil ? itemVersion! : self.itemVersion + 1,
+            rowValue: newRowValue
+        )
     }
 
-    init(itemVersion: Int,
-         rowValue: RowType)
-    {
+    init(
+        itemVersion: Int,
+        rowValue: RowType
+    ) {
         self.itemVersion = itemVersion
         self.rowValue = rowValue
     }

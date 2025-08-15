@@ -56,7 +56,10 @@ enum BaseEntryDiagnostic<Attributes: CoreMacroAttributes>: String, DiagnosticMes
 }
 
 enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
-    private static func getCases(caseMembers: [EnumCaseDeclSyntax], context: some MacroExpansionContext)
+    private static func getCases(
+        caseMembers: [EnumCaseDeclSyntax],
+        context: some MacroExpansionContext
+    )
         -> (hasDiagnostics: Bool, handleCases: SwitchCaseListSyntax, compositePrimaryKeyCases: SwitchCaseListSyntax)
     {
         var handleCases: SwitchCaseListSyntax = []
@@ -66,7 +69,9 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
             for element in caseMember.elements {
                 // ensure that the enum case only has one parameter
                 guard let parameterClause = element.parameterClause, parameterClause.parameters.count == 1 else {
-                    context.diagnose(.init(node: element, message: BaseEntryDiagnostic<Attributes>.enumCasesMustHaveASingleParameter))
+                    context.diagnose(
+                        .init(node: element, message: BaseEntryDiagnostic<Attributes>.enumCasesMustHaveASingleParameter)
+                    )
                     hasDiagnostics = true
                     // do nothing for this case
                     continue
@@ -79,7 +84,8 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
                     """
                     case let .\(element.name)(writeEntry):
                         return try context.transform(writeEntry)
-                    """)
+                    """
+                )
 
                 handleCases.append(handleCaseSyntax)
 
@@ -87,7 +93,8 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
                     """
                     case let .\(element.name)(writeEntry):
                         return writeEntry.compositePrimaryKey
-                    """)
+                    """
+                )
 
                 compositePrimaryKeyCases.append(compositePrimaryKeyCaseSyntax)
             }
@@ -101,17 +108,21 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
         conformingTo protocols: [TypeSyntax],
-        in context: some MacroExpansionContext) throws -> [ExtensionDeclSyntax]
-    {
+        in context: some MacroExpansionContext
+    ) throws -> [ExtensionDeclSyntax] {
         // make sure this is attached to an enum
         guard let enumDeclaration = declaration as? EnumDeclSyntax else {
-            context.diagnose(.init(node: declaration, message: BaseEntryDiagnostic<Attributes>.notAttachedToEnumDeclaration))
+            context.diagnose(
+                .init(node: declaration, message: BaseEntryDiagnostic<Attributes>.notAttachedToEnumDeclaration)
+            )
 
             return []
         }
 
         let requiresProtocolConformance = protocols.reduce(false) { partialResult, protocolSyntax in
-            if let identifierTypeSyntax = protocolSyntax.as(IdentifierTypeSyntax.self), identifierTypeSyntax.name.text == Attributes.protocolName {
+            if let identifierTypeSyntax = protocolSyntax.as(IdentifierTypeSyntax.self),
+                identifierTypeSyntax.name.text == Attributes.protocolName
+            {
                 return true
             }
 
@@ -130,32 +141,41 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
 
         // make sure this is attached to an enum
         guard !caseMembers.isEmpty else {
-            context.diagnose(.init(node: declaration, message: BaseEntryDiagnostic<Attributes>.enumMustNotHaveZeroCases))
+            context.diagnose(
+                .init(node: declaration, message: BaseEntryDiagnostic<Attributes>.enumMustNotHaveZeroCases)
+            )
 
             return []
         }
 
-        let (hasDiagnostics, handleCases, compositePrimaryKeyCases) = self.getCases(caseMembers: caseMembers, context: context)
+        let (hasDiagnostics, handleCases, compositePrimaryKeyCases) = self.getCases(
+            caseMembers: caseMembers,
+            context: context
+        )
 
         if hasDiagnostics {
             return []
         }
 
-        let type = TypeSyntax(extendedGraphemeClusterLiteral: requiresProtocolConformance ? "\(type.trimmed): \(Attributes.protocolName) "
-            : "\(type.trimmed) ")
+        let type = TypeSyntax(
+            extendedGraphemeClusterLiteral: requiresProtocolConformance
+                ? "\(type.trimmed): \(Attributes.protocolName) "
+                : "\(type.trimmed) "
+        )
         let extensionDecl = try ExtensionDeclSyntax(
             extendedType: type,
             memberBlockBuilder: {
                 try FunctionDeclSyntax(
-                    "func handle<Context: \(raw: Attributes.contextType)>(context: Context) throws -> Context.\(raw: Attributes.transformType)")
-                {
+                    "func handle<Context: \(raw: Attributes.contextType)>(context: Context) throws -> Context.\(raw: Attributes.transformType)"
+                ) {
                     SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: handleCases)
                 }
 
                 try VariableDeclSyntax("var compositePrimaryKey: StandardCompositePrimaryKey") {
                     SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: compositePrimaryKeyCases)
                 }
-            })
+            }
+        )
 
         return [extensionDecl]
     }

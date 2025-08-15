@@ -34,11 +34,16 @@ public class DynamoDBEncoder {
         self.attributeNameTransform = attributeNameTransform
     }
 
-    public func encode(_ value: some Swift.Encodable, userInfo: [CodingUserInfoKey: Any] = [:]) throws -> DynamoDBClientTypes.AttributeValue {
-        let container = InternalSingleValueEncodingContainer(userInfo: userInfo,
-                                                             codingPath: [],
-                                                             attributeNameTransform: attributeNameTransform,
-                                                             defaultValue: nil)
+    public func encode(
+        _ value: some Swift.Encodable,
+        userInfo: [CodingUserInfoKey: Any] = [:]
+    ) throws -> DynamoDBClientTypes.AttributeValue {
+        let container = InternalSingleValueEncodingContainer(
+            userInfo: userInfo,
+            codingPath: [],
+            attributeNameTransform: attributeNameTransform,
+            defaultValue: nil
+        )
         try value.encode(to: container)
 
         return container.attributeValue

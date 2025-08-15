@@ -19,14 +19,20 @@ import Foundation
 
 // MARK: - Query implementations
 
-public extension InMemoryDynamoDBCompositePrimaryKeyTable {
-    func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
-        forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
-        -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
+extension InMemoryDynamoDBCompositePrimaryKeyTable {
+    public func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forKeys keys: [CompositePrimaryKey<AttributesType>]
+    ) async throws
+        -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<
+            AttributesType, ItemType, TimeToLiveAttributesType
+        >]
     {
         let items = await self.getInMemoryDatabaseItems(forKeys: keys)
 
-        var map: [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = [:]
+        var map:
+            [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<
+                AttributesType, ItemType, TimeToLiveAttributesType
+            >] = [:]
 
         try items.forEach { key, value in
             map[key] = try DynamoDBDecoder().decode(DynamoDBClientTypes.AttributeValue.m(value.item))
@@ -35,7 +41,9 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
         return map
     }
 
-    private func getInMemoryDatabaseItems<AttributesType>(forKeys keys: [CompositePrimaryKey<AttributesType>]) async
+    private func getInMemoryDatabaseItems<AttributesType>(
+        forKeys keys: [CompositePrimaryKey<AttributesType>]
+    ) async
         -> [CompositePrimaryKey<AttributesType>: InMemoryDatabaseItem]
     {
         var map: [CompositePrimaryKey<AttributesType>: InMemoryDatabaseItem] = [:]
@@ -55,8 +63,9 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
         return map
     }
 
-    func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
-        forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]) async throws
+    public func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
+        forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]
+    ) async throws
         -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
     {
         let store = await self.store
@@ -72,8 +81,10 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
         return resultMap
     }
 
-    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                        sortKeyCondition: AttributeCondition?) async throws
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?
+    ) async throws
         -> [ReturnedType]
     {
         var items: [ReturnedType] = []
@@ -131,35 +142,44 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
         return items
     }
 
-    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                        sortKeyCondition: AttributeCondition?,
-                                                                        limit: Int?,
-                                                                        exclusiveStartKey: String?) async throws
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        exclusiveStartKey: String?
+    ) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
-        try await self.polymorphicQuery(forPartitionKey: partitionKey,
-                                        sortKeyCondition: sortKeyCondition,
-                                        limit: limit,
-                                        scanIndexForward: true,
-                                        exclusiveStartKey: exclusiveStartKey)
+        try await self.polymorphicQuery(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition,
+            limit: limit,
+            scanIndexForward: true,
+            exclusiveStartKey: exclusiveStartKey
+        )
     }
 
-    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                        sortKeyCondition: AttributeCondition?,
-                                                                        limit: Int?,
-                                                                        scanIndexForward: Bool,
-                                                                        exclusiveStartKey: String?) async throws
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        scanIndexForward: Bool,
+        exclusiveStartKey: String?
+    ) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
         // get all the results
-        let rawItems: [ReturnedType] = try await polymorphicQuery(forPartitionKey: partitionKey,
-                                                                  sortKeyCondition: sortKeyCondition)
+        let rawItems: [ReturnedType] = try await polymorphicQuery(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition
+        )
 
-        let items: [ReturnedType] = if !scanIndexForward {
-            rawItems.reversed()
-        } else {
-            rawItems
-        }
+        let items: [ReturnedType] =
+            if !scanIndexForward {
+                rawItems.reversed()
+            } else {
+                rawItems
+            }
 
         let startIndex: Int
         // if there is an exclusiveStartKey
@@ -183,11 +203,13 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
             lastEvaluatedKey = nil
         }
 
-        return (Array(items[startIndex ..< endIndex]), lastEvaluatedKey)
+        return (Array(items[startIndex..<endIndex]), lastEvaluatedKey)
     }
 
-    func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
-                                                                   sortKeyCondition: AttributeCondition?) async throws
+    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?
+    ) async throws
         -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         var items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = []
@@ -238,14 +260,20 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
                     }
                 }
 
-                if let typedValue: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> = try value.getItem() {
+                if let typedValue: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> =
+                    try value.getItem()
+                {
                     items.append(typedValue)
                 } else {
-                    let description = "Expected type \(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self), "
+                    let description =
+                        "Expected type \(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self), "
                         + " was \(type(of: value))."
                     let context = DecodingError.Context(codingPath: [], debugDescription: description)
 
-                    throw DecodingError.typeMismatch(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self, context)
+                    throw DecodingError.typeMismatch(
+                        TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self,
+                        context
+                    )
                 }
             }
         }
@@ -253,22 +281,29 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
         return items
     }
 
-    func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
-                                                                   sortKeyCondition: AttributeCondition?,
-                                                                   limit: Int?,
-                                                                   scanIndexForward: Bool,
-                                                                   exclusiveStartKey: String?) async throws
-        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
+    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        scanIndexForward: Bool,
+        exclusiveStartKey: String?
+    ) async throws
+        -> (
+            items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?
+        )
     {
         // get all the results
-        let rawItems: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try await query(forPartitionKey: partitionKey,
-                                                                                                                   sortKeyCondition: sortKeyCondition)
+        let rawItems: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try await query(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition
+        )
 
-        let items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = if !scanIndexForward {
-            rawItems.reversed()
-        } else {
-            rawItems
-        }
+        let items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] =
+            if !scanIndexForward {
+                rawItems.reversed()
+            } else {
+                rawItems
+            }
 
         let startIndex: Int
         // if there is an exclusiveStartKey
@@ -292,6 +327,6 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
             lastEvaluatedKey = nil
         }
 
-        return (Array(items[startIndex ..< endIndex]), lastEvaluatedKey)
+        return (Array(items[startIndex..<endIndex]), lastEvaluatedKey)
     }
 }

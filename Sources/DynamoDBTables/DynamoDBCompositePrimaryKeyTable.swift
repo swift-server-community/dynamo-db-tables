@@ -28,9 +28,7 @@ import AWSDynamoDB
 import ClientRuntime
 import Foundation
 
-/**
- Enumeration of the errors that can be thrown by a DynamoDBTable.
- */
+/// Enumeration of the errors that can be thrown by a DynamoDBTable.
 public enum DynamoDBTableError: Error {
     case accessDenied(message: String?)
     case internalServerError(message: String?)
@@ -61,17 +59,15 @@ public enum DynamoDBTableError: Error {
 
 public typealias DynamoDBTableErrorResult<SuccessPayload> = Result<SuccessPayload, DynamoDBTableError>
 
-public extension Swift.Error {
-    func asUnrecognizedDynamoDBTableError() -> DynamoDBTableError {
+extension Swift.Error {
+    public func asUnrecognizedDynamoDBTableError() -> DynamoDBTableError {
         let errorType = String(describing: type(of: self))
         let errorDescription = String(describing: self)
         return .unrecognizedError(errorType, errorDescription)
     }
 }
 
-/**
- Enumeration of the types of conditions that can be specified for an attribute.
- */
+/// Enumeration of the types of conditions that can be specified for an attribute.
 public enum AttributeCondition: Sendable {
     case equals(String)
     case lessThan(String)
@@ -82,16 +78,22 @@ public enum AttributeCondition: Sendable {
     case beginsWith(String)
 }
 
-public enum WriteEntry<AttributesType: PrimaryKeyAttributes, ItemType: Codable & Sendable, TimeToLiveAttributesType: TimeToLiveAttributes>: Sendable {
-    case update(new: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-                existing: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
+public enum WriteEntry<
+    AttributesType: PrimaryKeyAttributes,
+    ItemType: Codable & Sendable,
+    TimeToLiveAttributesType: TimeToLiveAttributes
+>: Sendable {
+    case update(
+        new: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        existing: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+    )
     case insert(new: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
     case deleteAtKey(key: CompositePrimaryKey<AttributesType>)
     case deleteItem(existing: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
 
     public var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
         switch self {
-        case .update(new: let new, existing: _):
+        case .update(let new, existing: _):
             new.compositePrimaryKey
         case let .insert(new: new):
             new.compositePrimaryKey
@@ -103,7 +105,9 @@ public enum WriteEntry<AttributesType: PrimaryKeyAttributes, ItemType: Codable &
     }
 }
 
-public typealias StandardWriteEntry<ItemType: Codable> = WriteEntry<StandardPrimaryKeyAttributes, ItemType, StandardTimeToLiveAttributes>
+public typealias StandardWriteEntry<ItemType: Codable> = WriteEntry<
+    StandardPrimaryKeyAttributes, ItemType, StandardTimeToLiveAttributes
+>
 
 public protocol DynamoDBCompositePrimaryKeyTable {
     /**
@@ -124,7 +128,8 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      */
     func updateItem<AttributesType, ItemType, TimeToLiveAttributesType>(
         newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+    ) async throws
 
     /**
      * Provides the ability to bulk write database rows in a transaction.
@@ -134,7 +139,8 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     func transactWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
 
     func polymorphicTransactWrite(
-        _ entries: [some PolymorphicWriteEntry]) async throws
+        _ entries: [some PolymorphicWriteEntry]
+    ) async throws
 
     /**
      * Provides the ability to bulk write database rows in a transaction.
@@ -145,12 +151,17 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      */
     func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
         _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
-        constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]) async throws
+        constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
+    ) async throws
 
-    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry,
-        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
-        _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType]) async throws
-        where WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
+    func polymorphicTransactWrite<
+        WriteEntryType: PolymorphicWriteEntry,
+        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry
+    >(
+        _ entries: [WriteEntryType],
+        constraints: [TransactionConstraintEntryType]
+    ) async throws
+    where WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
 
     /**
      * Provides the ability to bulk write database rows
@@ -164,14 +175,17 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     /**
      * Retrieves an item from the database table. Returns nil if the item doesn't exist.
      */
-    func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
+    func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forKey key: CompositePrimaryKey<AttributesType>
+    ) async throws
         -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
 
     /**
      * Retrieves items from the database table as a dictionary mapped to the provided key. Missing entries from the provided map indicate that item doesn't exist.
      */
     func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
-        forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]) async throws
+        forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]
+    ) async throws
         -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
 
     /**
@@ -206,8 +220,10 @@ public protocol DynamoDBCompositePrimaryKeyTable {
        function will potentially make multiple calls to DynamoDB to retrieve all results for
        the query.
      */
-    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                        sortKeyCondition: AttributeCondition?) async throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?
+    ) async throws
         -> [ReturnedType]
 
     /**
@@ -215,10 +231,12 @@ public protocol DynamoDBCompositePrimaryKeyTable {
        partition doesn't exist, this operation will return an empty list as a response. This
        function will return paginated results based on the limit and exclusiveStartKey provided.
      */
-    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                        sortKeyCondition: AttributeCondition?,
-                                                                        limit: Int?,
-                                                                        exclusiveStartKey: String?) async throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        exclusiveStartKey: String?
+    ) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
 
     /**
@@ -226,11 +244,13 @@ public protocol DynamoDBCompositePrimaryKeyTable {
        partition doesn't exist, this operation will return an empty list as a response. This
        function will return paginated results based on the limit and exclusiveStartKey provided.
      */
-    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(forPartitionKey partitionKey: String,
-                                                                        sortKeyCondition: AttributeCondition?,
-                                                                        limit: Int?,
-                                                                        scanIndexForward: Bool,
-                                                                        exclusiveStartKey: String?) async throws
+    func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        scanIndexForward: Bool,
+        exclusiveStartKey: String?
+    ) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
 
     /**
@@ -243,7 +263,8 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?) async throws -> [ReturnedType]
+        additionalWhereClause: String?
+    ) async throws -> [ReturnedType]
 
     /**
      * Uses the ExecuteStatement API to to perform batch reads or writes on data stored in DynamoDB, using PartiQL.
@@ -255,7 +276,9 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?, nextToken: String?) async throws
+        additionalWhereClause: String?,
+        nextToken: String?
+    ) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
 
     // MARK: Monomorphic batch and queries
@@ -264,8 +287,11 @@ public protocol DynamoDBCompositePrimaryKeyTable {
      * Retrieves items from the database table as a dictionary mapped to the provided key. Missing entries from the provided map indicate that item doesn't exist.
      */
     func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
-        forKeys keys: [CompositePrimaryKey<AttributesType>]) async throws
-        -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
+        forKeys keys: [CompositePrimaryKey<AttributesType>]
+    ) async throws
+        -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<
+            AttributesType, ItemType, TimeToLiveAttributesType
+        >]
 
     /**
      * Queries a partition in the database table and optionally a sort key condition. If the
@@ -273,8 +299,10 @@ public protocol DynamoDBCompositePrimaryKeyTable {
        function will potentially make multiple calls to DynamoDB to retrieve all results for
        the query.
      */
-    func query<AttributesType, ItemType, TimeToLiveAttributesType>(forPartitionKey partitionKey: String,
-                                                                   sortKeyCondition: AttributeCondition?) async throws
+    func query<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?
+    ) async throws
         -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
 
     /**
@@ -287,8 +315,11 @@ public protocol DynamoDBCompositePrimaryKeyTable {
         sortKeyCondition: AttributeCondition?,
         limit: Int?,
         scanIndexForward: Bool,
-        exclusiveStartKey: String?) async throws
-        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
+        exclusiveStartKey: String?
+    ) async throws
+        -> (
+            items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?
+        )
 
     /**
      * Uses the ExecuteStatement API to to perform batch reads or writes on data stored in DynamoDB, using PartiQL.
@@ -300,7 +331,8 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?) async throws -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
+        additionalWhereClause: String?
+    ) async throws -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
 
     /**
      * Uses the ExecuteStatement API to to perform batch reads or writes on data stored in DynamoDB, using PartiQL.
@@ -312,6 +344,10 @@ public protocol DynamoDBCompositePrimaryKeyTable {
     func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?, nextToken: String?) async throws
-        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
+        additionalWhereClause: String?,
+        nextToken: String?
+    ) async throws
+        -> (
+            items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?
+        )
 }

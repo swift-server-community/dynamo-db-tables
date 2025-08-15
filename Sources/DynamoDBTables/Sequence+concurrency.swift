@@ -36,8 +36,8 @@ extension Sequence {
     /// - parameter operation: The closure to run for each element.
     /// - throws: Rethrows any error thrown by the passed closure.
     func asyncForEach(
-        _ operation: @Sendable (Element) async throws -> Void) async rethrows
-    {
+        _ operation: @Sendable (Element) async throws -> Void
+    ) async rethrows {
         for element in self {
             try await operation(element)
         }
@@ -62,8 +62,8 @@ extension Sequence where Element: Sendable {
     ///   the transformed values will match the original sequence.
     func concurrentMap<T: Sendable>(
         withPriority priority: TaskPriority? = nil,
-        _ transform: @Sendable @escaping (Element) async -> T) async -> [T]
-    {
+        _ transform: @Sendable @escaping (Element) async -> T
+    ) async -> [T] {
         await withTaskGroup(of: (offset: Int, value: T).self) { group in
             var taskCount = 0
             for (idx, element) in enumerated() {
@@ -100,8 +100,8 @@ extension Sequence where Element: Sendable {
     /// - throws: Rethrows any error thrown by the passed closure.
     func concurrentMap<T: Sendable>(
         withPriority priority: TaskPriority? = nil,
-        _ transform: @Sendable @escaping (Element) async throws -> T) async throws -> [T]
-    {
+        _ transform: @Sendable @escaping (Element) async throws -> T
+    ) async throws -> [T] {
         try await withThrowingTaskGroup(of: (offset: Int, value: T).self) { group in
             var taskCount = 0
             for (idx, element) in enumerated() {
@@ -139,8 +139,8 @@ extension Sequence where Element: Sendable {
     ///   except for the values that were transformed into `nil`.
     /// - throws: Rethrows any error thrown by the passed closure.
     func asyncCompactMap<T>(
-        _ transform: @Sendable (Element) async throws -> T?) async rethrows -> [T]
-    {
+        _ transform: @Sendable (Element) async throws -> T?
+    ) async rethrows -> [T] {
         var values = [T]()
 
         for element in self {
@@ -171,8 +171,8 @@ extension Sequence where Element: Sendable {
     ///   except for the values that were transformed into `nil`.
     func concurrentCompactMap<T: Sendable>(
         withPriority priority: TaskPriority? = nil,
-        _ transform: @Sendable @escaping (Element) async -> T?) async -> [T]
-    {
+        _ transform: @Sendable @escaping (Element) async -> T?
+    ) async -> [T] {
         await withTaskGroup(of: (offset: Int, value: T?).self) { group in
             var taskCount = 0
             for (idx, element) in enumerated() {
@@ -211,8 +211,8 @@ extension Sequence where Element: Sendable {
     /// - throws: Rethrows any error thrown by the passed closure.
     func concurrentCompactMap<T: Sendable>(
         withPriority priority: TaskPriority? = nil,
-        _ transform: @Sendable @escaping (Element) async throws -> T?) async throws -> [T]
-    {
+        _ transform: @Sendable @escaping (Element) async throws -> T?
+    ) async throws -> [T] {
         try await withThrowingTaskGroup(of: (offset: Int, value: T?).self) { group in
             var taskCount = 0
             for (idx, element) in enumerated() {
@@ -253,8 +253,8 @@ extension Sequence where Element: Sendable {
     ///   within the returned array.
     func concurrentFlatMap<T: Sequence & Sendable>(
         withPriority priority: TaskPriority? = nil,
-        _ transform: @Sendable @escaping (Element) async -> T) async -> [T.Element]
-    {
+        _ transform: @Sendable @escaping (Element) async -> T
+    ) async -> [T.Element] {
         await withTaskGroup(of: (offset: Int, value: T).self) { group in
             var taskCount = 0
             for (idx, element) in enumerated() {
@@ -294,8 +294,8 @@ extension Sequence where Element: Sendable {
     /// - throws: Rethrows any error thrown by the passed closure.
     func concurrentFlatMap<T: Sequence & Sendable>(
         withPriority priority: TaskPriority? = nil,
-        _ transform: @Sendable @escaping (Element) async throws -> T) async throws -> [T.Element]
-    {
+        _ transform: @Sendable @escaping (Element) async throws -> T
+    ) async throws -> [T.Element] {
         try await withThrowingTaskGroup(of: (offset: Int, value: T).self) { group in
             var taskCount = 0
             for (idx, element) in enumerated() {
@@ -315,8 +315,8 @@ extension Sequence where Element: Sendable {
     }
 }
 
-extension Collection{
-    func asNonOptionalCollection<T>() -> [T] where Element == Optional<T> {
+extension Collection {
+    func asNonOptionalCollection<T>() -> [T] where Element == T? {
         return self.map { optional in
             guard let finalValue = optional else {
                 fatalError("Mapped task did not complete as expected")

@@ -33,14 +33,13 @@ public struct NoOpPolymorphicWriteEntry<AttributesType: PrimaryKeyAttributes>: P
         fatalError("Unimplemented")
     }
 
-    public func handle<Context>(context _: Context) throws -> Context.WriteEntryTransformType where Context: PolymorphicWriteEntryContext {
+    public func handle<Context>(context _: Context) throws -> Context.WriteEntryTransformType
+    where Context: PolymorphicWriteEntryContext {
         fatalError("Unimplemented")
     }
 }
 
-/**
-  A protocol that simulates the logic of a GSI reacting to events on the main table.
- */
+/// A protocol that simulates the logic of a GSI reacting to events on the main table.
 public protocol DynamoDBCompositePrimaryKeyGSILogic {
     associatedtype GSIAttributesType: PrimaryKeyAttributes
     associatedtype WriteEntryType: PolymorphicWriteEntry = NoOpPolymorphicWriteEntry<GSIAttributesType>
@@ -48,35 +47,47 @@ public protocol DynamoDBCompositePrimaryKeyGSILogic {
     /**
      * Called when an item is inserted on the main table. Can be used to transform the provided item to the item that would be made available on the GSI.
      */
-    func onInsertItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>,
-                      gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
+    func onInsertItem(
+        _ item: TypedTTLDatabaseItem<some Any, some Any, some Any>,
+        gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable
+    ) async throws
 
     /**
      * Called when an item is clobbered on the main table. Can be used to transform the provided item to the item that would be made available on the GSI.
      */
-    func onClobberItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>,
-                       gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
+    func onClobberItem(
+        _ item: TypedTTLDatabaseItem<some Any, some Any, some Any>,
+        gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable
+    ) async throws
 
     /**
      * Called when an item is updated on the main table. Can be used to transform the provided item to the item that would be made available on the GSI.
      */
-    func onUpdateItem<AttributesType,
+    func onUpdateItem<
+        AttributesType,
         ItemType,
-        TimeToLiveAttributesType>(newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-                                  existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-                                  gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
+        TimeToLiveAttributesType
+    >(
+        newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable
+    ) async throws
 
     /**
      * Called when an item is delete on the main table. Can be used to also delete the corresponding item on the GSI.
-
+    
      */
-    func onDeleteItem(forKey key: CompositePrimaryKey<some Any>,
-                      gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
+    func onDeleteItem(
+        forKey key: CompositePrimaryKey<some Any>,
+        gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable
+    ) async throws
 
     /**
      * Called when an transact write in the main table. Can be used to also transact write the corresponding item on the GSI.
-
+    
      */
-    func onTransactWrite(_ entries: [WriteEntryType],
-                         gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable) async throws
+    func onTransactWrite(
+        _ entries: [WriteEntryType],
+        gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable
+    ) async throws
 }
