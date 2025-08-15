@@ -255,6 +255,73 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         )
     }
 
+    private func getErrorReasons<AttributesType>(
+        cancellationReasons: [DynamoDBClientTypes.CancellationReason],
+        keys: [CompositePrimaryKey<AttributesType>],
+        entryCount: Int
+    ) throws -> (reasons: [DynamoDBTableError], isTransactionConflict: Bool) {
+        var isTransactionConflict = false
+        let reasons = try zip(cancellationReasons, keys).compactMap {
+            cancellationReason,
+            entryKey -> DynamoDBTableError? in
+            let key: CompositePrimaryKey<AttributesType>? =
+                if let item = cancellationReason.item {
+                    try DynamoDBDecoder().decode(.m(item))
+                } else {
+                    nil
+                }
+
+            let partitionKey = key?.partitionKey ?? entryKey.partitionKey
+            let sortKey = key?.sortKey ?? entryKey.sortKey
+
+            // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ExecuteTransaction.html
+            switch cancellationReason.code {
+            case "None":
+                return nil
+            case "ConditionalCheckFailed":
+                return DynamoDBTableError.conditionalCheckFailed(
+                    partitionKey: partitionKey,
+                    sortKey: sortKey,
+                    message: cancellationReason.message
+                )
+            case "DuplicateItem":
+                return DynamoDBTableError.duplicateItem(
+                    partitionKey: partitionKey,
+                    sortKey: sortKey,
+                    message: cancellationReason.message
+                )
+            case "ItemCollectionSizeLimitExceeded":
+                return DynamoDBTableError.itemCollectionSizeLimitExceeded(
+                    attemptedSize: entryCount,
+                    maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement
+                )
+            case "TransactionConflict":
+                isTransactionConflict = true
+
+                return DynamoDBTableError.transactionConflict(message: cancellationReason.message)
+            case "ProvisionedThroughputExceeded":
+                return DynamoDBTableError.provisionedThroughputExceeded(message: cancellationReason.message)
+            case "ThrottlingError":
+                return DynamoDBTableError.throttling(message: cancellationReason.message)
+            case "ValidationError":
+                return DynamoDBTableError.validation(
+                    partitionKey: partitionKey,
+                    sortKey: sortKey,
+                    message: cancellationReason.message
+                )
+            default:
+                return DynamoDBTableError.unknown(
+                    code: cancellationReason.code,
+                    partitionKey: partitionKey,
+                    sortKey: sortKey,
+                    message: cancellationReason.message
+                )
+            }
+        }
+
+        return (reasons, isTransactionConflict)
+    }
+
     private func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
         _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
         constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
@@ -281,64 +348,11 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
 
             let keys = entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
 
-            var isTransactionConflict = false
-            let reasons = try zip(cancellationReasons, keys).compactMap {
-                cancellationReason,
-                entryKey -> DynamoDBTableError? in
-                let key: CompositePrimaryKey<AttributesType>? =
-                    if let item = cancellationReason.item {
-                        try DynamoDBDecoder().decode(.m(item))
-                    } else {
-                        nil
-                    }
-
-                let partitionKey = key?.partitionKey ?? entryKey.partitionKey
-                let sortKey = key?.sortKey ?? entryKey.sortKey
-
-                // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ExecuteTransaction.html
-                switch cancellationReason.code {
-                case "None":
-                    return nil
-                case "ConditionalCheckFailed":
-                    return DynamoDBTableError.conditionalCheckFailed(
-                        partitionKey: partitionKey,
-                        sortKey: sortKey,
-                        message: cancellationReason.message
-                    )
-                case "DuplicateItem":
-                    return DynamoDBTableError.duplicateItem(
-                        partitionKey: partitionKey,
-                        sortKey: sortKey,
-                        message: cancellationReason.message
-                    )
-                case "ItemCollectionSizeLimitExceeded":
-                    return DynamoDBTableError.itemCollectionSizeLimitExceeded(
-                        attemptedSize: entryCount,
-                        maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement
-                    )
-                case "TransactionConflict":
-                    isTransactionConflict = true
-
-                    return DynamoDBTableError.transactionConflict(message: cancellationReason.message)
-                case "ProvisionedThroughputExceeded":
-                    return DynamoDBTableError.provisionedThroughputExceeded(message: cancellationReason.message)
-                case "ThrottlingError":
-                    return DynamoDBTableError.throttling(message: cancellationReason.message)
-                case "ValidationError":
-                    return DynamoDBTableError.validation(
-                        partitionKey: partitionKey,
-                        sortKey: sortKey,
-                        message: cancellationReason.message
-                    )
-                default:
-                    return DynamoDBTableError.unknown(
-                        code: cancellationReason.code,
-                        partitionKey: partitionKey,
-                        sortKey: sortKey,
-                        message: cancellationReason.message
-                    )
-                }
-            }
+            let (reasons, isTransactionConflict) = try getErrorReasons(
+                cancellationReasons: cancellationReasons,
+                keys: keys,
+                entryCount: entryCount
+            )
 
             if isTransactionConflict, retriesRemaining > 0 {
                 return try await retryTransactWrite(
@@ -413,64 +427,11 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
                 throw DynamoDBTableError.transactionCanceled(reasons: [])
             }
 
-            var isTransactionConflict = false
-            let reasons = try zip(cancellationReasons, inputKeys).compactMap {
-                cancellationReason,
-                entryKey -> DynamoDBTableError? in
-                let key: CompositePrimaryKey<AttributesType>? =
-                    if let item = cancellationReason.item {
-                        try DynamoDBDecoder().decode(.m(item))
-                    } else {
-                        nil
-                    }
-
-                let partitionKey = key?.partitionKey ?? entryKey.partitionKey
-                let sortKey = key?.sortKey ?? entryKey.sortKey
-
-                // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ExecuteTransaction.html
-                switch cancellationReason.code {
-                case "None":
-                    return nil
-                case "ConditionalCheckFailed":
-                    return DynamoDBTableError.conditionalCheckFailed(
-                        partitionKey: partitionKey,
-                        sortKey: sortKey,
-                        message: cancellationReason.message
-                    )
-                case "DuplicateItem":
-                    return DynamoDBTableError.duplicateItem(
-                        partitionKey: partitionKey,
-                        sortKey: sortKey,
-                        message: cancellationReason.message
-                    )
-                case "ItemCollectionSizeLimitExceeded":
-                    return DynamoDBTableError.itemCollectionSizeLimitExceeded(
-                        attemptedSize: inputKeys.count,
-                        maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement
-                    )
-                case "TransactionConflict":
-                    isTransactionConflict = true
-
-                    return DynamoDBTableError.transactionConflict(message: cancellationReason.message)
-                case "ProvisionedThroughputExceeded":
-                    return DynamoDBTableError.provisionedThroughputExceeded(message: cancellationReason.message)
-                case "ThrottlingError":
-                    return DynamoDBTableError.throttling(message: cancellationReason.message)
-                case "ValidationError":
-                    return DynamoDBTableError.validation(
-                        partitionKey: partitionKey,
-                        sortKey: sortKey,
-                        message: cancellationReason.message
-                    )
-                default:
-                    return DynamoDBTableError.unknown(
-                        code: cancellationReason.code,
-                        partitionKey: partitionKey,
-                        sortKey: sortKey,
-                        message: cancellationReason.message
-                    )
-                }
-            }
+            let (reasons, isTransactionConflict) = try getErrorReasons(
+                cancellationReasons: cancellationReasons,
+                keys: inputKeys,
+                entryCount: inputKeys.count
+            )
 
             if isTransactionConflict, retriesRemaining > 0 {
                 return try await retryPolymorphicTransactWrite(
