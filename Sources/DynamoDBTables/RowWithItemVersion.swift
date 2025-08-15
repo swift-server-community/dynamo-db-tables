@@ -26,7 +26,7 @@
 
 import Foundation
 
-public struct RowWithItemVersion<RowType: Codable>: Codable, CustomRowTypeIdentifier {
+public struct RowWithItemVersion<RowType: Codable & Sendable>: Codable, Sendable, CustomRowTypeIdentifier {
     public static var rowTypeIdentifier: String? {
         let rowTypeIdentity = getTypeRowIdentifier(type: RowType.self)
 

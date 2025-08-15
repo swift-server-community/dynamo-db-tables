@@ -46,11 +46,11 @@ enum BaseEntryDiagnostic<Attributes: CoreMacroAttributes>: String, DiagnosticMes
     var message: String {
         switch self {
         case .notAttachedToEnumDeclaration:
-            return "@\(Attributes.macroName) must be attached to an enum declaration."
+            "@\(Attributes.macroName) must be attached to an enum declaration."
         case .enumMustNotHaveZeroCases:
-            return "@\(Attributes.macroName) decorated enum must be have at least a singe case."
+            "@\(Attributes.macroName) decorated enum must be have at least a singe case."
         case .enumCasesMustHaveASingleParameter:
-            return "@\(Attributes.macroName) decorated enum can only have case entries with a single parameter."
+            "@\(Attributes.macroName) decorated enum can only have case entries with a single parameter."
         }
     }
 }

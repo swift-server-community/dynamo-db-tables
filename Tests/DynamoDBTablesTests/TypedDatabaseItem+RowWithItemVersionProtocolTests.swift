@@ -26,8 +26,8 @@
 
 import Foundation
 
-@testable import DynamoDBTables
 import AWSDynamoDB
+@testable import DynamoDBTables
 import Testing
 
 private let ORIGINAL_PAYLOAD = "Payload"
@@ -117,9 +117,9 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     }
 
     func getTable(escapeSingleQuoteInPartiQL: Bool = false) throws -> GenericAWSDynamoDBCompositePrimaryKeyTable<MockDynamoDBClientProtocol> {
-        GenericAWSDynamoDBCompositePrimaryKeyTable(tableName: "DummyTable", 
-                                                client: MockDynamoDBClientProtocol(),
-                                                tableConfiguration: .init(escapeSingleQuoteInPartiQL: escapeSingleQuoteInPartiQL))
+        GenericAWSDynamoDBCompositePrimaryKeyTable(tableName: "DummyTable",
+                                                   client: MockDynamoDBClientProtocol(),
+                                                   tableConfiguration: .init(escapeSingleQuoteInPartiQL: escapeSingleQuoteInPartiQL))
     }
 
     @Test

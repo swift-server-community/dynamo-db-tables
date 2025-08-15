@@ -42,8 +42,8 @@ public struct RowStatus: Sendable, Codable {
 }
 
 public struct TypedTTLDatabaseItem<AttributesType: PrimaryKeyAttributes,
-    RowType: Codable,
-    TimeToLiveAttributesType: TimeToLiveAttributes>: Codable
+    RowType: Codable & Sendable,
+    TimeToLiveAttributesType: TimeToLiveAttributes>: Codable, Sendable
 {
     public let compositePrimaryKey: CompositePrimaryKey<AttributesType>
     public let createDate: Date

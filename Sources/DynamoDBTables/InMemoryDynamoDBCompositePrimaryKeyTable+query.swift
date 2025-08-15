@@ -155,11 +155,10 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
         let rawItems: [ReturnedType] = try await polymorphicQuery(forPartitionKey: partitionKey,
                                                                   sortKeyCondition: sortKeyCondition)
 
-        let items: [ReturnedType]
-        if !scanIndexForward {
-            items = rawItems.reversed()
+        let items: [ReturnedType] = if !scanIndexForward {
+            rawItems.reversed()
         } else {
-            items = rawItems
+            rawItems
         }
 
         let startIndex: Int
@@ -265,11 +264,10 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
         let rawItems: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try await query(forPartitionKey: partitionKey,
                                                                                                                    sortKeyCondition: sortKeyCondition)
 
-        let items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
-        if !scanIndexForward {
-            items = rawItems.reversed()
+        let items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = if !scanIndexForward {
+            rawItems.reversed()
         } else {
-            items = rawItems
+            rawItems
         }
 
         let startIndex: Int

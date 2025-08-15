@@ -34,7 +34,7 @@ public enum GSIError: Error {
     case unknownIndex(name: String)
 }
 
-public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: DynamoDBCompositePrimaryKeyGSILogic>: DynamoDBCompositePrimaryKeyTable {
+public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: DynamoDBCompositePrimaryKeyGSILogic & Sendable>: DynamoDBCompositePrimaryKeyTable, Sendable {
     public let primaryTable: InMemoryDynamoDBCompositePrimaryKeyTable
     public let gsiDataStore: InMemoryDynamoDBCompositePrimaryKeyTable
 
@@ -108,13 +108,13 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<GSILogic: Dynamo
         try await entries.asyncForEach { entry in
             switch entry {
             case let .update(new: new, existing: existing):
-                return try await self.updateItem(newItem: new, existingItem: existing)
+                try await self.updateItem(newItem: new, existingItem: existing)
             case let .insert(new: new):
-                return try await self.insertItem(new)
+                try await self.insertItem(new)
             case let .deleteAtKey(key: key):
-                return try await self.deleteItem(forKey: key)
+                try await self.deleteItem(forKey: key)
             case let .deleteItem(existing: existing):
-                return try await self.deleteItem(existingItem: existing)
+                try await self.deleteItem(existingItem: existing)
             }
         }
     }

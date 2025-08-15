@@ -25,7 +25,6 @@
 //
 
 import AWSDynamoDB
-import CollectionConcurrencyKit
 import Foundation
 import Logging
 
@@ -38,7 +37,7 @@ public enum AWSDynamoDBLimits {
     public static let maxStatementLength = 8192
 }
 
-private struct AWSDynamoDBPolymorphicWriteEntryTransform<Client: DynamoDBClientProtocol>: PolymorphicWriteEntryTransform {
+private struct AWSDynamoDBPolymorphicWriteEntryTransform<Client: DynamoDBClientProtocol & Sendable>: PolymorphicWriteEntryTransform {
     typealias TableType = GenericAWSDynamoDBCompositePrimaryKeyTable<Client>
 
     let statement: String
@@ -48,12 +47,12 @@ private struct AWSDynamoDBPolymorphicWriteEntryTransform<Client: DynamoDBClientP
     }
 }
 
-private struct AWSDynamoDBPolymorphicTransactionConstraintTransform<Client: DynamoDBClientProtocol>: PolymorphicTransactionConstraintTransform {
+private struct AWSDynamoDBPolymorphicTransactionConstraintTransform<Client: DynamoDBClientProtocol & Sendable>: PolymorphicTransactionConstraintTransform {
     typealias TableType = GenericAWSDynamoDBCompositePrimaryKeyTable<Client>
 
     let statement: String
 
-    init(_ entry: TransactionConstraintEntry<some PrimaryKeyAttributes, some Codable, some TimeToLiveAttributes>,
+    init(_ entry: TransactionConstraintEntry<some PrimaryKeyAttributes, some Codable & Sendable, some TimeToLiveAttributes>,
          table: TableType) throws
     {
         self.statement = try table.entryToStatement(entry)
@@ -75,34 +74,32 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
     internal func entryToStatement(
         _ entry: WriteEntry<some Any, some Any, some Any>) throws -> String
     {
-        let statement: String
-        switch entry {
+        let statement: String = switch entry {
         case let .update(new: new, existing: existing):
-            statement = try getUpdateExpression(tableName: self.targetTableName,
-                                                newItem: new,
-                                                existingItem: existing)
+            try getUpdateExpression(tableName: self.targetTableName,
+                                    newItem: new,
+                                    existingItem: existing)
         case let .insert(new: new):
-            statement = try getInsertExpression(tableName: self.targetTableName,
-                                                newItem: new)
+            try getInsertExpression(tableName: self.targetTableName,
+                                    newItem: new)
         case let .deleteAtKey(key: key):
-            statement = try getDeleteExpression(tableName: self.targetTableName,
-                                                existingKey: key)
+            try getDeleteExpression(tableName: self.targetTableName,
+                                    existingKey: key)
         case let .deleteItem(existing: existing):
-            statement = try getDeleteExpression(tableName: self.targetTableName,
-                                                existingItem: existing)
+            try getDeleteExpression(tableName: self.targetTableName,
+                                    existingItem: existing)
         }
 
         return statement
     }
 
     internal func entryToStatement(
-        _ entry: TransactionConstraintEntry<some Any, some Any, some Any>) throws -> String
+        _ entry: TransactionConstraintEntry<some Any, some Sendable, some Any>) throws -> String
     {
-        let statement: String
-        switch entry {
+        let statement: String = switch entry {
         case let .required(existing: existing):
-            statement = getExistsExpression(tableName: self.targetTableName,
-                                            existingItem: existing)
+            getExistsExpression(tableName: self.targetTableName,
+                                existingItem: existing)
         }
 
         return statement
@@ -236,11 +233,10 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
 
             var isTransactionConflict = false
             let reasons = try zip(cancellationReasons, keys).compactMap { cancellationReason, entryKey -> DynamoDBTableError? in
-                let key: CompositePrimaryKey<AttributesType>?
-                if let item = cancellationReason.item {
-                    key = try DynamoDBDecoder().decode(.m(item))
+                let key: CompositePrimaryKey<AttributesType>? = if let item = cancellationReason.item {
+                    try DynamoDBDecoder().decode(.m(item))
                 } else {
-                    key = nil
+                    nil
                 }
 
                 let partitionKey = key?.partitionKey ?? entryKey.partitionKey
@@ -339,11 +335,10 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
 
             var isTransactionConflict = false
             let reasons = try zip(cancellationReasons, inputKeys).compactMap { cancellationReason, entryKey -> DynamoDBTableError? in
-                let key: CompositePrimaryKey<AttributesType>?
-                if let item = cancellationReason.item {
-                    key = try DynamoDBDecoder().decode(.m(item))
+                let key: CompositePrimaryKey<AttributesType>? = if let item = cancellationReason.item {
+                    try DynamoDBDecoder().decode(.m(item))
                 } else {
-                    key = nil
+                    nil
                 }
 
                 let partitionKey = key?.partitionKey ?? entryKey.partitionKey
@@ -469,21 +464,20 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         }
 
         let statements = try entries.map { entry -> DynamoDBClientTypes.BatchStatementRequest in
-            let statement: String
-            switch entry {
+            let statement: String = switch entry {
             case let .update(new: new, existing: existing):
-                statement = try getUpdateExpression(tableName: self.targetTableName,
-                                                    newItem: new,
-                                                    existingItem: existing)
+                try getUpdateExpression(tableName: self.targetTableName,
+                                        newItem: new,
+                                        existingItem: existing)
             case let .insert(new: new):
-                statement = try getInsertExpression(tableName: self.targetTableName,
-                                                    newItem: new)
+                try getInsertExpression(tableName: self.targetTableName,
+                                        newItem: new)
             case let .deleteAtKey(key: key):
-                statement = try getDeleteExpression(tableName: self.targetTableName,
-                                                    existingKey: key)
+                try getDeleteExpression(tableName: self.targetTableName,
+                                        existingKey: key)
             case let .deleteItem(existing: existing):
-                statement = try getDeleteExpression(tableName: self.targetTableName,
-                                                    existingItem: existing)
+                try getDeleteExpression(tableName: self.targetTableName,
+                                        existingItem: existing)
             }
 
             return DynamoDBClientTypes.BatchStatementRequest(consistentRead: self.tableConfiguration.consistentRead, statement: statement)
@@ -515,15 +509,13 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func bulkWriteWithFallback<AttributesType, ItemType, TimeToLiveAttributesType>(
+    func bulkWriteWithFallback<AttributesType, ItemType: Sendable, TimeToLiveAttributesType>(
         _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>]) async throws
     {
-        // fall back to singel operation if the write entry exceeds the statement length limitation
-        var bulkWriteEntries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>] = []
-        let errors: [DynamoDBTableError] = try await entries.concurrentCompactMap { entry -> DynamoDBTableError? in
+        // fall back to single operation if the write entry exceeds the statement length limitation
+        let results: [Result<WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>, DynamoDBTableError>] = try await entries.concurrentMap { entry in
             do {
                 try self.validateEntry(entry: entry)
-                bulkWriteEntries.append(entry)
             } catch DynamoDBTableError.statementLengthExceeded {
                 do {
                     switch entry {
@@ -537,11 +529,22 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
                         try await self.deleteItem(existingItem: existing)
                     }
                 } catch let error as DynamoDBTableError {
-                    return error
+                    return .failure(error)
                 }
             }
 
-            return nil
+            return .success(entry)
+        }
+
+        var bulkWriteEntries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>] = []
+        var errors: [DynamoDBTableError] = []
+        for result in results {
+            switch result {
+            case let .success(entry):
+                bulkWriteEntries.append(entry)
+            case let .failure(error):
+                errors.append(error)
+            }
         }
 
         do {

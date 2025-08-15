@@ -51,7 +51,7 @@ public func createRowWithIndexCodingKey(stringValue: String) -> RowWithIndexCodi
     RowWithIndexCodingKey(stringValue: stringValue)!
 }
 
-public struct RowWithIndex<RowType: Codable, Identity: IndexIdentity>: Codable, CustomRowTypeIdentifier {
+public struct RowWithIndex<RowType: Codable & Sendable, Identity: IndexIdentity>: Codable, CustomRowTypeIdentifier, Sendable {
     public static var rowTypeIdentifier: String? {
         let rowTypeIdentity = getTypeRowIdentifier(type: RowType.self)
         let indexIdentity = Identity.identity

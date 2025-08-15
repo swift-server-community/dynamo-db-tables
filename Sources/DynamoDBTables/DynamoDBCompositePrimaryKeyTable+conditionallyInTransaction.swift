@@ -25,7 +25,6 @@
 //  DynamoDBTables
 //
 
-import CollectionConcurrencyKit
 import Foundation
 
 public enum ConditionalTransactWriteError<AttributesType: PrimaryKeyAttributes>: Error {
@@ -54,7 +53,7 @@ public extension DynamoDBCompositePrimaryKeyTable {
         forKeys keys: [CompositePrimaryKey<AttributesType>],
         withRetries retries: Int = 10,
         constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>] = [],
-        writeEntryProvider: @escaping (CompositePrimaryKey<AttributesType>, TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?)
+        writeEntryProvider: @Sendable @escaping (CompositePrimaryKey<AttributesType>, TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?)
         async throws -> WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>?) async throws
         -> [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
@@ -101,7 +100,7 @@ public extension DynamoDBCompositePrimaryKeyTable {
         ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
         forKeys keys: [CompositePrimaryKey<WriteEntryType.AttributesType>],
         withRetries retries: Int = 10,
-        writeEntryProvider: @escaping (CompositePrimaryKey<WriteEntryType.AttributesType>, ReturnedType?)
+        writeEntryProvider: @Sendable @escaping (CompositePrimaryKey<WriteEntryType.AttributesType>, ReturnedType?)
         async throws -> WriteEntryType?) async throws
         -> [WriteEntryType] where WriteEntryType.AttributesType == ReturnedType.AttributesType
     {
@@ -133,7 +132,7 @@ public extension DynamoDBCompositePrimaryKeyTable {
         forKeys keys: [CompositePrimaryKey<WriteEntryType.AttributesType>],
         withRetries retries: Int = 10,
         constraints: [TransactionConstraintEntryType],
-        writeEntryProvider: @escaping (CompositePrimaryKey<WriteEntryType.AttributesType>, ReturnedType?)
+        writeEntryProvider: @Sendable @escaping (CompositePrimaryKey<WriteEntryType.AttributesType>, ReturnedType?)
         async throws -> WriteEntryType?) async throws
         -> [WriteEntryType] where WriteEntryType.AttributesType == ReturnedType.AttributesType,
         WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
