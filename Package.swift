@@ -37,33 +37,42 @@ let package = Package(
     products: [
         .library(
             name: "DynamoDBTables",
-            targets: ["DynamoDBTables"]),
+            targets: ["DynamoDBTables"]
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
-        .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0" ..< "3.0.0"),
+        .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
         .package(url: "https://github.com/apple/swift-syntax", from: "601.0.0"),
         .package(url: "https://github.com/tachyonics/smockable", from: "0.4.0"),
     ],
     targets: [
-        .macro(name: "DynamoDBTablesMacros", dependencies: [
-            .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
-            .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
-        ]),
+        .macro(
+            name: "DynamoDBTablesMacros",
+            dependencies: [
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+            ]
+        ),
         .target(
-            name: "DynamoDBTables", dependencies: [
+            name: "DynamoDBTables",
+            dependencies: [
                 .target(name: "DynamoDBTablesMacros"),
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Metrics", package: "swift-metrics"),
                 .product(name: "AWSDynamoDB", package: "aws-sdk-swift"),
                 .product(name: "Smockable", package: "smockable"),
             ],
-            swiftSettings: swiftSettings),
+            swiftSettings: swiftSettings
+        ),
         .testTarget(
-            name: "DynamoDBTablesTests", dependencies: [
+            name: "DynamoDBTablesTests",
+            dependencies: [
                 .target(name: "DynamoDBTables"),
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ],
-            swiftSettings: swiftSettings),
-    ])
+            swiftSettings: swiftSettings
+        ),
+    ]
+)

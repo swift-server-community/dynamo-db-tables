@@ -35,11 +35,12 @@ class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
     let codingPath: [CodingKey]
     let userInfo: [CodingUserInfoKey: Any]
 
-    init(userInfo: [CodingUserInfoKey: Any],
-         codingPath: [CodingKey],
-         attributeNameTransform: ((String) -> String)?,
-         defaultValue: ContainerValueType?)
-    {
+    init(
+        userInfo: [CodingUserInfoKey: Any],
+        codingPath: [CodingKey],
+        attributeNameTransform: ((String) -> String)?,
+        defaultValue: ContainerValueType?
+    ) {
         self.containerValue = defaultValue
         self.userInfo = userInfo
         self.codingPath = codingPath
@@ -148,11 +149,12 @@ class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
     }
 
     private func getAttributeName(key: CodingKey) -> String {
-        let attributeName: String = if let attributeNameTransform {
-            attributeNameTransform(key.stringValue)
-        } else {
-            key.stringValue
-        }
+        let attributeName: String =
+            if let attributeNameTransform {
+                attributeNameTransform(key.stringValue)
+            } else {
+                key.stringValue
+            }
 
         return attributeName
     }

@@ -35,17 +35,19 @@ enum AttributeDifference: Equatable {
 
     var path: String {
         switch self {
-        case .update(path: let path, value: _):
+        case .update(let path, value: _):
             path
         case let .remove(path: path):
             path
-        case .listAppend(path: let path, value: _):
+        case .listAppend(let path, value: _):
             path
         }
     }
 }
 
-func getAttributes(forItem item: TypedTTLDatabaseItem<some Any, some Any, some Any>) throws
+func getAttributes(
+    forItem item: TypedTTLDatabaseItem<some Any, some Any, some Any>
+) throws
     -> [String: DynamoDBClientTypes.AttributeValue]
 {
     let attributeValue = try DynamoDBEncoder().encode(item)
@@ -64,10 +66,12 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
     func getUpdateExpression<AttributesType, ItemType, TimeToLiveAttributesType>(
         tableName: String,
         newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) throws -> String
-    {
-        let attributeDifferences = try diffItems(newItem: newItem,
-                                                 existingItem: existingItem)
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+    ) throws -> String {
+        let attributeDifferences = try diffItems(
+            newItem: newItem,
+            existingItem: existingItem
+        )
 
         // according to https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.update.html
         let elements = attributeDifferences.map { attributeDifference -> String in
@@ -89,9 +93,10 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
             + "AND \(RowStatus.CodingKeys.rowVersion.rawValue)=\(existingItem.rowStatus.rowVersion)"
     }
 
-    func getInsertExpression(tableName: String,
-                             newItem: TypedTTLDatabaseItem<some Any, some Any, some Any>) throws -> String
-    {
+    func getInsertExpression(
+        tableName: String,
+        newItem: TypedTTLDatabaseItem<some Any, some Any, some Any>
+    ) throws -> String {
         let newAttributes = try getAttributes(forItem: newItem)
         let flattenedAttribute = try getFlattenedMapAttribute(attribute: newAttributes)
 
@@ -99,26 +104,29 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         return "INSERT INTO \"\(tableName)\" value \(flattenedAttribute)"
     }
 
-    func getDeleteExpression<AttributesType>(tableName: String,
-                                             existingItem: TypedTTLDatabaseItem<AttributesType, some Any, some Any>) throws -> String
-    {
+    func getDeleteExpression<AttributesType>(
+        tableName: String,
+        existingItem: TypedTTLDatabaseItem<AttributesType, some Any, some Any>
+    ) throws -> String {
         "DELETE FROM \"\(tableName)\" "
             + "WHERE \(AttributesType.partitionKeyAttributeName)='\(self.sanitizeString(existingItem.compositePrimaryKey.partitionKey))' "
             + "AND \(AttributesType.sortKeyAttributeName)='\(self.sanitizeString(existingItem.compositePrimaryKey.sortKey))' "
             + "AND \(RowStatus.CodingKeys.rowVersion.rawValue)=\(existingItem.rowStatus.rowVersion)"
     }
 
-    func getDeleteExpression<AttributesType>(tableName: String,
-                                             existingKey: CompositePrimaryKey<AttributesType>) throws -> String
-    {
+    func getDeleteExpression<AttributesType>(
+        tableName: String,
+        existingKey: CompositePrimaryKey<AttributesType>
+    ) throws -> String {
         "DELETE FROM \"\(tableName)\" "
             + "WHERE \(AttributesType.partitionKeyAttributeName)='\(self.sanitizeString(existingKey.partitionKey))' "
             + "AND \(AttributesType.sortKeyAttributeName)='\(self.sanitizeString(existingKey.sortKey))'"
     }
 
-    func getExistsExpression<AttributesType>(tableName: String,
-                                             existingItem: TypedTTLDatabaseItem<AttributesType, some Any, some Any>) -> String
-    {
+    func getExistsExpression<AttributesType>(
+        tableName: String,
+        existingItem: TypedTTLDatabaseItem<AttributesType, some Any, some Any>
+    ) -> String {
         // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-functions.exists.html
         "EXISTS("
             + "SELECT * FROM \"\(tableName)\" "
@@ -134,18 +142,19 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
      */
     func diffItems<AttributesType, ItemType, TimeToLiveAttributesType>(
         newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) throws -> [AttributeDifference]
-    {
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+    ) throws -> [AttributeDifference] {
         let newAttributes = try getAttributes(forItem: newItem)
         let existingAttributes = try getAttributes(forItem: existingItem)
 
         return try self.diffMapAttribute(path: nil, newAttribute: newAttributes, existingAttribute: existingAttributes)
     }
 
-    private func diffAttribute(path: String,
-                               newAttribute: DynamoDBClientTypes.AttributeValue,
-                               existingAttribute: DynamoDBClientTypes.AttributeValue) throws -> [AttributeDifference]
-    {
+    private func diffAttribute(
+        path: String,
+        newAttribute: DynamoDBClientTypes.AttributeValue,
+        existingAttribute: DynamoDBClientTypes.AttributeValue
+    ) throws -> [AttributeDifference] {
         switch (newAttribute, existingAttribute) {
         case (.b, .b):
             throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle Binary types.")
@@ -156,9 +165,17 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         case (.bs, .bs):
             throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle Binary Set types.")
         case let (.l(newTypedAttribute), .l(existingTypedAttribute)):
-            return try self.diffListAttribute(path: path, newAttribute: newTypedAttribute, existingAttribute: existingTypedAttribute)
+            return try self.diffListAttribute(
+                path: path,
+                newAttribute: newTypedAttribute,
+                existingAttribute: existingTypedAttribute
+            )
         case let (.m(newTypedAttribute), .m(existingTypedAttribute)):
-            return try self.diffMapAttribute(path: path, newAttribute: newTypedAttribute, existingAttribute: existingTypedAttribute)
+            return try self.diffMapAttribute(
+                path: path,
+                newAttribute: newTypedAttribute,
+                existingAttribute: existingTypedAttribute
+            )
         case let (.n(newTypedAttribute), .n(existingTypedAttribute)):
             if newTypedAttribute != existingTypedAttribute {
                 return [.update(path: path, value: String(newTypedAttribute))]
@@ -183,18 +200,23 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         return []
     }
 
-    private func diffListAttribute(path: String,
-                                   newAttribute: [DynamoDBClientTypes.AttributeValue],
-                                   existingAttribute: [DynamoDBClientTypes.AttributeValue]) throws -> [AttributeDifference]
-    {
+    private func diffListAttribute(
+        path: String,
+        newAttribute: [DynamoDBClientTypes.AttributeValue],
+        existingAttribute: [DynamoDBClientTypes.AttributeValue]
+    ) throws -> [AttributeDifference] {
         let maxIndex = max(newAttribute.count, existingAttribute.count)
 
-        return try (0 ..< maxIndex).flatMap { index -> [AttributeDifference] in
+        return try (0..<maxIndex).flatMap { index -> [AttributeDifference] in
             let newPath = "\(path)[\(index)]"
 
             // if both new and existing attributes are present
             if index < newAttribute.count, index < existingAttribute.count {
-                return try self.diffAttribute(path: newPath, newAttribute: newAttribute[index], existingAttribute: existingAttribute[index])
+                return try self.diffAttribute(
+                    path: newPath,
+                    newAttribute: newAttribute[index],
+                    existingAttribute: existingAttribute[index]
+                )
             } else if index < existingAttribute.count {
                 return [.remove(path: newPath)]
             } else if index < newAttribute.count {
@@ -205,11 +227,13 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    private func diffMapAttribute(path: String?,
-                                  newAttribute: [String: DynamoDBClientTypes.AttributeValue],
-                                  existingAttribute: [String: DynamoDBClientTypes.AttributeValue]) throws -> [AttributeDifference]
-    {
-        var combinedMap: [String: (new: DynamoDBClientTypes.AttributeValue?, existing: DynamoDBClientTypes.AttributeValue?)] = [:]
+    private func diffMapAttribute(
+        path: String?,
+        newAttribute: [String: DynamoDBClientTypes.AttributeValue],
+        existingAttribute: [String: DynamoDBClientTypes.AttributeValue]
+    ) throws -> [AttributeDifference] {
+        var combinedMap:
+            [String: (new: DynamoDBClientTypes.AttributeValue?, existing: DynamoDBClientTypes.AttributeValue?)] = [:]
 
         for (key, attribute) in newAttribute {
             var existingEntry = combinedMap[key] ?? (nil, nil)
@@ -247,7 +271,10 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    private func updateAttribute(newPath: String, attribute: DynamoDBClientTypes.AttributeValue) throws -> [AttributeDifference] {
+    private func updateAttribute(
+        newPath: String,
+        attribute: DynamoDBClientTypes.AttributeValue
+    ) throws -> [AttributeDifference] {
         if let newValue = try getFlattenedAttribute(attribute: attribute) {
             [.update(path: newPath, value: newValue)]
         } else {

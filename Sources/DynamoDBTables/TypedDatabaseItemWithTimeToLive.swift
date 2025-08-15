@@ -41,10 +41,11 @@ public struct RowStatus: Sendable, Codable {
     }
 }
 
-public struct TypedTTLDatabaseItem<AttributesType: PrimaryKeyAttributes,
+public struct TypedTTLDatabaseItem<
+    AttributesType: PrimaryKeyAttributes,
     RowType: Codable & Sendable,
-    TimeToLiveAttributesType: TimeToLiveAttributes>: Codable, Sendable
-{
+    TimeToLiveAttributesType: TimeToLiveAttributes
+>: Codable, Sendable {
     public let compositePrimaryKey: CompositePrimaryKey<AttributesType>
     public let createDate: Date
     public let rowStatus: RowStatus
@@ -56,9 +57,11 @@ public struct TypedTTLDatabaseItem<AttributesType: PrimaryKeyAttributes,
         case createDate = "CreateDate"
     }
 
-    public static func newItem(withKey key: CompositePrimaryKey<AttributesType>,
-                               andValue value: RowType,
-                               andTimeToLive timeToLive: TimeToLive<TimeToLiveAttributesType>? = nil)
+    public static func newItem(
+        withKey key: CompositePrimaryKey<AttributesType>,
+        andValue value: RowType,
+        andTimeToLive timeToLive: TimeToLive<TimeToLiveAttributesType>? = nil
+    )
         -> TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>
     {
         TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>(
@@ -66,28 +69,35 @@ public struct TypedTTLDatabaseItem<AttributesType: PrimaryKeyAttributes,
             createDate: Date(),
             rowStatus: RowStatus(rowVersion: 1, lastUpdatedDate: Date()),
             rowValue: value,
-            timeToLive: timeToLive)
+            timeToLive: timeToLive
+        )
     }
 
-    public func createUpdatedItem(withValue value: RowType,
-                                  andTimeToLive timeToLive: TimeToLive<TimeToLiveAttributesType>? = nil)
+    public func createUpdatedItem(
+        withValue value: RowType,
+        andTimeToLive timeToLive: TimeToLive<TimeToLiveAttributesType>? = nil
+    )
         -> TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>
     {
         TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>(
             compositePrimaryKey: self.compositePrimaryKey,
             createDate: self.createDate,
-            rowStatus: RowStatus(rowVersion: self.rowStatus.rowVersion + 1,
-                                 lastUpdatedDate: Date()),
+            rowStatus: RowStatus(
+                rowVersion: self.rowStatus.rowVersion + 1,
+                lastUpdatedDate: Date()
+            ),
             rowValue: value,
-            timeToLive: timeToLive)
+            timeToLive: timeToLive
+        )
     }
 
-    init(compositePrimaryKey: CompositePrimaryKey<AttributesType>,
-         createDate: Date,
-         rowStatus: RowStatus,
-         rowValue: RowType,
-         timeToLive: TimeToLive<TimeToLiveAttributesType>? = nil)
-    {
+    init(
+        compositePrimaryKey: CompositePrimaryKey<AttributesType>,
+        createDate: Date,
+        rowStatus: RowStatus,
+        rowValue: RowType,
+        timeToLive: TimeToLive<TimeToLiveAttributesType>? = nil
+    ) {
         self.compositePrimaryKey = compositePrimaryKey
         self.createDate = createDate
         self.rowStatus = rowStatus

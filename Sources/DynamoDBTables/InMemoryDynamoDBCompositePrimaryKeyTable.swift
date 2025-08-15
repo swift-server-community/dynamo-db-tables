@@ -28,8 +28,8 @@
 @preconcurrency import AWSDynamoDB
 import Foundation
 
-public extension TypedTTLDatabaseItem {
-    var rowTypeIdentifier: String {
+extension TypedTTLDatabaseItem {
+    public var rowTypeIdentifier: String {
         getTypeRowIdentifier(type: RowType.self)
     }
 }
@@ -42,7 +42,9 @@ public protocol InMemoryTransactionDelegate: Sendable {
       Inject errors into a `transactWrite` or `polymorphicTransactWrite` call.
      */
     func injectErrors(
-        inputKeys: [CompositePrimaryKey<some Any>?], table: InMemoryDynamoDBCompositePrimaryKeyTable) async throws -> [DynamoDBTableError]
+        inputKeys: [CompositePrimaryKey<some Any>?],
+        table: InMemoryDynamoDBCompositePrimaryKeyTable
+    ) async throws -> [DynamoDBTableError]
 }
 
 public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable, Sendable {
@@ -50,9 +52,10 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
     public let executeItemFilter: ExecuteItemFilterType?
     let storeWrapper: InMemoryDynamoDBCompositePrimaryKeyTableStore
 
-    public init(executeItemFilter: ExecuteItemFilterType? = nil,
-                transactionDelegate: InMemoryTransactionDelegate? = nil)
-    {
+    public init(
+        executeItemFilter: ExecuteItemFilterType? = nil,
+        transactionDelegate: InMemoryTransactionDelegate? = nil
+    ) {
         self.storeWrapper = InMemoryDynamoDBCompositePrimaryKeyTableStore()
         self.transactionDelegate = transactionDelegate
         self.executeItemFilter = executeItemFilter
@@ -69,7 +72,8 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
         if entryString.count > AWSDynamoDBLimits.maxStatementLength {
             throw DynamoDBTableError.statementLengthExceeded(
                 reason: "failed to satisfy constraint: Member must have length less than or equal to "
-                    + "\(AWSDynamoDBLimits.maxStatementLength). Actual length \(entryString.count)")
+                    + "\(AWSDynamoDBLimits.maxStatementLength). Actual length \(entryString.count)"
+            )
         }
     }
 
@@ -103,16 +107,22 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimary
 
     public func updateItem<AttributesType, ItemType, TimeToLiveAttributesType>(
         newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
-    {
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+    ) async throws {
         let inMemoryDatabaseItem = try newItem.inMemoryForm()
         let existingItemMetadata = existingItem.asMetadataWithKey()
         try await self.storeWrapper.execute { store in
-            try self.updateItem(newItem: inMemoryDatabaseItem, existingItemMetadata: existingItemMetadata, store: &store)
+            try self.updateItem(
+                newItem: inMemoryDatabaseItem,
+                existingItemMetadata: existingItemMetadata,
+                store: &store
+            )
         }
     }
 
-    public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(forKey key: CompositePrimaryKey<AttributesType>) async throws
+    public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forKey key: CompositePrimaryKey<AttributesType>
+    ) async throws
         -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
     {
         if let partition = await self.store[key.partitionKey] {

@@ -19,20 +19,21 @@ import Foundation
 
 // MARK: - Transaction implementations
 
-public extension InMemoryDynamoDBCompositePrimaryKeyTable {
-    func transactWrite(
-        _ entries: [WriteEntry<some Any, some Any, some Any>]) async throws
-    {
+extension InMemoryDynamoDBCompositePrimaryKeyTable {
+    public func transactWrite(
+        _ entries: [WriteEntry<some Any, some Any, some Any>]
+    ) async throws {
         try await self.transactWrite(entries, constraints: [])
     }
 
-    func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
+    public func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
         _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
-        constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]) async throws
-    {
+        constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
+    ) async throws {
         // if there is a transaction delegate and it wants to inject errors
         let inputKeys = entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
-        if let errors = try await transactionDelegate?.injectErrors(inputKeys: inputKeys, table: self), !errors.isEmpty {
+        if let errors = try await transactionDelegate?.injectErrors(inputKeys: inputKeys, table: self), !errors.isEmpty
+        {
             throw DynamoDBTableError.transactionCanceled(reasons: errors)
         }
 
@@ -44,54 +45,74 @@ public extension InMemoryDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry>(_ entries: [WriteEntryType]) async throws {
+    public func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry>(
+        _ entries: [WriteEntryType]
+    ) async throws {
         let noConstraints: [EmptyPolymorphicTransactionConstraintEntry<WriteEntryType.AttributesType>] = []
         return try await self.polymorphicTransactWrite(entries, constraints: noConstraints)
     }
 
-    func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry,
-        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry>(
-        _ entries: [WriteEntryType], constraints: [TransactionConstraintEntryType]) async throws
-        where WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
-    {
+    public func polymorphicTransactWrite<
+        WriteEntryType: PolymorphicWriteEntry,
+        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry
+    >(
+        _ entries: [WriteEntryType],
+        constraints: [TransactionConstraintEntryType]
+    ) async throws
+    where WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType {
         // if there is a transaction delegate and it wants to inject errors
         let inputKeys = entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
-        if let errors = try await transactionDelegate?.injectErrors(inputKeys: inputKeys, table: self), !errors.isEmpty {
+        if let errors = try await transactionDelegate?.injectErrors(inputKeys: inputKeys, table: self), !errors.isEmpty
+        {
             throw DynamoDBTableError.transactionCanceled(reasons: errors)
         }
 
-        let context = StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
-            InMemoryPolymorphicTransactionConstraintTransform>(table: self)
+        let context = StandardPolymorphicWriteEntryContext<
+            InMemoryPolymorphicWriteEntryTransform,
+            InMemoryPolymorphicTransactionConstraintTransform
+        >(table: self)
 
         let entryTransformResults = entries.asInMemoryTransforms(context: context)
         let contraintTransformResults = constraints.asInMemoryTransforms(context: context)
 
         try await self.storeWrapper.execute { store in
-            try self.polymorphicBulkWrite(entryTransformResults, constraintTransformResults: contraintTransformResults,
-                                          store: &store, context: context, isTransaction: true)
+            try self.polymorphicBulkWrite(
+                entryTransformResults,
+                constraintTransformResults: contraintTransformResults,
+                store: &store,
+                context: context,
+                isTransaction: true
+            )
         }
     }
 
-    func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
-        let context = StandardPolymorphicWriteEntryContext<InMemoryPolymorphicWriteEntryTransform,
-            InMemoryPolymorphicTransactionConstraintTransform>(table: self)
+    public func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+        let context = StandardPolymorphicWriteEntryContext<
+            InMemoryPolymorphicWriteEntryTransform,
+            InMemoryPolymorphicTransactionConstraintTransform
+        >(table: self)
 
         let entryTransformResults = entries.asInMemoryTransforms(context: context)
 
         try await self.storeWrapper.execute { store in
-            try self.polymorphicBulkWrite(entryTransformResults, constraintTransformResults: [],
-                                          store: &store, context: context, isTransaction: false)
+            try self.polymorphicBulkWrite(
+                entryTransformResults,
+                constraintTransformResults: [],
+                store: &store,
+                context: context,
+                isTransaction: false
+            )
         }
     }
 
-    func bulkWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
+    public func bulkWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
         let inMemoryEntries = try entries.map { try $0.inMemoryForm() }
         try await self.storeWrapper.execute { store in
             try self.bulkWrite(inMemoryEntries, constraints: [], store: &store, isTransaction: false)
         }
     }
 
-    func bulkWriteWithFallback(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
+    public func bulkWriteWithFallback(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
         try await self.bulkWrite(entries)
     }
 }

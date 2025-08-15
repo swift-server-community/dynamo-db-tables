@@ -51,7 +51,9 @@ public func createRowWithIndexCodingKey(stringValue: String) -> RowWithIndexCodi
     RowWithIndexCodingKey(stringValue: stringValue)!
 }
 
-public struct RowWithIndex<RowType: Codable & Sendable, Identity: IndexIdentity>: Codable, CustomRowTypeIdentifier, Sendable {
+public struct RowWithIndex<RowType: Codable & Sendable, Identity: IndexIdentity>: Codable, CustomRowTypeIdentifier,
+    Sendable
+{
     public static var rowTypeIdentifier: String? {
         let rowTypeIdentity = getTypeRowIdentifier(type: RowType.self)
         let indexIdentity = Identity.identity
@@ -62,21 +64,27 @@ public struct RowWithIndex<RowType: Codable & Sendable, Identity: IndexIdentity>
     public let indexValue: String
     public let rowValue: RowType
 
-    public static func newItem(withIndex indexValue: String,
-                               andValue rowValue: RowType) -> RowWithIndex<RowType, Identity>
-    {
-        RowWithIndex<RowType, Identity>(indexValue: indexValue,
-                                        rowValue: rowValue)
+    public static func newItem(
+        withIndex indexValue: String,
+        andValue rowValue: RowType
+    ) -> RowWithIndex<RowType, Identity> {
+        RowWithIndex<RowType, Identity>(
+            indexValue: indexValue,
+            rowValue: rowValue
+        )
     }
 
     public func createUpdatedItem(withValue newRowValue: RowType) -> RowWithIndex<RowType, Identity> {
-        RowWithIndex<RowType, Identity>(indexValue: self.indexValue,
-                                        rowValue: newRowValue)
+        RowWithIndex<RowType, Identity>(
+            indexValue: self.indexValue,
+            rowValue: newRowValue
+        )
     }
 
-    init(indexValue: String,
-         rowValue: RowType)
-    {
+    init(
+        indexValue: String,
+        rowValue: RowType
+    ) {
         self.indexValue = indexValue
         self.rowValue = rowValue
     }

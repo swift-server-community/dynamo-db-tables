@@ -32,8 +32,8 @@ public protocol PrimaryKeyAttributes {
     static var indexName: String? { get }
 }
 
-public extension PrimaryKeyAttributes {
-    static var indexName: String? {
+extension PrimaryKeyAttributes {
+    public static var indexName: String? {
         nil
     }
 }
@@ -69,7 +69,9 @@ struct DynamoDBAttributesTypeCodingKey: CodingKey {
     }
 }
 
-public struct CompositePrimaryKey<AttributesType: PrimaryKeyAttributes>: Sendable, Codable, CustomStringConvertible, Hashable {
+public struct CompositePrimaryKey<AttributesType: PrimaryKeyAttributes>: Sendable, Codable, CustomStringConvertible,
+    Hashable
+{
     public var description: String {
         "CompositePrimaryKey(partitionKey: \(self.partitionKey), sortKey: \(self.sortKey))"
     }
@@ -84,13 +86,25 @@ public struct CompositePrimaryKey<AttributesType: PrimaryKeyAttributes>: Sendabl
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: DynamoDBAttributesTypeCodingKey.self)
-        self.partitionKey = try values.decode(String.self, forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.partitionKeyAttributeName)!)
-        self.sortKey = try values.decode(String.self, forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.sortKeyAttributeName)!)
+        self.partitionKey = try values.decode(
+            String.self,
+            forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.partitionKeyAttributeName)!
+        )
+        self.sortKey = try values.decode(
+            String.self,
+            forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.sortKeyAttributeName)!
+        )
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: DynamoDBAttributesTypeCodingKey.self)
-        try container.encode(self.partitionKey, forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.partitionKeyAttributeName)!)
-        try container.encode(self.sortKey, forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.sortKeyAttributeName)!)
+        try container.encode(
+            self.partitionKey,
+            forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.partitionKeyAttributeName)!
+        )
+        try container.encode(
+            self.sortKey,
+            forKey: DynamoDBAttributesTypeCodingKey(stringValue: AttributesType.sortKeyAttributeName)!
+        )
     }
 }

@@ -41,19 +41,23 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
         conformingTo protocols: [TypeSyntax],
-        in context: some MacroExpansionContext) throws -> [ExtensionDeclSyntax]
-    {
+        in context: some MacroExpansionContext
+    ) throws -> [ExtensionDeclSyntax] {
         // make sure this is attached to an enum
         guard let enumDeclaration = declaration as? EnumDeclSyntax else {
-            context.diagnose(.init(node: declaration, message: BaseEntryDiagnostic<Attributes>.notAttachedToEnumDeclaration))
+            context.diagnose(
+                .init(node: declaration, message: BaseEntryDiagnostic<Attributes>.notAttachedToEnumDeclaration)
+            )
 
             return []
         }
 
         let databaseItemType: String
         let standardDatabaseType = "StandardTypedDatabaseItem"
-        if let arguments = node.arguments, case let .argumentList(argumentList) = arguments, let firstArgument = argumentList.first, argumentList.count == 1,
-           firstArgument.label?.text == "databaseItemType", let expression = firstArgument.expression.as(StringLiteralExprSyntax.self)
+        if let arguments = node.arguments, case let .argumentList(argumentList) = arguments,
+            let firstArgument = argumentList.first, argumentList.count == 1,
+            firstArgument.label?.text == "databaseItemType",
+            let expression = firstArgument.expression.as(StringLiteralExprSyntax.self)
         {
             databaseItemType = expression.representedLiteralValue ?? standardDatabaseType
         } else {
@@ -61,7 +65,9 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
         }
 
         let requiresProtocolConformance = protocols.reduce(false) { partialResult, protocolSyntax in
-            if let identifierTypeSyntax = protocolSyntax.as(IdentifierTypeSyntax.self), identifierTypeSyntax.name.text == Attributes.protocolName {
+            if let identifierTypeSyntax = protocolSyntax.as(IdentifierTypeSyntax.self),
+                identifierTypeSyntax.name.text == Attributes.protocolName
+            {
                 return true
             }
 
@@ -80,19 +86,28 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
 
         // make sure this is attached to an enum
         guard !caseMembers.isEmpty else {
-            context.diagnose(.init(node: declaration, message: BaseEntryDiagnostic<Attributes>.enumMustNotHaveZeroCases))
+            context.diagnose(
+                .init(node: declaration, message: BaseEntryDiagnostic<Attributes>.enumMustNotHaveZeroCases)
+            )
 
             return []
         }
 
-        let (hasDiagnostics, handleCases) = self.getCases(caseMembers: caseMembers, context: context, databaseItemType: databaseItemType)
+        let (hasDiagnostics, handleCases) = self.getCases(
+            caseMembers: caseMembers,
+            context: context,
+            databaseItemType: databaseItemType
+        )
 
         if hasDiagnostics {
             return []
         }
 
-        let type = TypeSyntax(extendedGraphemeClusterLiteral: requiresProtocolConformance ? "\(type.trimmed): \(Attributes.protocolName) "
-            : "\(type.trimmed) ")
+        let type = TypeSyntax(
+            extendedGraphemeClusterLiteral: requiresProtocolConformance
+                ? "\(type.trimmed): \(Attributes.protocolName) "
+                : "\(type.trimmed) "
+        )
         let extensionDecl = try ExtensionDeclSyntax(
             extendedType: type,
             memberBlockBuilder: {
@@ -102,21 +117,28 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
                 let casesArray = ArrayExprSyntax(
                     leftSquare: .leftSquareToken(),
                     elements: handleCases,
-                    rightSquare: .rightSquareToken())
+                    rightSquare: .rightSquareToken()
+                )
 
                 try VariableDeclSyntax(
                     """
                     static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] =
                     \(casesArray)
-                    """)
-            })
+                    """
+                )
+            }
+        )
 
         return [extensionDecl]
     }
 }
 
 extension PolymorphicOperationReturnTypeMacro {
-    private static func getCases(caseMembers: [EnumCaseDeclSyntax], context: some MacroExpansionContext, databaseItemType: String)
+    private static func getCases(
+        caseMembers: [EnumCaseDeclSyntax],
+        context: some MacroExpansionContext,
+        databaseItemType: String
+    )
         -> (hasDiagnostics: Bool, handleCases: ArrayElementListSyntax)
     {
         var handleCases: ArrayElementListSyntax = []
@@ -124,32 +146,47 @@ extension PolymorphicOperationReturnTypeMacro {
         for caseMember in caseMembers {
             for element in caseMember.elements {
                 // ensure that the enum case only has one parameter
-                guard let parameters = element.parameterClause?.parameters, let parameterType = parameters.first?.type.as(IdentifierTypeSyntax.self),
-                      parameters.count == 1
+                guard let parameters = element.parameterClause?.parameters,
+                    let parameterType = parameters.first?.type.as(IdentifierTypeSyntax.self),
+                    parameters.count == 1
                 else {
-                    context.diagnose(.init(node: element, message: BaseEntryDiagnostic<Attributes>.enumCasesMustHaveASingleParameter))
+                    context.diagnose(
+                        .init(node: element, message: BaseEntryDiagnostic<Attributes>.enumCasesMustHaveASingleParameter)
+                    )
                     hasDiagnostics = true
                     // do nothing for this case
                     continue
                 }
 
                 guard parameterType.name.text == databaseItemType,
-                      let firstArgumentType = parameterType.genericArgumentClause?.arguments.first?.argument
+                    let firstArgumentType = parameterType.genericArgumentClause?.arguments.first?.argument
                 else {
-                    let message = "PolymorphicOperationReturnTypeMacro decorated enum cases parameter must be of \(databaseItemType) type."
-                    context.diagnose(.init(node: element, message: BasicDiagnosticMessage(message: message, rawValue: "enumCasesMustBeOfTheExpectedType")))
+                    let message =
+                        "PolymorphicOperationReturnTypeMacro decorated enum cases parameter must be of \(databaseItemType) type."
+                    context.diagnose(
+                        .init(
+                            node: element,
+                            message: BasicDiagnosticMessage(
+                                message: message,
+                                rawValue: "enumCasesMustBeOfTheExpectedType"
+                            )
+                        )
+                    )
                     hasDiagnostics = true
                     // do nothing for this case
                     continue
                 }
 
                 let handleCaseSyntax = ArrayElementSyntax(
-                    expression: ExprSyntax("""
-                    (
-                        \(firstArgumentType).self, .init { .\(element.name)($0) }
-                    )
-                    """),
-                    trailingComma: .commaToken())
+                    expression: ExprSyntax(
+                        """
+                        (
+                            \(firstArgumentType).self, .init { .\(element.name)($0) }
+                        )
+                        """
+                    ),
+                    trailingComma: .commaToken()
+                )
 
                 handleCases.append(handleCaseSyntax)
             }

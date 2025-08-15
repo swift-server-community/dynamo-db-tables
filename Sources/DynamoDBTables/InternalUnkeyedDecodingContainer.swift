@@ -121,7 +121,9 @@ struct InternalUnkeyedDecodingContainer: UnkeyedDecodingContainer {
         return self.currentIndex >= values.count
     }
 
-    mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws
+    mutating func nestedContainer<NestedKey>(
+        keyedBy type: NestedKey.Type
+    ) throws
         -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey
     {
         try self.createNestedContainer().container(keyedBy: type)
@@ -155,11 +157,13 @@ struct InternalUnkeyedDecodingContainer: UnkeyedDecodingContainer {
 
         let value = values[index]
 
-        return InternalSingleValueDecodingContainer(attributeValue: value,
-                                                    codingPath: self.decodingContainer.codingPath
-                                                        + [InternalDynamoDBCodingKey(index: index)],
-                                                    userInfo: self.decodingContainer.userInfo,
-                                                    attributeNameTransform: self.decodingContainer.attributeNameTransform)
+        return InternalSingleValueDecodingContainer(
+            attributeValue: value,
+            codingPath: self.decodingContainer.codingPath
+                + [InternalDynamoDBCodingKey(index: index)],
+            userInfo: self.decodingContainer.userInfo,
+            attributeNameTransform: self.decodingContainer.attributeNameTransform
+        )
     }
 }
 
@@ -180,6 +184,6 @@ extension Date {
 
 extension String {
     var dateFromISO8601: Date? {
-        createISO8601DateFormatter().date(from: self) // "Mar 22, 2017, 10:22 AM"
+        createISO8601DateFormatter().date(from: self)  // "Mar 22, 2017, 10:22 AM"
     }
 }

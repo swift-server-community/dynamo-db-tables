@@ -27,10 +27,8 @@ import Foundation
  without storing the potentially non-Sendable row types.
  */
 
-/**
- Representation of a `DatabaseItem` when stored in `InMemoryDynamoDBCompositePrimaryKeyTableStore`.
- This type stores the serialised `DynamoDBClientTypes.AttributeValue` map
- */
+/// Representation of a `DatabaseItem` when stored in `InMemoryDynamoDBCompositePrimaryKeyTableStore`.
+/// This type stores the serialised `DynamoDBClientTypes.AttributeValue` map
 public struct InMemoryDatabaseItem: Sendable {
     public var item: [Swift.String: DynamoDBClientTypes.AttributeValue]
     var metadata: DatabaseItemMetadata
@@ -133,8 +131,10 @@ extension TypedTTLDatabaseItem {
     func inMemoryFormWithKey() throws
         -> InMemoryDatabaseItemWithKey<AttributesType>
     {
-        try InMemoryDatabaseItemWithKey(compositePrimaryKey: self.compositePrimaryKey,
-                                        inMemoryDatabaseItem: self.inMemoryForm())
+        try InMemoryDatabaseItemWithKey(
+            compositePrimaryKey: self.compositePrimaryKey,
+            inMemoryDatabaseItem: self.inMemoryForm()
+        )
     }
 }
 
@@ -146,7 +146,7 @@ enum InMemoryWriteEntry<AttributesType: PrimaryKeyAttributes>: Sendable {
 
     var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
         switch self {
-        case .update(new: let new, existing: _):
+        case .update(let new, existing: _):
             new.compositePrimaryKey
         case let .insert(new: new):
             new.compositePrimaryKey

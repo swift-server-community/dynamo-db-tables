@@ -140,7 +140,10 @@ extension DynamoDBClientTypes.AttributeValue: Swift.Codable {
             self = .bs(bs)
             return
         }
-        let mContainer = try values.decodeIfPresent([Swift.String: DynamoDBClientTypes.AttributeValue?].self, forKey: .m)
+        let mContainer = try values.decodeIfPresent(
+            [Swift.String: DynamoDBClientTypes.AttributeValue?].self,
+            forKey: .m
+        )
         var mDecoded0: [Swift.String: DynamoDBClientTypes.AttributeValue]? = nil
         if let mContainer {
             mDecoded0 = [Swift.String: DynamoDBClientTypes.AttributeValue]()

@@ -28,14 +28,16 @@ import AWSDynamoDB
 import Foundation
 
 extension QueryInput {
-    static func forSortKeyCondition<AttributesType>(partitionKey: String,
-                                                    targetTableName: String,
-                                                    primaryKeyType: AttributesType.Type,
-                                                    sortKeyCondition: AttributeCondition?,
-                                                    limit: Int?,
-                                                    scanIndexForward: Bool,
-                                                    exclusiveStartKey: String?,
-                                                    consistentRead: Bool?) throws
+    static func forSortKeyCondition<AttributesType>(
+        partitionKey: String,
+        targetTableName: String,
+        primaryKeyType: AttributesType.Type,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        scanIndexForward: Bool,
+        exclusiveStartKey: String?,
+        consistentRead: Bool?
+    ) throws
         -> AWSDynamoDB.QueryInput where AttributesType: PrimaryKeyAttributes
     {
         let expressionAttributeValues: [String: DynamoDBClientTypes.AttributeValue]
@@ -43,7 +45,7 @@ extension QueryInput {
         let keyConditionExpression: String
         if let currentSortKeyCondition = sortKeyCondition {
             var withSortConditionAttributeValues: [String: DynamoDBClientTypes.AttributeValue] = [
-                ":pk": DynamoDBClientTypes.AttributeValue.s(partitionKey),
+                ":pk": DynamoDBClientTypes.AttributeValue.s(partitionKey)
             ]
 
             let sortKeyExpression: String
@@ -74,8 +76,10 @@ extension QueryInput {
 
             keyConditionExpression = "#pk= :pk AND \(sortKeyExpression)"
 
-            expressionAttributeNames = ["#pk": AttributesType.partitionKeyAttributeName,
-                                        "#sk": AttributesType.sortKeyAttributeName]
+            expressionAttributeNames = [
+                "#pk": AttributesType.partitionKeyAttributeName,
+                "#sk": AttributesType.sortKeyAttributeName,
+            ]
             expressionAttributeValues = withSortConditionAttributeValues
         } else {
             keyConditionExpression = "#pk= :pk"
@@ -84,21 +88,26 @@ extension QueryInput {
             expressionAttributeValues = [":pk": DynamoDBClientTypes.AttributeValue.s(partitionKey)]
         }
 
-        let inputExclusiveStartKey: [String: DynamoDBClientTypes.AttributeValue]? = if let exclusiveStartKey = exclusiveStartKey?.data(using: .utf8) {
-            try JSONDecoder().decode([String: DynamoDBClientTypes.AttributeValue].self,
-                                     from: exclusiveStartKey)
-        } else {
-            nil
-        }
+        let inputExclusiveStartKey: [String: DynamoDBClientTypes.AttributeValue]? =
+            if let exclusiveStartKey = exclusiveStartKey?.data(using: .utf8) {
+                try JSONDecoder().decode(
+                    [String: DynamoDBClientTypes.AttributeValue].self,
+                    from: exclusiveStartKey
+                )
+            } else {
+                nil
+            }
 
-        return AWSDynamoDB.QueryInput(consistentRead: consistentRead,
-                                      exclusiveStartKey: inputExclusiveStartKey,
-                                      expressionAttributeNames: expressionAttributeNames,
-                                      expressionAttributeValues: expressionAttributeValues,
-                                      indexName: primaryKeyType.indexName,
-                                      keyConditionExpression: keyConditionExpression,
-                                      limit: limit,
-                                      scanIndexForward: scanIndexForward,
-                                      tableName: targetTableName)
+        return AWSDynamoDB.QueryInput(
+            consistentRead: consistentRead,
+            exclusiveStartKey: inputExclusiveStartKey,
+            expressionAttributeNames: expressionAttributeNames,
+            expressionAttributeValues: expressionAttributeValues,
+            indexName: primaryKeyType.indexName,
+            keyConditionExpression: keyConditionExpression,
+            limit: limit,
+            scanIndexForward: scanIndexForward,
+            tableName: targetTableName
+        )
     }
 }

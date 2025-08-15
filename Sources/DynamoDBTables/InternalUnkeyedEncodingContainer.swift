@@ -125,15 +125,19 @@ struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
 
     // MARK: -
 
-    private func createNestedContainer(defaultValue: ContainerValueType? = nil)
+    private func createNestedContainer(
+        defaultValue: ContainerValueType? = nil
+    )
         -> InternalSingleValueEncodingContainer
     {
         let index = self.enclosingContainer.unkeyedContainerCount
 
-        let nestedContainer = InternalSingleValueEncodingContainer(userInfo: enclosingContainer.userInfo,
-                                                                   codingPath: self.enclosingContainer.codingPath + [InternalDynamoDBCodingKey(index: index)],
-                                                                   attributeNameTransform: self.enclosingContainer.attributeNameTransform,
-                                                                   defaultValue: defaultValue)
+        let nestedContainer = InternalSingleValueEncodingContainer(
+            userInfo: enclosingContainer.userInfo,
+            codingPath: self.enclosingContainer.codingPath + [InternalDynamoDBCodingKey(index: index)],
+            attributeNameTransform: self.enclosingContainer.attributeNameTransform,
+            defaultValue: defaultValue
+        )
         self.enclosingContainer.addToUnkeyedContainer(value: nestedContainer)
 
         return nestedContainer

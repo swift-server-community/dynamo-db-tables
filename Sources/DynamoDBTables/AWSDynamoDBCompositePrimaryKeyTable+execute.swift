@@ -32,35 +32,40 @@ import Logging
 private let maximumKeysPerExecuteStatement = 50
 
 /// DynamoDBTable conformance execute function
-public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
-    private func getStatement(partitionKeys: [String],
-                              attributesFilter: [String]?,
-                              partitionKeyAttributeName: String,
-                              additionalWhereClause: String?) -> String
-    {
-        let attributesFilterString = attributesFilter?.joined(separator: ", ") ?? "*"
-
-        let partitionWhereClause = if partitionKeys.count == 1 {
-            "\(partitionKeyAttributeName)='\(partitionKeys[0])'"
-        } else {
-            "\(partitionKeyAttributeName) IN ['\(partitionKeys.joined(separator: "', '"))']"
-        }
-
-        let whereClausePostfix = if let additionalWhereClause {
-            " \(additionalWhereClause)"
-        } else {
-            ""
-        }
-
-        return """
-        SELECT \(attributesFilterString) FROM "\(self.targetTableName)" WHERE \(partitionWhereClause)\(whereClausePostfix)
-        """
-    }
-
-    func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
+extension GenericAWSDynamoDBCompositePrimaryKeyTable {
+    private func getStatement(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?, nextToken: String?) async throws
+        partitionKeyAttributeName: String,
+        additionalWhereClause: String?
+    ) -> String {
+        let attributesFilterString = attributesFilter?.joined(separator: ", ") ?? "*"
+
+        let partitionWhereClause =
+            if partitionKeys.count == 1 {
+                "\(partitionKeyAttributeName)='\(partitionKeys[0])'"
+            } else {
+                "\(partitionKeyAttributeName) IN ['\(partitionKeys.joined(separator: "', '"))']"
+            }
+
+        let whereClausePostfix =
+            if let additionalWhereClause {
+                " \(additionalWhereClause)"
+            } else {
+                ""
+            }
+
+        return """
+            SELECT \(attributesFilterString) FROM "\(self.targetTableName)" WHERE \(partitionWhereClause)\(whereClausePostfix)
+            """
+    }
+
+    public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
+        partitionKeys: [String],
+        attributesFilter: [String]?,
+        additionalWhereClause: String?,
+        nextToken: String?
+    ) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
         // if there are no partitions, there will be no results to return
@@ -72,15 +77,25 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         // ExecuteStatement API has a maximum limit on the number of decomposed read operations per request.
         // Caller of this function needs to handle pagination on their side.
         guard partitionKeys.count <= maximumKeysPerExecuteStatement else {
-            throw DynamoDBTableError.validation(partitionKey: nil, sortKey: nil,
-                                                message: "Execute API has a maximum limit of \(maximumKeysPerExecuteStatement) partition keys per request.")
+            throw DynamoDBTableError.validation(
+                partitionKey: nil,
+                sortKey: nil,
+                message:
+                    "Execute API has a maximum limit of \(maximumKeysPerExecuteStatement) partition keys per request."
+            )
         }
 
-        let statement = self.getStatement(partitionKeys: partitionKeys,
-                                          attributesFilter: attributesFilter,
-                                          partitionKeyAttributeName: ReturnedType.AttributesType.partitionKeyAttributeName,
-                                          additionalWhereClause: additionalWhereClause)
-        let executeInput = ExecuteStatementInput(consistentRead: self.tableConfiguration.consistentRead, nextToken: nextToken, statement: statement)
+        let statement = self.getStatement(
+            partitionKeys: partitionKeys,
+            attributesFilter: attributesFilter,
+            partitionKeyAttributeName: ReturnedType.AttributesType.partitionKeyAttributeName,
+            additionalWhereClause: additionalWhereClause
+        )
+        let executeInput = ExecuteStatementInput(
+            consistentRead: self.tableConfiguration.consistentRead,
+            nextToken: nextToken,
+            statement: statement
+        )
 
         let executeOutput = try await self.dynamodb.executeStatement(input: executeInput)
 
@@ -107,30 +122,37 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
+    public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?) async throws
+        additionalWhereClause: String?
+    ) async throws
         -> [ReturnedType]
     {
         // ExecuteStatement API has a maximum limit on the number of decomposed read operations per request.
         // This function handles pagination internally.
         let chunkedPartitionKeys = partitionKeys.chunked(by: maximumKeysPerExecuteStatement)
         let itemLists = try await chunkedPartitionKeys.concurrentMap { chunk -> [ReturnedType] in
-            try await self.polymorphicPartialExecute(partitionKeys: chunk,
-                                                     attributesFilter: attributesFilter,
-                                                     additionalWhereClause: additionalWhereClause,
-                                                     nextToken: nil)
+            try await self.polymorphicPartialExecute(
+                partitionKeys: chunk,
+                attributesFilter: attributesFilter,
+                additionalWhereClause: additionalWhereClause,
+                nextToken: nil
+            )
         }
 
         return itemLists.flatMap(\.self)
     }
 
-    func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
+    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?, nextToken: String?) async throws
-        -> (items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?)
+        additionalWhereClause: String?,
+        nextToken: String?
+    ) async throws
+        -> (
+            items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?
+        )
     {
         // if there are no partitions, there will be no results to return
         // succeed immediately with empty results
@@ -141,15 +163,25 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         // ExecuteStatement API has a maximum limit on the number of decomposed read operations per request.
         // Caller of this function needs to handle pagination on their side.
         guard partitionKeys.count <= maximumKeysPerExecuteStatement else {
-            throw DynamoDBTableError.validation(partitionKey: nil, sortKey: nil,
-                                                message: "Execute API has a maximum limit of \(maximumKeysPerExecuteStatement) partition keys per request.")
+            throw DynamoDBTableError.validation(
+                partitionKey: nil,
+                sortKey: nil,
+                message:
+                    "Execute API has a maximum limit of \(maximumKeysPerExecuteStatement) partition keys per request."
+            )
         }
 
-        let statement = self.getStatement(partitionKeys: partitionKeys,
-                                          attributesFilter: attributesFilter,
-                                          partitionKeyAttributeName: AttributesType.partitionKeyAttributeName,
-                                          additionalWhereClause: additionalWhereClause)
-        let executeInput = ExecuteStatementInput(consistentRead: self.tableConfiguration.consistentRead, nextToken: nextToken, statement: statement)
+        let statement = self.getStatement(
+            partitionKeys: partitionKeys,
+            attributesFilter: attributesFilter,
+            partitionKeyAttributeName: AttributesType.partitionKeyAttributeName,
+            additionalWhereClause: additionalWhereClause
+        )
+        let executeInput = ExecuteStatementInput(
+            consistentRead: self.tableConfiguration.consistentRead,
+            nextToken: nextToken,
+            statement: statement
+        )
 
         let executeOutput = try await self.dynamodb.executeStatement(input: executeInput)
 
@@ -174,21 +206,25 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
+    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
-        additionalWhereClause: String?) async throws
+        additionalWhereClause: String?
+    ) async throws
         -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         // ExecuteStatement API has a maximum limit on the number of decomposed read operations per request.
         // This function handles pagination internally.
         let chunkedPartitionKeys = partitionKeys.chunked(by: maximumKeysPerExecuteStatement)
-        let itemLists = try await chunkedPartitionKeys.concurrentMap { chunk
-            -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] in
-            try await self.partialExecute(partitionKeys: chunk,
-                                          attributesFilter: attributesFilter,
-                                          additionalWhereClause: additionalWhereClause,
-                                          nextToken: nil)
+        let itemLists = try await chunkedPartitionKeys.concurrentMap {
+            chunk
+                -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] in
+            try await self.partialExecute(
+                partitionKeys: chunk,
+                attributesFilter: attributesFilter,
+                additionalWhereClause: additionalWhereClause,
+                nextToken: nil
+            )
         }
 
         return itemLists.flatMap(\.self)
@@ -199,22 +235,27 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?,
-        nextToken: String?) async throws
+        nextToken: String?
+    ) async throws
         -> [ReturnedType]
     {
         let paginatedItems: ([ReturnedType], String?) =
-            try await polymorphicExecute(partitionKeys: partitionKeys,
-                                         attributesFilter: attributesFilter,
-                                         additionalWhereClause: additionalWhereClause,
-                                         nextToken: nextToken)
+            try await polymorphicExecute(
+                partitionKeys: partitionKeys,
+                attributesFilter: attributesFilter,
+                additionalWhereClause: additionalWhereClause,
+                nextToken: nextToken
+            )
 
         // if there are more items
         if let returnedNextToken = paginatedItems.1 {
             // returns a future with all the results from all later paginated calls
-            let partialResult: [ReturnedType] = try await self.polymorphicPartialExecute(partitionKeys: partitionKeys,
-                                                                                         attributesFilter: attributesFilter,
-                                                                                         additionalWhereClause: additionalWhereClause,
-                                                                                         nextToken: returnedNextToken)
+            let partialResult: [ReturnedType] = try await self.polymorphicPartialExecute(
+                partitionKeys: partitionKeys,
+                attributesFilter: attributesFilter,
+                additionalWhereClause: additionalWhereClause,
+                nextToken: returnedNextToken
+            )
 
             // return the results from 'this' call and all later paginated calls
             return paginatedItems.0 + partialResult
@@ -228,23 +269,28 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?,
-        nextToken: String?) async throws
+        nextToken: String?
+    ) async throws
         -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         let paginatedItems: ([TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], String?) =
-            try await execute(partitionKeys: partitionKeys,
-                              attributesFilter: attributesFilter,
-                              additionalWhereClause: additionalWhereClause,
-                              nextToken: nextToken)
+            try await execute(
+                partitionKeys: partitionKeys,
+                attributesFilter: attributesFilter,
+                additionalWhereClause: additionalWhereClause,
+                nextToken: nextToken
+            )
 
         // if there are more items
         if let returnedNextToken = paginatedItems.1 {
             // returns a future with all the results from all later paginated calls
-            let partialResult: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try await self.partialExecute(
-                partitionKeys: partitionKeys,
-                attributesFilter: attributesFilter,
-                additionalWhereClause: additionalWhereClause,
-                nextToken: returnedNextToken)
+            let partialResult: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] =
+                try await self.partialExecute(
+                    partitionKeys: partitionKeys,
+                    attributesFilter: attributesFilter,
+                    additionalWhereClause: additionalWhereClause,
+                    nextToken: returnedNextToken
+                )
 
             // return the results from 'this' call and all later paginated calls
             return paginatedItems.0 + partialResult
@@ -266,34 +312,51 @@ extension DynamoDBClientTypes.BatchStatementError {
         case .accessdenied:
             DynamoDBTableError.accessDenied(message: self.message)
         case .conditionalcheckfailed:
-            DynamoDBTableError.conditionalCheckFailed(partitionKey: partitionKey,
-                                                      sortKey: sortKey,
-                                                      message: self.message)
+            DynamoDBTableError.conditionalCheckFailed(
+                partitionKey: partitionKey,
+                sortKey: sortKey,
+                message: self.message
+            )
         case .duplicateitem:
-            DynamoDBTableError.duplicateItem(partitionKey: partitionKey, sortKey: sortKey,
-                                             message: self.message)
+            DynamoDBTableError.duplicateItem(
+                partitionKey: partitionKey,
+                sortKey: sortKey,
+                message: self.message
+            )
         case .internalservererror:
             DynamoDBTableError.internalServerError(message: self.message)
         case .itemcollectionsizelimitexceeded:
-            DynamoDBTableError.itemCollectionSizeLimitExceeded(attemptedSize: entryCount,
-                                                               maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement)
+            DynamoDBTableError.itemCollectionSizeLimitExceeded(
+                attemptedSize: entryCount,
+                maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement
+            )
         case .provisionedthroughputexceeded:
             DynamoDBTableError.provisionedThroughputExceeded(message: self.message)
         case .requestlimitexceeded:
             DynamoDBTableError.requestLimitExceeded(message: self.message)
         case .resourcenotfound:
-            DynamoDBTableError.resourceNotFound(partitionKey: partitionKey, sortKey: sortKey,
-                                                message: self.message)
+            DynamoDBTableError.resourceNotFound(
+                partitionKey: partitionKey,
+                sortKey: sortKey,
+                message: self.message
+            )
         case .throttlingerror:
             DynamoDBTableError.throttling(message: self.message)
         case .transactionconflict:
             DynamoDBTableError.transactionConflict(message: self.message)
         case .validationerror:
-            DynamoDBTableError.validation(partitionKey: partitionKey, sortKey: sortKey,
-                                          message: self.message)
+            DynamoDBTableError.validation(
+                partitionKey: partitionKey,
+                sortKey: sortKey,
+                message: self.message
+            )
         case let .sdkUnknown(message):
-            DynamoDBTableError.unknown(code: message, partitionKey: partitionKey,
-                                       sortKey: sortKey, message: self.message)
+            DynamoDBTableError.unknown(
+                code: message,
+                partitionKey: partitionKey,
+                sortKey: sortKey,
+                message: self.message
+            )
         }
     }
 }
@@ -332,9 +395,10 @@ extension [DynamoDBTableError] {
             case .provisionedThroughputExceeded:
                 canPassThrough(state: &seenProvisionedThroughputExceeded) ? error : nil
             case .conditionalCheckFailed, .duplicateItem, .concurrencyError, .validation, .throttling, .databaseError,
-                 .unexpectedError, .unexpectedResponse, .resourceNotFound, .typeMismatch, .batchAPIExceededRetries,
-                 .unexpectedType, .unableToUpdateError, .unrecognizedError, .multipleUnexpectedErrors, .transactionCanceled,
-                 .transactionConflict, .batchFailures, .unknown:
+                .unexpectedError, .unexpectedResponse, .resourceNotFound, .typeMismatch, .batchAPIExceededRetries,
+                .unexpectedType, .unableToUpdateError, .unrecognizedError, .multipleUnexpectedErrors,
+                .transactionCanceled,
+                .transactionConflict, .batchFailures, .unknown:
                 // always pass through these errors
                 error
             }

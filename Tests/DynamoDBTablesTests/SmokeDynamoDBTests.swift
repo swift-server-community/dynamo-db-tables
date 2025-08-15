@@ -25,18 +25,19 @@
 //
 
 import AWSDynamoDB
-@testable import DynamoDBTables
 import Foundation
 import Testing
+
+@testable import DynamoDBTables
 
 private func createDecoder() -> JSONDecoder {
     let jsonDecoder = JSONDecoder()
     #if os(Linux)
-        jsonDecoder.dateDecodingStrategy = .iso8601
+    jsonDecoder.dateDecodingStrategy = .iso8601
     #elseif os(OSX)
-        if #available(OSX 10.12, *) {
-            jsonDecoder.dateDecodingStrategy = .iso8601
-        }
+    if #available(OSX 10.12, *) {
+        jsonDecoder.dateDecodingStrategy = .iso8601
+    }
     #endif
 
     return jsonDecoder
@@ -59,20 +60,26 @@ struct DynamoDBTablesTests {
     func encodeTypedItem() {
         let inputData = serializedTypeADatabaseItem.data(using: .utf8)!
 
-        guard let jsonAttributeValue = try assertNoThrow(
-            jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData))
+        guard
+            let jsonAttributeValue = try assertNoThrow(
+                jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)
+            )
         else {
             return
         }
 
-        guard let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
-            DynamoDBDecoder().decode(jsonAttributeValue))
+        guard
+            let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
+                DynamoDBDecoder().decode(jsonAttributeValue)
+            )
         else {
             return
         }
 
-        guard let decodeAttributeValue = try assertNoThrow(
-            DynamoDBEncoder().encode(databaseItem))
+        guard
+            let decodeAttributeValue = try assertNoThrow(
+                DynamoDBEncoder().encode(databaseItem)
+            )
         else {
             return
         }
@@ -89,20 +96,26 @@ struct DynamoDBTablesTests {
     func encodeTypedItemWithTimeToLive() {
         let inputData = serializedTypeADatabaseItemWithTimeToLive.data(using: .utf8)!
 
-        guard let jsonAttributeValue = try assertNoThrow(
-            jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData))
+        guard
+            let jsonAttributeValue = try assertNoThrow(
+                jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)
+            )
         else {
             return
         }
 
-        guard let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
-            DynamoDBDecoder().decode(jsonAttributeValue))
+        guard
+            let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
+                DynamoDBDecoder().decode(jsonAttributeValue)
+            )
         else {
             return
         }
 
-        guard let decodeAttributeValue = try assertNoThrow(
-            DynamoDBEncoder().encode(databaseItem))
+        guard
+            let decodeAttributeValue = try assertNoThrow(
+                DynamoDBEncoder().encode(databaseItem)
+            )
         else {
             return
         }
@@ -119,14 +132,18 @@ struct DynamoDBTablesTests {
     func typedDatabaseItem() {
         let inputData = serializedTypeADatabaseItem.data(using: .utf8)!
 
-        guard let attributeValue = try assertNoThrow(
-            jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData))
+        guard
+            let attributeValue = try assertNoThrow(
+                jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)
+            )
         else {
             return
         }
 
-        guard let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
-            DynamoDBDecoder().decode(attributeValue))
+        guard
+            let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
+                DynamoDBDecoder().decode(attributeValue)
+            )
         else {
             return
         }
@@ -146,14 +163,18 @@ struct DynamoDBTablesTests {
     func typedDatabaseItemWithTimeToLive() {
         let inputData = serializedTypeADatabaseItemWithTimeToLive.data(using: .utf8)!
 
-        guard let attributeValue = try assertNoThrow(
-            jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData))
+        guard
+            let attributeValue = try assertNoThrow(
+                jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)
+            )
         else {
             return
         }
 
-        guard let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
-            DynamoDBDecoder().decode(attributeValue))
+        guard
+            let databaseItem: StandardTypedDatabaseItem<TypeA> = try assertNoThrow(
+                DynamoDBDecoder().decode(attributeValue)
+            )
         else {
             return
         }
@@ -165,8 +186,10 @@ struct DynamoDBTablesTests {
 
         // create an updated item from the decoded one
         let newItem = TypeA(firstly: "hello", secondly: "world!!")
-        let updatedItem = databaseItem.createUpdatedItem(withValue: newItem,
-                                                         andTimeToLive: StandardTimeToLive(timeToLiveTimestamp: 234_567_890))
+        let updatedItem = databaseItem.createUpdatedItem(
+            withValue: newItem,
+            andTimeToLive: StandardTimeToLive(timeToLiveTimestamp: 234_567_890)
+        )
         #expect(updatedItem.rowValue.firstly == "hello")
         #expect(updatedItem.rowValue.secondly == "world!!")
         #expect(updatedItem.rowStatus.rowVersion == 6)
@@ -177,8 +200,10 @@ struct DynamoDBTablesTests {
     func polymorphicDatabaseItemList() {
         let inputData = serializedPolymorphicDatabaseItemList.data(using: .utf8)!
 
-        guard let attributeValues = try assertNoThrow(
-            jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData))
+        guard
+            let attributeValues = try assertNoThrow(
+                jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData)
+            )
         else {
             return
         }
@@ -186,7 +211,8 @@ struct DynamoDBTablesTests {
         let itemsOptional: [ReturnTypeDecodable<AllQueryableTypes>]? = try assertNoThrow(
             attributeValues.map { value in
                 try DynamoDBDecoder().decode(value)
-            })
+            }
+        )
 
         guard let items = itemsOptional else {
             Issue.record("No items returned.")
@@ -229,8 +255,10 @@ struct DynamoDBTablesTests {
     func polymorphicDatabaseItemListUnknownType() {
         let inputData = serializedPolymorphicDatabaseItemList.data(using: .utf8)!
 
-        guard let attributeValues = try assertNoThrow(
-            jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData))
+        guard
+            let attributeValues = try assertNoThrow(
+                jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData)
+            )
         else {
             return
         }
@@ -254,8 +282,10 @@ struct DynamoDBTablesTests {
     func polymorphicDatabaseItemListWithIndex() {
         let inputData = serializedPolymorphicDatabaseItemListWithIndex.data(using: .utf8)!
 
-        guard let attributeValues = try assertNoThrow(
-            jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData))
+        guard
+            let attributeValues = try assertNoThrow(
+                jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData)
+            )
         else {
             return
         }
@@ -263,7 +293,8 @@ struct DynamoDBTablesTests {
         let itemsOptional: [ReturnTypeDecodable<AllQueryableTypesWithIndex>]? = try assertNoThrow(
             attributeValues.map { value in
                 try DynamoDBDecoder().decode(value)
-            })
+            }
+        )
 
         guard let items = itemsOptional else {
             Issue.record("No items returned.")

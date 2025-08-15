@@ -24,11 +24,11 @@
 //  DynamoDBTablesTests
 //
 
-import Foundation
-
 import AWSDynamoDB
-@testable import DynamoDBTables
+import Foundation
 import Testing
+
+@testable import DynamoDBTables
 
 private let ORIGINAL_PAYLOAD = "Payload"
 private let ORIGINAL_TIME_TO_LIVE: Int64 = 123_456_789
@@ -38,13 +38,17 @@ private let UPDATED_TIME_TO_LIVE: Int64 = 234_567_890
 struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     @Test
     func createUpdatedRowWithItemVersion() throws {
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let rowWithItemVersion = RowWithItemVersion.newItem(withValue: "Payload")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: rowWithItemVersion)
 
-        let updatedItem = try databaseItem.createUpdatedRowWithItemVersion(withValue: "Updated",
-                                                                           conditionalStatusVersion: nil)
+        let updatedItem = try databaseItem.createUpdatedRowWithItemVersion(
+            withValue: "Updated",
+            conditionalStatusVersion: nil
+        )
 
         #expect(databaseItem.rowStatus.rowVersion == 1)
         #expect(databaseItem.rowValue.itemVersion == 1)
@@ -58,16 +62,22 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
 
     @Test
     func createUpdatedRowWithItemVersionWithTimeToLive() throws {
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let rowWithItemVersion = RowWithItemVersion.newItem(withValue: "Payload")
-        let databaseItem = TypedTTLDatabaseItem.newItem(withKey: compositeKey,
-                                                        andValue: rowWithItemVersion,
-                                                        andTimeToLive: StandardTimeToLive(timeToLiveTimestamp: 123_456_789))
+        let databaseItem = TypedTTLDatabaseItem.newItem(
+            withKey: compositeKey,
+            andValue: rowWithItemVersion,
+            andTimeToLive: StandardTimeToLive(timeToLiveTimestamp: 123_456_789)
+        )
 
-        let updatedItem = try databaseItem.createUpdatedRowWithItemVersion(withValue: "Updated",
-                                                                           conditionalStatusVersion: nil,
-                                                                           andTimeToLive: StandardTimeToLive(timeToLiveTimestamp: 234_567_890))
+        let updatedItem = try databaseItem.createUpdatedRowWithItemVersion(
+            withValue: "Updated",
+            conditionalStatusVersion: nil,
+            andTimeToLive: StandardTimeToLive(timeToLiveTimestamp: 234_567_890)
+        )
 
         #expect(databaseItem.rowStatus.rowVersion == 1)
         #expect(databaseItem.rowValue.itemVersion == 1)
@@ -81,13 +91,17 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
 
     @Test
     func createUpdatedRowWithItemVersionWithCorrectConditionalVersion() throws {
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let rowWithItemVersion = RowWithItemVersion.newItem(withValue: "Payload")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: rowWithItemVersion)
 
-        let updatedItem = try databaseItem.createUpdatedRowWithItemVersion(withValue: "Updated",
-                                                                           conditionalStatusVersion: 1)
+        let updatedItem = try databaseItem.createUpdatedRowWithItemVersion(
+            withValue: "Updated",
+            conditionalStatusVersion: 1
+        )
 
         #expect(databaseItem.rowStatus.rowVersion == 1)
         #expect(databaseItem.rowValue.itemVersion == 1)
@@ -99,14 +113,18 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
 
     @Test
     func createUpdatedRowWithItemVersionWithIncorrectConditionalVersion() {
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let rowWithItemVersion = RowWithItemVersion.newItem(withValue: "Payload")
         let databaseItem = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: rowWithItemVersion)
 
         do {
-            _ = try databaseItem.createUpdatedRowWithItemVersion(withValue: "Updated",
-                                                                 conditionalStatusVersion: 8)
+            _ = try databaseItem.createUpdatedRowWithItemVersion(
+                withValue: "Updated",
+                conditionalStatusVersion: 8
+            )
 
             Issue.record("Expected error not thrown.")
         } catch DynamoDBTableError.concurrencyError {
@@ -116,27 +134,45 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         }
     }
 
-    func getTable(escapeSingleQuoteInPartiQL: Bool = false) throws -> GenericAWSDynamoDBCompositePrimaryKeyTable<MockDynamoDBClientProtocol> {
-        GenericAWSDynamoDBCompositePrimaryKeyTable(tableName: "DummyTable",
-                                                   client: MockDynamoDBClientProtocol(),
-                                                   tableConfiguration: .init(escapeSingleQuoteInPartiQL: escapeSingleQuoteInPartiQL))
+    func getTable(
+        escapeSingleQuoteInPartiQL: Bool = false
+    ) throws -> GenericAWSDynamoDBCompositePrimaryKeyTable<MockDynamoDBClientProtocol> {
+        GenericAWSDynamoDBCompositePrimaryKeyTable(
+            tableName: "DummyTable",
+            client: MockDynamoDBClientProtocol(),
+            tableConfiguration: .init(escapeSingleQuoteInPartiQL: escapeSingleQuoteInPartiQL)
+        )
     }
 
     @Test
     func stringFieldDifference() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
-        let payloadB = TestTypeC(theString: "eigthly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
+        let payloadB = TestTypeC(
+            theString: "eigthly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theString\""] == .update(path: "\"theString\"", value: "'eigthly'"))
@@ -146,18 +182,32 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     @Test
     func stringFieldDifferenceWithEscapedQuotes() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "f'ir''st'''ly", theNumber: 4, theStruct: theStruct, theList: ["t'hi''rdly", "fourt''hl'y"])
-        let payloadB = TestTypeC(theString: "e'ig''thl'''y", theNumber: 4, theStruct: theStruct, theList: ["t'hi''rdly", "fourt''hl'y"])
+        let payloadA = TestTypeC(
+            theString: "f'ir''st'''ly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["t'hi''rdly", "fourt''hl'y"]
+        )
+        let payloadB = TestTypeC(
+            theString: "e'ig''thl'''y",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["t'hi''rdly", "fourt''hl'y"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "par'titio''nKey",
-                                                       sortKey: "so'rt'''Key")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "par'titio''nKey",
+            sortKey: "so'rt'''Key"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable(escapeSingleQuoteInPartiQL: true)
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theString\""] == .update(path: "\"theString\"", value: "'e''ig''''thl''''''y'"))
@@ -167,18 +217,32 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     @Test
     func numberFieldDifference() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
-        let payloadB = TestTypeC(theString: "firstly", theNumber: 12, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
+        let payloadB = TestTypeC(
+            theString: "firstly",
+            theNumber: 12,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theNumber\""] == .update(path: "\"theNumber\"", value: "12"))
@@ -189,18 +253,32 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     func structFieldDifference() throws {
         let theStructA = TestTypeA(firstly: "firstly", secondly: "secondly")
         let theStructB = TestTypeA(firstly: "eigthly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStructA, theList: ["thirdly", "fourthly"])
-        let payloadB = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStructB, theList: ["thirdly", "fourthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStructA,
+            theList: ["thirdly", "fourthly"]
+        )
+        let payloadB = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStructB,
+            theList: ["thirdly", "fourthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theStruct\".\"firstly\""] == .update(path: "\"theStruct\".\"firstly\"", value: "'eigthly'"))
@@ -211,39 +289,70 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     func structFieldDifferenceWithEscapedQuotes() throws {
         let theStructA = TestTypeA(firstly: "f'ir''st'''ly", secondly: "se'con''dl'''y")
         let theStructB = TestTypeA(firstly: "e'ig''thly'''", secondly: "se'con''dl'''y")
-        let payloadA = TestTypeC(theString: "fi''rst'ly", theNumber: 4, theStruct: theStructA, theList: ["t'hi'rdl'y", "f'ou'rthl'y"])
-        let payloadB = TestTypeC(theString: "fi''rstl'y", theNumber: 4, theStruct: theStructB, theList: ["t'hi'rdl'y", "f'ou'rthl'y"])
+        let payloadA = TestTypeC(
+            theString: "fi''rst'ly",
+            theNumber: 4,
+            theStruct: theStructA,
+            theList: ["t'hi'rdl'y", "f'ou'rthl'y"]
+        )
+        let payloadB = TestTypeC(
+            theString: "fi''rstl'y",
+            theNumber: 4,
+            theStruct: theStructB,
+            theList: ["t'hi'rdl'y", "f'ou'rthl'y"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "par'titio''nKey",
-                                                       sortKey: "so'rt'''Key")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "par'titio''nKey",
+            sortKey: "so'rt'''Key"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable(escapeSingleQuoteInPartiQL: true)
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
-        #expect(pathMap["\"theStruct\".\"firstly\""] == .update(path: "\"theStruct\".\"firstly\"", value: "'e''ig''''thly'''''''"))
+        #expect(
+            pathMap["\"theStruct\".\"firstly\""]
+                == .update(path: "\"theStruct\".\"firstly\"", value: "'e''ig''''thly'''''''")
+        )
         #expect(pathMap["\"RowVersion\""] == .update(path: "\"RowVersion\"", value: "2"))
     }
 
     @Test
     func listFieldDifference() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
-        let payloadB = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "eigthly", "ninthly", "tenthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
+        let payloadB = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "eigthly", "ninthly", "tenthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theList\"[1]"] == .update(path: "\"theList\"[1]", value: "'eigthly'"))
@@ -261,15 +370,19 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let payloadA = NestedLists(nestedList: [["one", "two"], ["three", "four"]])
         let payloadB = NestedLists(nestedList: [["one", "five"], ["three", "four", "eight"], ["six", "seven"]])
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"nestedList\"[0][1]"] == .update(path: "\"nestedList\"[0][1]", value: "'five'"))
@@ -281,22 +394,40 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     @Test
     func listFieldDifferenceWithEscapedQuotes() throws {
         let theStruct = TestTypeA(firstly: "f'irstl''y", secondly: "se'cond''ly")
-        let payloadA = TestTypeC(theString: "f'irst''ly", theNumber: 4, theStruct: theStruct, theList: ["th'irdly",
-                                                                                                        "fo''urthly"])
-        let payloadB = TestTypeC(theString: "f'irst''ly", theNumber: 4, theStruct: theStruct, theList: ["th'irdly",
-                                                                                                        "eigth'''ly",
-                                                                                                        "ni'n''thly",
-                                                                                                        "ten'thly'"])
+        let payloadA = TestTypeC(
+            theString: "f'irst''ly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: [
+                "th'irdly",
+                "fo''urthly",
+            ]
+        )
+        let payloadB = TestTypeC(
+            theString: "f'irst''ly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: [
+                "th'irdly",
+                "eigth'''ly",
+                "ni'n''thly",
+                "ten'thly'",
+            ]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "par'titio''nKey",
-                                                       sortKey: "so'rt'''Key")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "par'titio''nKey",
+            sortKey: "so'rt'''Key"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable(escapeSingleQuoteInPartiQL: true)
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theList\"[1]"] == .update(path: "\"theList\"[1]", value: "'eigth''''''ly'"))
@@ -309,17 +440,26 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     func stringFieldAddition() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
         let payloadA = TestTypeC(theString: nil, theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
-        let payloadB = TestTypeC(theString: "eigthly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadB = TestTypeC(
+            theString: "eigthly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theString\""] == .update(path: "\"theString\"", value: "'eigthly'"))
@@ -329,18 +469,32 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     @Test
     func numberFieldAddition() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: nil, theStruct: theStruct, theList: ["thirdly", "fourthly"])
-        let payloadB = TestTypeC(theString: "firstly", theNumber: 12, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: nil,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
+        let payloadB = TestTypeC(
+            theString: "firstly",
+            theNumber: 12,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theNumber\""] == .update(path: "\"theNumber\"", value: "12"))
@@ -351,17 +505,26 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     func structFieldAddition() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
         let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: nil, theList: ["thirdly", "fourthly"])
-        let payloadB = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadB = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         guard case let .update(_, value) = pathMap["\"theStruct\""] else {
@@ -369,8 +532,9 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
             return
         }
 
-        let valueMatches = (value == "{'firstly': 'firstly', 'secondly': 'secondly'}") ||
-            (value == "{'secondly': 'secondly', 'firstly': 'firstly'}")
+        let valueMatches =
+            (value == "{'firstly': 'firstly', 'secondly': 'secondly'}")
+            || (value == "{'secondly': 'secondly', 'firstly': 'firstly'}")
 
         #expect(valueMatches)
         #expect(pathMap["\"RowVersion\""] == .update(path: "\"RowVersion\"", value: "2"))
@@ -380,38 +544,59 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     func listFieldAddition() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
         let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: nil)
-        let payloadB = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "eigthly", "ninthly", "tenthly"])
+        let payloadB = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "eigthly", "ninthly", "tenthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
-        #expect(pathMap["\"theList\""] == .update(path: "\"theList\"", value: "['thirdly', 'eigthly', 'ninthly', 'tenthly']"))
+        #expect(
+            pathMap["\"theList\""]
+                == .update(path: "\"theList\"", value: "['thirdly', 'eigthly', 'ninthly', 'tenthly']")
+        )
         #expect(pathMap["\"RowVersion\""] == .update(path: "\"RowVersion\"", value: "2"))
     }
 
     @Test
     func stringFieldRemoval() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
         let payloadB = TestTypeC(theString: nil, theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theString\""] == .remove(path: "\"theString\""))
@@ -421,18 +606,32 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     @Test
     func numberFieldRemoval() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
-        let payloadB = TestTypeC(theString: "firstly", theNumber: nil, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
+        let payloadB = TestTypeC(
+            theString: "firstly",
+            theNumber: nil,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theNumber\""] == .remove(path: "\"theNumber\""))
@@ -442,18 +641,27 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     @Test
     func structFieldRemoval() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
         let payloadB = TestTypeC(theString: "firstly", theNumber: 4, theStruct: nil, theList: ["thirdly", "fourthly"])
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theStruct\""] == .remove(path: "\"theStruct\""))
@@ -463,18 +671,27 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     @Test
     func listFieldRemoval() throws {
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
         let payloadB = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: nil)
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = databaseItemA.createUpdatedItem(withValue: payloadB)
 
         let table = try getTable()
 
-        let differences = try table.diffItems(newItem: databaseItemB,
-                                              existingItem: databaseItemA)
+        let differences = try table.diffItems(
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
         let pathMap = differences.pathMap
 
         #expect(pathMap["\"theList\""] == .remove(path: "\"theList\""))
@@ -485,52 +702,82 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
     func listFieldDifferenceExpression() throws {
         let tableName = "TableName"
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
-        let payloadB = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "eigthly", "ninthly", "tenthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
+        let payloadB = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "eigthly", "ninthly", "tenthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
         let table = try getTable()
 
-        let expression = try table.getUpdateExpression(tableName: tableName,
-                                                       newItem: databaseItemB,
-                                                       existingItem: databaseItemA)
-        #expect(expression == "UPDATE \"TableName\" "
-            + "SET \"theList\"[1]='eigthly' "
-            + "SET \"theList\"[2]='ninthly' "
-            + "SET \"theList\"[3]='tenthly' "
-            + "WHERE PK='partitionKey' AND SK='sortKey' "
-            + "AND RowVersion=1")
+        let expression = try table.getUpdateExpression(
+            tableName: tableName,
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
+        #expect(
+            expression == "UPDATE \"TableName\" "
+                + "SET \"theList\"[1]='eigthly' "
+                + "SET \"theList\"[2]='ninthly' "
+                + "SET \"theList\"[3]='tenthly' "
+                + "WHERE PK='partitionKey' AND SK='sortKey' "
+                + "AND RowVersion=1"
+        )
     }
 
     @Test
     func listFieldDifferenceExpressionWithEscapedQuotes() throws {
         let tableName = "TableName"
         let theStruct = TestTypeA(firstly: "f'irstly", secondly: "s'econdly")
-        let payloadA = TestTypeC(theString: "fi''rstly", theNumber: 4, theStruct: theStruct,
-                                 theList: ["thirdl'y", "fourt''hly"])
-        let payloadB = TestTypeC(theString: "fi''rstly", theNumber: 4, theStruct: theStruct,
-                                 theList: ["thirdl'y", "eigth''ly", "n'inthly", "tenth'''ly"])
+        let payloadA = TestTypeC(
+            theString: "fi''rstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdl'y", "fourt''hly"]
+        )
+        let payloadB = TestTypeC(
+            theString: "fi''rstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdl'y", "eigth''ly", "n'inthly", "tenth'''ly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "pa'rtition''Key",
-                                                       sortKey: "so'rt''Key")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "pa'rtition''Key",
+            sortKey: "so'rt''Key"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
         let table = try getTable(escapeSingleQuoteInPartiQL: true)
 
-        let expression = try table.getUpdateExpression(tableName: tableName,
-                                                       newItem: databaseItemB,
-                                                       existingItem: databaseItemA)
-        #expect(expression == "UPDATE \"TableName\" "
-            + "SET \"theList\"[1]='eigth''''ly' "
-            + "SET \"theList\"[2]='n''inthly' "
-            + "SET \"theList\"[3]='tenth''''''ly' "
-            + "WHERE PK='pa''rtition''''Key' AND SK='so''rt''''Key' "
-            + "AND RowVersion=1")
+        let expression = try table.getUpdateExpression(
+            tableName: tableName,
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
+        #expect(
+            expression == "UPDATE \"TableName\" "
+                + "SET \"theList\"[1]='eigth''''ly' "
+                + "SET \"theList\"[2]='n''inthly' "
+                + "SET \"theList\"[3]='tenth''''''ly' "
+                + "WHERE PK='pa''rtition''''Key' AND SK='so''rt''''Key' "
+                + "AND RowVersion=1"
+        )
     }
 
     @Test
@@ -538,102 +785,157 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
         let tableName = "TableName"
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
         let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: nil)
-        let payloadB = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "eigthly", "ninthly", "tenthly"])
+        let payloadB = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "eigthly", "ninthly", "tenthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
         let table = try getTable()
 
-        let expression = try table.getUpdateExpression(tableName: tableName,
-                                                       newItem: databaseItemB,
-                                                       existingItem: databaseItemA)
-        #expect(expression == "UPDATE \"TableName\" "
-            + "SET \"theList\"=['thirdly', 'eigthly', 'ninthly', 'tenthly'] "
-            + "WHERE PK='partitionKey' AND SK='sortKey' "
-            + "AND RowVersion=1")
+        let expression = try table.getUpdateExpression(
+            tableName: tableName,
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
+        #expect(
+            expression == "UPDATE \"TableName\" "
+                + "SET \"theList\"=['thirdly', 'eigthly', 'ninthly', 'tenthly'] "
+                + "WHERE PK='partitionKey' AND SK='sortKey' "
+                + "AND RowVersion=1"
+        )
     }
 
     @Test
     func listFieldRemovalExpression() throws {
         let tableName = "TableName"
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
         let payloadB = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: nil)
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
         let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
 
         let table = try getTable()
 
-        let expression = try table.getUpdateExpression(tableName: tableName,
-                                                       newItem: databaseItemB,
-                                                       existingItem: databaseItemA)
-        #expect(expression == "UPDATE \"TableName\" "
-            + "REMOVE \"theList\" "
-            + "WHERE PK='partitionKey' AND SK='sortKey' "
-            + "AND RowVersion=1")
+        let expression = try table.getUpdateExpression(
+            tableName: tableName,
+            newItem: databaseItemB,
+            existingItem: databaseItemA
+        )
+        #expect(
+            expression == "UPDATE \"TableName\" "
+                + "REMOVE \"theList\" "
+                + "WHERE PK='partitionKey' AND SK='sortKey' "
+                + "AND RowVersion=1"
+        )
     }
 
     @Test
     func deleteItemExpression() throws {
         let tableName = "TableName"
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
 
         let table = try getTable()
 
-        let expression = try table.getDeleteExpression(tableName: tableName,
-                                                       existingItem: databaseItemA)
-        #expect(expression == "DELETE FROM \"TableName\" "
-            + "WHERE PK='partitionKey' AND SK='sortKey' "
-            + "AND RowVersion=1")
+        let expression = try table.getDeleteExpression(
+            tableName: tableName,
+            existingItem: databaseItemA
+        )
+        #expect(
+            expression == "DELETE FROM \"TableName\" "
+                + "WHERE PK='partitionKey' AND SK='sortKey' "
+                + "AND RowVersion=1"
+        )
     }
 
     @Test
     func deleteItemExpressionWithEscapedQuotes() throws {
         let tableName = "TableName"
         let theStruct = TestTypeA(firstly: "fir'stly", secondly: "secondl'y")
-        let payloadA = TestTypeC(theString: "f'irstly", theNumber: 4, theStruct: theStruct, theList: ["third''ly", "fou'''rthly"])
+        let payloadA = TestTypeC(
+            theString: "f'irstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["third''ly", "fou'''rthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "p'artitionKe''y",
-                                                       sortKey: "sort'''Key")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "p'artitionKe''y",
+            sortKey: "sort'''Key"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
 
         let table = try getTable(escapeSingleQuoteInPartiQL: true)
 
-        let expression = try table.getDeleteExpression(tableName: tableName,
-                                                       existingItem: databaseItemA)
-        #expect(expression == "DELETE FROM \"TableName\" "
-            + "WHERE PK='p''artitionKe''''y' AND SK='sort''''''Key' "
-            + "AND RowVersion=1")
+        let expression = try table.getDeleteExpression(
+            tableName: tableName,
+            existingItem: databaseItemA
+        )
+        #expect(
+            expression == "DELETE FROM \"TableName\" "
+                + "WHERE PK='p''artitionKe''''y' AND SK='sort''''''Key' "
+                + "AND RowVersion=1"
+        )
     }
 
     @Test
     func deleteKeyExpression() throws {
         let tableName = "TableName"
         let theStruct = TestTypeA(firstly: "firstly", secondly: "secondly")
-        let payloadA = TestTypeC(theString: "firstly", theNumber: 4, theStruct: theStruct, theList: ["thirdly", "fourthly"])
+        let payloadA = TestTypeC(
+            theString: "firstly",
+            theNumber: 4,
+            theStruct: theStruct,
+            theList: ["thirdly", "fourthly"]
+        )
 
-        let compositeKey = StandardCompositePrimaryKey(partitionKey: "partitionKey",
-                                                       sortKey: "sortKey")
+        let compositeKey = StandardCompositePrimaryKey(
+            partitionKey: "partitionKey",
+            sortKey: "sortKey"
+        )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
 
         let table = try getTable()
 
-        let expression = try table.getDeleteExpression(tableName: tableName,
-                                                       existingItem: databaseItemA)
-        #expect(expression == "DELETE FROM \"TableName\" "
-            + "WHERE PK='partitionKey' AND SK='sortKey' "
-            + "AND RowVersion=1")
+        let expression = try table.getDeleteExpression(
+            tableName: tableName,
+            existingItem: databaseItemA
+        )
+        #expect(
+            expression == "DELETE FROM \"TableName\" "
+                + "WHERE PK='partitionKey' AND SK='sortKey' "
+                + "AND RowVersion=1"
+        )
     }
 }
 

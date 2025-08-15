@@ -29,9 +29,7 @@ import Foundation
 /// Type alias for a retry interval.
 public typealias RetryInterval = UInt32
 
-/**
- Retry configuration for the requests made by a table..
- */
+/// Retry configuration for the requests made by a table..
 public struct RetryConfiguration: Sendable {
     // Number of retries to be attempted
     public let numRetries: Int
@@ -46,7 +44,7 @@ public struct RetryConfiguration: Sendable {
 
     /**
      Initializer.
-
+    
      - Parameters:
          - numRetries: number of retries to be attempted.
          - baseRetryInterval: first interval of retry in millis.
@@ -54,9 +52,13 @@ public struct RetryConfiguration: Sendable {
          - exponentialBackoff: exponential backoff for each retry
          - jitter: ramdomized backoff
      */
-    public init(numRetries: Int, baseRetryInterval: RetryInterval, maxRetryInterval: RetryInterval,
-                exponentialBackoff: Double, jitter: Bool = true)
-    {
+    public init(
+        numRetries: Int,
+        baseRetryInterval: RetryInterval,
+        maxRetryInterval: RetryInterval,
+        exponentialBackoff: Double,
+        jitter: Bool = true
+    ) {
         self.numRetries = numRetries
         self.baseRetryInterval = baseRetryInterval
         self.maxRetryInterval = maxRetryInterval
@@ -65,12 +67,14 @@ public struct RetryConfiguration: Sendable {
     }
 
     public func getRetryInterval(retriesRemaining: Int) -> RetryInterval {
-        let msInterval = RetryInterval(Double(baseRetryInterval) * pow(self.exponentialBackoff, Double(self.numRetries - retriesRemaining)))
+        let msInterval = RetryInterval(
+            Double(baseRetryInterval) * pow(self.exponentialBackoff, Double(self.numRetries - retriesRemaining))
+        )
         let boundedMsInterval = min(maxRetryInterval, msInterval)
 
         if self.jitter {
             if boundedMsInterval > 0 {
-                return RetryInterval.random(in: 0 ..< boundedMsInterval)
+                return RetryInterval.random(in: 0..<boundedMsInterval)
             } else {
                 return 0
             }
@@ -80,10 +84,18 @@ public struct RetryConfiguration: Sendable {
     }
 
     /// Default try configuration with 5 retries starting at 500 ms interval.
-    public static let `default` = RetryConfiguration(numRetries: 5, baseRetryInterval: 500,
-                                                     maxRetryInterval: 10000, exponentialBackoff: 2)
+    public static let `default` = RetryConfiguration(
+        numRetries: 5,
+        baseRetryInterval: 500,
+        maxRetryInterval: 10000,
+        exponentialBackoff: 2
+    )
 
     /// Retry Configuration with no retries.
-    public static let noRetries = RetryConfiguration(numRetries: 0, baseRetryInterval: 0,
-                                                     maxRetryInterval: 0, exponentialBackoff: 0)
+    public static let noRetries = RetryConfiguration(
+        numRetries: 0,
+        baseRetryInterval: 0,
+        maxRetryInterval: 0,
+        exponentialBackoff: 0
+    )
 }

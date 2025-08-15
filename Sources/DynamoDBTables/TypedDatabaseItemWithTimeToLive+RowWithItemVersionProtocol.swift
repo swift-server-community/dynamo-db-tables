@@ -28,22 +28,26 @@ import Foundation
 
 /// An extension for TypedTTLDatabaseItem that is constrained by the RowType conforming
 /// to RowWithItemVersionProtocol
-public extension TypedTTLDatabaseItem where RowType: RowWithItemVersionProtocol {
+extension TypedTTLDatabaseItem where RowType: RowWithItemVersionProtocol {
     /// Helper function wrapping createUpdatedItem that will verify if
     /// conditionalStatusVersion is provided that it matches the version
     /// of the current item
-    func createUpdatedRowWithItemVersion(withValue value: RowType.RowType,
-                                         conditionalStatusVersion: Int?,
-                                         andTimeToLive timeToLive: TimeToLive<TimeToLiveAttributesType>? = nil) throws
+    public func createUpdatedRowWithItemVersion(
+        withValue value: RowType.RowType,
+        conditionalStatusVersion: Int?,
+        andTimeToLive timeToLive: TimeToLive<TimeToLiveAttributesType>? = nil
+    ) throws
         -> TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>
     {
         // if we can only update a particular version
         if let overwriteVersion = conditionalStatusVersion,
-           rowValue.itemVersion != overwriteVersion
+            rowValue.itemVersion != overwriteVersion
         {
-            throw DynamoDBTableError.concurrencyError(partitionKey: compositePrimaryKey.partitionKey,
-                                                      sortKey: compositePrimaryKey.sortKey,
-                                                      message: "Current row did not have the required version '\(overwriteVersion)'")
+            throw DynamoDBTableError.concurrencyError(
+                partitionKey: compositePrimaryKey.partitionKey,
+                sortKey: compositePrimaryKey.sortKey,
+                message: "Current row did not have the required version '\(overwriteVersion)'"
+            )
         }
 
         let updatedPayloadWithVersion: RowType = rowValue.createUpdatedItem(withValue: value)

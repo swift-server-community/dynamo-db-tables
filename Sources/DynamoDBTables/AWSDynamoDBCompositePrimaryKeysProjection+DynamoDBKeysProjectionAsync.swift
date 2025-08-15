@@ -29,29 +29,36 @@ import Foundation
 import Logging
 
 /// DynamoDBKeysProjection conformance async functions
-public extension AWSDynamoDBCompositePrimaryKeysProjection {
-    func query<AttributesType>(forPartitionKey partitionKey: String,
-                               sortKeyCondition: AttributeCondition?) async throws
+extension AWSDynamoDBCompositePrimaryKeysProjection {
+    public func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?
+    ) async throws
         -> [CompositePrimaryKey<AttributesType>]
     {
-        try await self.partialQuery(forPartitionKey: partitionKey,
-                                    sortKeyCondition: sortKeyCondition,
-                                    exclusiveStartKey: nil)
+        try await self.partialQuery(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition,
+            exclusiveStartKey: nil
+        )
     }
 
     // function to return a future with the results of a query call and all future paginated calls
     private func partialQuery<AttributesType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?,
-        exclusiveStartKey: String?) async throws
+        exclusiveStartKey: String?
+    ) async throws
         -> [CompositePrimaryKey<AttributesType>]
     {
         let paginatedItems: ([CompositePrimaryKey<AttributesType>], String?) =
-            try await query(forPartitionKey: partitionKey,
-                            sortKeyCondition: sortKeyCondition,
-                            limit: nil,
-                            scanIndexForward: true,
-                            exclusiveStartKey: exclusiveStartKey)
+            try await query(
+                forPartitionKey: partitionKey,
+                sortKeyCondition: sortKeyCondition,
+                limit: nil,
+                scanIndexForward: true,
+                exclusiveStartKey: exclusiveStartKey
+            )
 
         // if there are more items
         if let lastEvaluatedKey = paginatedItems.1 {
@@ -59,7 +66,8 @@ public extension AWSDynamoDBCompositePrimaryKeysProjection {
             let partialResult: [CompositePrimaryKey<AttributesType>] = try await self.partialQuery(
                 forPartitionKey: partitionKey,
                 sortKeyCondition: sortKeyCondition,
-                exclusiveStartKey: lastEvaluatedKey)
+                exclusiveStartKey: lastEvaluatedKey
+            )
 
             // return the results from 'this' call and all later paginated calls
             return paginatedItems.0 + partialResult
@@ -69,34 +77,46 @@ public extension AWSDynamoDBCompositePrimaryKeysProjection {
         }
     }
 
-    func query<AttributesType>(forPartitionKey partitionKey: String,
-                               sortKeyCondition: AttributeCondition?,
-                               limit: Int?,
-                               exclusiveStartKey: String?) async throws
+    public func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        exclusiveStartKey: String?
+    ) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
     {
-        try await self.query(forPartitionKey: partitionKey,
-                             sortKeyCondition: sortKeyCondition,
-                             limit: limit,
-                             scanIndexForward: true,
-                             exclusiveStartKey: exclusiveStartKey)
+        try await self.query(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition,
+            limit: limit,
+            scanIndexForward: true,
+            exclusiveStartKey: exclusiveStartKey
+        )
     }
 
-    func query<AttributesType>(forPartitionKey partitionKey: String,
-                               sortKeyCondition: AttributeCondition?,
-                               limit: Int?,
-                               scanIndexForward: Bool,
-                               exclusiveStartKey: String?) async throws
+    public func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        scanIndexForward: Bool,
+        exclusiveStartKey: String?
+    ) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
     {
-        let queryInput = try AWSDynamoDB.QueryInput.forSortKeyCondition(partitionKey: partitionKey, targetTableName: targetTableName,
-                                                                        primaryKeyType: AttributesType.self,
-                                                                        sortKeyCondition: sortKeyCondition, limit: limit,
-                                                                        scanIndexForward: scanIndexForward, exclusiveStartKey: exclusiveStartKey,
-                                                                        consistentRead: self.tableConfiguration.consistentRead)
+        let queryInput = try AWSDynamoDB.QueryInput.forSortKeyCondition(
+            partitionKey: partitionKey,
+            targetTableName: targetTableName,
+            primaryKeyType: AttributesType.self,
+            sortKeyCondition: sortKeyCondition,
+            limit: limit,
+            scanIndexForward: scanIndexForward,
+            exclusiveStartKey: exclusiveStartKey,
+            consistentRead: self.tableConfiguration.consistentRead
+        )
 
-        let logMessage = "dynamodb.query with partitionKey: \(partitionKey), " +
-            "sortKeyCondition: \(sortKeyCondition.debugDescription), and table name \(targetTableName)."
+        let logMessage =
+            "dynamodb.query with partitionKey: \(partitionKey), "
+            + "sortKeyCondition: \(sortKeyCondition.debugDescription), and table name \(targetTableName)."
         self.logger.trace("\(logMessage)")
 
         let queryOutput = try await self.dynamodb.query(input: queryInput)

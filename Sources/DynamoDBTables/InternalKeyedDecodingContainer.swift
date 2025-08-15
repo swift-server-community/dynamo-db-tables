@@ -106,7 +106,10 @@ struct InternalKeyedDecodingContainer<K: CodingKey>: KeyedDecodingContainerProto
         try self.createNestedContainer(for: key).decode(type)
     }
 
-    func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: K) throws
+    func nestedContainer<NestedKey>(
+        keyedBy type: NestedKey.Type,
+        forKey key: K
+    ) throws
         -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey
     {
         try self.createNestedContainer(for: key).container(keyedBy: type)
@@ -161,17 +164,21 @@ struct InternalKeyedDecodingContainer<K: CodingKey>: KeyedDecodingContainerProto
             throw DecodingError.keyNotFound(key, context)
         }
 
-        return InternalSingleValueDecodingContainer(attributeValue: value, codingPath: self.decodingContainer.codingPath + [key],
-                                                    userInfo: self.decodingContainer.userInfo,
-                                                    attributeNameTransform: self.decodingContainer.attributeNameTransform)
+        return InternalSingleValueDecodingContainer(
+            attributeValue: value,
+            codingPath: self.decodingContainer.codingPath + [key],
+            userInfo: self.decodingContainer.userInfo,
+            attributeNameTransform: self.decodingContainer.attributeNameTransform
+        )
     }
 
     private func getAttributeName(key: CodingKey) -> String {
-        let attributeName: String = if let attributeNameTransform = decodingContainer.attributeNameTransform {
-            attributeNameTransform(key.stringValue)
-        } else {
-            key.stringValue
-        }
+        let attributeName: String =
+            if let attributeNameTransform = decodingContainer.attributeNameTransform {
+                attributeNameTransform(key.stringValue)
+            } else {
+                key.stringValue
+            }
 
         return attributeName
     }

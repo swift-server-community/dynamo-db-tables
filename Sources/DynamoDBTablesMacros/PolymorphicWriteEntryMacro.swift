@@ -34,12 +34,14 @@ public enum PolymorphicWriteEntryMacro: ExtensionMacro {
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
         conformingTo protocols: [TypeSyntax],
-        in context: some MacroExpansionContext) throws -> [ExtensionDeclSyntax]
-    {
-        try BaseEntryMacro<PolymorphicWriteEntryMacroAttributes>.expansion(of: node,
-                                                                           attachedTo: declaration,
-                                                                           providingExtensionsOf: type,
-                                                                           conformingTo: protocols,
-                                                                           in: context)
+        in context: some MacroExpansionContext
+    ) throws -> [ExtensionDeclSyntax] {
+        try BaseEntryMacro<PolymorphicWriteEntryMacroAttributes>.expansion(
+            of: node,
+            attachedTo: declaration,
+            providingExtensionsOf: type,
+            conformingTo: protocols,
+            in: context
+        )
     }
 }
