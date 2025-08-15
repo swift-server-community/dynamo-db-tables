@@ -36,11 +36,11 @@ enum AttributeDifference: Equatable {
     var path: String {
         switch self {
         case .update(path: let path, value: _):
-            return path
+            path
         case let .remove(path: path):
-            return path
+            path
         case .listAppend(path: let path, value: _):
-            return path
+            path
         }
     }
 }
@@ -241,17 +241,17 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
 
     private func combinePath(basePath: String?, newComponent: String) -> String {
         if let basePath {
-            return "\(basePath).\"\(newComponent)\""
+            "\(basePath).\"\(newComponent)\""
         } else {
-            return "\"\(newComponent)\""
+            "\"\(newComponent)\""
         }
     }
 
     private func updateAttribute(newPath: String, attribute: DynamoDBClientTypes.AttributeValue) throws -> [AttributeDifference] {
         if let newValue = try getFlattenedAttribute(attribute: attribute) {
-            return [.update(path: newPath, value: newValue)]
+            [.update(path: newPath, value: newValue)]
         } else {
-            return [.remove(path: newPath)]
+            [.remove(path: newPath)]
         }
     }
 
@@ -310,9 +310,9 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
     /// single quote by doubling it. E.g. 'foo'bar' becomes 'foo''bar'.
     private func sanitizeString(_ string: String) -> String {
         if self.tableConfiguration.escapeSingleQuoteInPartiQL {
-            return string.replacingOccurrences(of: "'", with: "''")
+            string.replacingOccurrences(of: "'", with: "''")
         } else {
-            return string
+            string
         }
     }
 }

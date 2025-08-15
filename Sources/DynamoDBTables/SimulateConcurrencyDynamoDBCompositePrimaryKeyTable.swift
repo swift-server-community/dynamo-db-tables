@@ -34,8 +34,8 @@ private let maxStatementLength = 8192
  to a database by incrementing a row's version every time it is added for
  a specified number of requests.
  */
-public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable {
-    let wrappedDynamoDBTable: DynamoDBCompositePrimaryKeyTable
+public actor SimulateConcurrencyDynamoDBCompositePrimaryKeyTable<Wrapped: DynamoDBCompositePrimaryKeyTable & Sendable>: DynamoDBCompositePrimaryKeyTable, Sendable {
+    let wrappedDynamoDBTable: Wrapped
     let simulateConcurrencyModifications: Int
     var previousConcurrencyModifications: Int
     let simulateOnInsertItem: Bool
@@ -50,7 +50,7 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         - simulateOnInsertItem: if this instance should simulate concurrency on insertItem.
         - simulateOnUpdateItem: if this instance should simulate concurrency on updateItem.
      */
-    public init(wrappedDynamoDBTable: DynamoDBCompositePrimaryKeyTable, simulateConcurrencyModifications: Int,
+    public init(wrappedDynamoDBTable: Wrapped, simulateConcurrencyModifications: Int,
                 simulateOnInsertItem: Bool = true, simulateOnUpdateItem: Bool = true)
     {
         self.wrappedDynamoDBTable = wrappedDynamoDBTable
@@ -138,13 +138,13 @@ public class SimulateConcurrencyDynamoDBCompositePrimaryKeyTable: DynamoDBCompos
         try await entries.asyncForEach { entry in
             switch entry {
             case let .update(new: new, existing: existing):
-                return try await self.updateItem(newItem: new, existingItem: existing)
+                try await self.updateItem(newItem: new, existingItem: existing)
             case let .insert(new: new):
-                return try await self.insertItem(new)
+                try await self.insertItem(new)
             case let .deleteAtKey(key: key):
-                return try await self.deleteItem(forKey: key)
+                try await self.deleteItem(forKey: key)
             case let .deleteItem(existing: existing):
-                return try await self.deleteItem(existingItem: existing)
+                try await self.deleteItem(existingItem: existing)
             }
         }
     }

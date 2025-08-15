@@ -148,11 +148,10 @@ class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
     }
 
     private func getAttributeName(key: CodingKey) -> String {
-        let attributeName: String
-        if let attributeNameTransform {
-            attributeName = attributeNameTransform(key.stringValue)
+        let attributeName: String = if let attributeNameTransform {
+            attributeNameTransform(key.stringValue)
         } else {
-            attributeName = key.stringValue
+            key.stringValue
         }
 
         return attributeName

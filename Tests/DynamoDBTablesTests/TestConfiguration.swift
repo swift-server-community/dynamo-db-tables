@@ -63,9 +63,9 @@ extension TestQueryableTypes: BatchCapableReturnType {
     func getItemKey() -> CompositePrimaryKey<StandardPrimaryKeyAttributes> {
         switch self {
         case let .testTypeA(databaseItem):
-            return databaseItem.compositePrimaryKey
+            databaseItem.compositePrimaryKey
         case let .testTypeB(databaseItem):
-            return databaseItem.compositePrimaryKey
+            databaseItem.compositePrimaryKey
         }
     }
 }

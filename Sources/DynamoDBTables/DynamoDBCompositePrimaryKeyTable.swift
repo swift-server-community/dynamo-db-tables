@@ -82,7 +82,7 @@ public enum AttributeCondition: Sendable {
     case beginsWith(String)
 }
 
-public enum WriteEntry<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes> {
+public enum WriteEntry<AttributesType: PrimaryKeyAttributes, ItemType: Codable & Sendable, TimeToLiveAttributesType: TimeToLiveAttributes>: Sendable {
     case update(new: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
                 existing: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
     case insert(new: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
@@ -92,13 +92,13 @@ public enum WriteEntry<AttributesType: PrimaryKeyAttributes, ItemType: Codable, 
     public var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
         switch self {
         case .update(new: let new, existing: _):
-            return new.compositePrimaryKey
+            new.compositePrimaryKey
         case let .insert(new: new):
-            return new.compositePrimaryKey
+            new.compositePrimaryKey
         case let .deleteAtKey(key: key):
-            return key
+            key
         case let .deleteItem(existing: existing):
-            return existing.compositePrimaryKey
+            existing.compositePrimaryKey
         }
     }
 }

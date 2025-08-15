@@ -1311,6 +1311,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
 
         try await table.insertItem(databaseItem1)
 
+        @Sendable
         func writeEntryProvider(key: StandardCompositePrimaryKey, existingItem: StandardTypedDatabaseItem<TestTypeA>?) throws
             -> StandardWriteEntry<TestTypeA>?
         {
@@ -1360,6 +1361,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
 
         try await table.insertItem(databaseItem1)
 
+        @Sendable
         func writeEntryProvider(key: StandardCompositePrimaryKey, existingItem: TestQueryableTypes?) throws
             -> TestPolymorphicWriteEntry?
         {

@@ -40,18 +40,16 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
     {
         let attributesFilterString = attributesFilter?.joined(separator: ", ") ?? "*"
 
-        let partitionWhereClause: String
-        if partitionKeys.count == 1 {
-            partitionWhereClause = "\(partitionKeyAttributeName)='\(partitionKeys[0])'"
+        let partitionWhereClause = if partitionKeys.count == 1 {
+            "\(partitionKeyAttributeName)='\(partitionKeys[0])'"
         } else {
-            partitionWhereClause = "\(partitionKeyAttributeName) IN ['\(partitionKeys.joined(separator: "', '"))']"
+            "\(partitionKeyAttributeName) IN ['\(partitionKeys.joined(separator: "', '"))']"
         }
 
-        let whereClausePostfix: String
-        if let additionalWhereClause {
-            whereClausePostfix = " \(additionalWhereClause)"
+        let whereClausePostfix = if let additionalWhereClause {
+            " \(additionalWhereClause)"
         } else {
-            whereClausePostfix = ""
+            ""
         }
 
         return """
@@ -125,7 +123,7 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
                                                      nextToken: nil)
         }
 
-        return itemLists.flatMap { $0 }
+        return itemLists.flatMap(\.self)
     }
 
     func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
@@ -193,7 +191,7 @@ public extension GenericAWSDynamoDBCompositePrimaryKeyTable {
                                           nextToken: nil)
         }
 
-        return itemLists.flatMap { $0 }
+        return itemLists.flatMap(\.self)
     }
 
     // function to return a future with the results of an execute call and all future paginated calls
@@ -320,7 +318,7 @@ extension [DynamoDBTableError] {
 
         // iterate through all errors
         return self.compactMap { error in
-            return switch error {
+            switch error {
             case .accessDenied:
                 canPassThrough(state: &seenAccessDenied) ? error : nil
             case .internalServerError:

@@ -56,7 +56,7 @@ struct SimulateConcurrencyDynamoDBCompositePrimaryKeyTableTests {
         }
     }
 
-    private func verifyWithUpdate(table: SimulateConcurrencyDynamoDBCompositePrimaryKeyTable,
+    private func verifyWithUpdate(table: SimulateConcurrencyDynamoDBCompositePrimaryKeyTable<InMemoryDynamoDBCompositePrimaryKeyTable>,
                                   databaseItem: StandardTypedDatabaseItem<TestTypeA>,
                                   key: StandardCompositePrimaryKey,
                                   expectedFailureCount: Int) async throws

@@ -25,14 +25,14 @@
 //
 
 import AwsCommonRuntimeKit
-import AWSDynamoDB
+@preconcurrency import AWSDynamoDB
 import ClientRuntime
 import Foundation
 import Logging
 import Metrics
 import SmithyIdentity
 
-public struct AWSDynamoDBTableMetrics {
+public struct AWSDynamoDBTableMetrics: Sendable {
     // metric to record if the `TransactWrite` API is retried
     let transactWriteRetryCountRecorder: Metrics.Recorder?
 
@@ -41,7 +41,7 @@ public struct AWSDynamoDBTableMetrics {
     }
 }
 
-public struct AWSDynamoDBTableConfiguration {
+public struct AWSDynamoDBTableConfiguration: Sendable {
     public let consistentRead: Bool
     public let escapeSingleQuoteInPartiQL: Bool
     public let retry: RetryConfiguration
@@ -80,7 +80,7 @@ public struct AWSDynamoDBTableConfiguration {
 /// ```
 public typealias AWSDynamoDBCompositePrimaryKeyTable = GenericAWSDynamoDBCompositePrimaryKeyTable<AWSDynamoDB.DynamoDBClient>
 
-public struct GenericAWSDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientProtocol>: DynamoDBCompositePrimaryKeyTable {
+public struct GenericAWSDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientProtocol & Sendable>: DynamoDBCompositePrimaryKeyTable, Sendable {
     let dynamodb: Client
     let targetTableName: String
     public let tableConfiguration: AWSDynamoDBTableConfiguration

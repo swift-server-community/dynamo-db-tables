@@ -77,7 +77,7 @@ struct InMemoryPolymorphicTransactionConstraintTransform: PolymorphicTransaction
     let sortKey: String
     let rowVersion: Int
 
-    init(_ entry: TransactionConstraintEntry<some PrimaryKeyAttributes, some Codable, some TimeToLiveAttributes>,
+    init(_ entry: TransactionConstraintEntry<some PrimaryKeyAttributes, some Codable & Sendable, some TimeToLiveAttributes>,
          table _: TableType) throws
     {
         switch entry {
@@ -286,11 +286,9 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
         -> DynamoDBTableError?
     {
         let errors = constraints.compactMap { entry -> DynamoDBTableError? in
-            let existingItem: InMemoryDatabaseItemWithKey<AttributesType>
-
-            switch entry {
+            let existingItem: InMemoryDatabaseItemWithKey<AttributesType> = switch entry {
             case let .required(existing: existing):
-                existingItem = existing
+                existing
             }
 
             let compositePrimaryKey = existingItem.compositePrimaryKey

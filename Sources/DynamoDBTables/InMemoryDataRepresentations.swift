@@ -147,20 +147,20 @@ enum InMemoryWriteEntry<AttributesType: PrimaryKeyAttributes>: Sendable {
     var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
         switch self {
         case .update(new: let new, existing: _):
-            return new.compositePrimaryKey
+            new.compositePrimaryKey
         case let .insert(new: new):
-            return new.compositePrimaryKey
+            new.compositePrimaryKey
         case let .deleteAtKey(key: key):
-            return key
+            key
         case let .deleteItem(existing: existing):
-            return existing.compositePrimaryKey
+            existing.compositePrimaryKey
         }
     }
 }
 
 extension WriteEntry {
     func inMemoryForm() throws -> InMemoryWriteEntry<AttributesType> {
-        return switch self {
+        switch self {
         case let .update(new: new, existing: existing):
             try .update(new: new.inMemoryFormWithKey(), existing: existing.inMemoryFormWithKey())
         case let .insert(new: new):
@@ -179,14 +179,14 @@ enum InMemoryTransactionConstraintEntry<AttributesType: PrimaryKeyAttributes>: S
     var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
         switch self {
         case let .required(existing: existing):
-            return existing.compositePrimaryKey
+            existing.compositePrimaryKey
         }
     }
 }
 
 extension TransactionConstraintEntry {
     func inMemoryForm() throws -> InMemoryTransactionConstraintEntry<AttributesType> {
-        return switch self {
+        switch self {
         case let .required(existing: existing):
             try .required(existing: existing.inMemoryFormWithKey())
         }

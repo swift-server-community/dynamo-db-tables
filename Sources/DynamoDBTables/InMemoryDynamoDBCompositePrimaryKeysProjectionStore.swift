@@ -123,11 +123,10 @@ actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {
         // get all the results
         let rawItems: [CompositePrimaryKey<AttributesType>] = try await query(forPartitionKey: partitionKey,
                                                                               sortKeyCondition: sortKeyCondition)
-        let items: [CompositePrimaryKey<AttributesType>]
-        if !scanIndexForward {
-            items = rawItems.reversed()
+        let items: [CompositePrimaryKey<AttributesType>] = if !scanIndexForward {
+            rawItems.reversed()
         } else {
-            items = rawItems
+            rawItems
         }
 
         let startIndex: Int

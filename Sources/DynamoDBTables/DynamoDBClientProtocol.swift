@@ -49,9 +49,8 @@ import Smockable
 /// as the table implementation may call these methods from multiple concurrent contexts.
 @Smock
 public protocol DynamoDBClientProtocol {
-    
     // MARK: - Single Item Operations
-    
+
     /// Puts an item into a DynamoDB table.
     ///
     /// This operation either creates a new item or replaces an existing item with the same key.
@@ -71,7 +70,7 @@ public protocol DynamoDBClientProtocol {
     /// let response = try await client.putItem(input: putInput)
     /// ```
     func putItem(input: AWSDynamoDB.PutItemInput) async throws -> AWSDynamoDB.PutItemOutput
-    
+
     /// Retrieves an item from a DynamoDB table by its primary key.
     ///
     /// This operation returns the item attributes for the specified key. If the item doesn't exist,
@@ -91,7 +90,7 @@ public protocol DynamoDBClientProtocol {
     /// let response = try await client.getItem(input: getInput)
     /// ```
     func getItem(input: AWSDynamoDB.GetItemInput) async throws -> AWSDynamoDB.GetItemOutput
-    
+
     /// Deletes an item from a DynamoDB table.
     ///
     /// This operation removes an item with the specified key. Conditional expressions can be used
@@ -111,9 +110,9 @@ public protocol DynamoDBClientProtocol {
     /// let response = try await client.deleteItem(input: deleteInput)
     /// ```
     func deleteItem(input: AWSDynamoDB.DeleteItemInput) async throws -> AWSDynamoDB.DeleteItemOutput
-    
+
     // MARK: - Query Operations
-    
+
     /// Queries items from a DynamoDB table using a partition key and optional sort key conditions.
     ///
     /// This operation efficiently retrieves items that share the same partition key value.
@@ -133,9 +132,9 @@ public protocol DynamoDBClientProtocol {
     /// let response = try await client.query(input: queryInput)
     /// ```
     func query(input: AWSDynamoDB.QueryInput) async throws -> AWSDynamoDB.QueryOutput
-    
+
     // MARK: - Batch Operations
-    
+
     /// Retrieves multiple items from one or more DynamoDB tables in a single request.
     ///
     /// This operation allows efficient retrieval of up to 100 items across multiple tables.
@@ -155,7 +154,7 @@ public protocol DynamoDBClientProtocol {
     /// let response = try await client.batchGetItem(input: batchInput)
     /// ```
     func batchGetItem(input: AWSDynamoDB.BatchGetItemInput) async throws -> AWSDynamoDB.BatchGetItemOutput
-    
+
     /// Executes multiple PartiQL statements in a single batch request.
     ///
     /// This operation allows executing up to 25 PartiQL statements (SELECT, INSERT, UPDATE, DELETE)
@@ -175,9 +174,9 @@ public protocol DynamoDBClientProtocol {
     /// let response = try await client.batchExecuteStatement(input: batchInput)
     /// ```
     func batchExecuteStatement(input: AWSDynamoDB.BatchExecuteStatementInput) async throws -> AWSDynamoDB.BatchExecuteStatementOutput
-    
+
     // MARK: - Advanced Operations
-    
+
     /// Executes a single PartiQL statement against a DynamoDB table.
     ///
     /// PartiQL is a SQL-compatible query language for DynamoDB that supports SELECT, INSERT,
@@ -196,7 +195,7 @@ public protocol DynamoDBClientProtocol {
     /// let response = try await client.executeStatement(input: executeInput)
     /// ```
     func executeStatement(input: AWSDynamoDB.ExecuteStatementInput) async throws -> AWSDynamoDB.ExecuteStatementOutput
-    
+
     /// Executes multiple PartiQL statements as a single transaction.
     ///
     /// This operation ensures that all statements either succeed together or fail together,

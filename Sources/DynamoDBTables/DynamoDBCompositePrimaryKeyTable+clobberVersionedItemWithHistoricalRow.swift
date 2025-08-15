@@ -44,7 +44,7 @@ public extension DynamoDBCompositePrimaryKeyTable {
                            version number.
      - completion: completion handler providing an error that was thrown or nil
      */
-    func clobberVersionedItemWithHistoricalRow<AttributesType: PrimaryKeyAttributes, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
+    func clobberVersionedItemWithHistoricalRow<AttributesType: PrimaryKeyAttributes, ItemType: Codable & Sendable, TimeToLiveAttributesType: TimeToLiveAttributes>(
         forPrimaryKey partitionKey: String,
         andHistoricalKey historicalKey: String,
         item: ItemType,

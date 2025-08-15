@@ -43,7 +43,7 @@ public extension DynamoDBCompositePrimaryKeyTable {
          withRetries: the number of times to attempt to retry the update before failing.
          updatedPayloadProvider: the provider that will return updated payloads.
      */
-    func conditionallyUpdateItem<AttributesType, ItemType: Codable, TimeToLiveAttributesType: TimeToLiveAttributes>(
+    func conditionallyUpdateItem<AttributesType, ItemType: Codable & Sendable, TimeToLiveAttributesType: TimeToLiveAttributes>(
         forKey key: CompositePrimaryKey<AttributesType>,
         withRetries retries: Int = 10,
         timeToLiveAttributesType _: TimeToLiveAttributesType.Type = StandardTimeToLiveAttributes.self,

@@ -84,12 +84,11 @@ extension QueryInput {
             expressionAttributeValues = [":pk": DynamoDBClientTypes.AttributeValue.s(partitionKey)]
         }
 
-        let inputExclusiveStartKey: [String: DynamoDBClientTypes.AttributeValue]?
-        if let exclusiveStartKey = exclusiveStartKey?.data(using: .utf8) {
-            inputExclusiveStartKey = try JSONDecoder().decode([String: DynamoDBClientTypes.AttributeValue].self,
-                                                              from: exclusiveStartKey)
+        let inputExclusiveStartKey: [String: DynamoDBClientTypes.AttributeValue]? = if let exclusiveStartKey = exclusiveStartKey?.data(using: .utf8) {
+            try JSONDecoder().decode([String: DynamoDBClientTypes.AttributeValue].self,
+                                     from: exclusiveStartKey)
         } else {
-            inputExclusiveStartKey = nil
+            nil
         }
 
         return AWSDynamoDB.QueryInput(consistentRead: consistentRead,

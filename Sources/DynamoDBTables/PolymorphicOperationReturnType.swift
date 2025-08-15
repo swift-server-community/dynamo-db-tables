@@ -33,7 +33,7 @@ public protocol BatchCapableReturnType {
     func getItemKey() -> CompositePrimaryKey<AttributesType>
 }
 
-public protocol PolymorphicOperationReturnType {
+public protocol PolymorphicOperationReturnType: Sendable {
     associatedtype AttributesType: PrimaryKeyAttributes
     associatedtype TimeToLiveAttributesType: TimeToLiveAttributes
 

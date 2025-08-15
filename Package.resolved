@@ -1,5 +1,5 @@
 {
-  "originHash" : "13b2eb8b8f0d979ce0d4c53cbf8649c671c922ab761e78916e46299bee6ea407",
+  "originHash" : "4d3e06790cea6d7326e933f8433c6f6854f0bd90072b780af74424588538f4e9",
   "pins" : [
     {
       "identity" : "aws-crt-swift",
@@ -17,15 +17,6 @@
       "state" : {
         "revision" : "58ce4f68a2f20c6cd75922e89a25fb5ee1376d0c",
         "version" : "1.5.20"
-      }
-    },
-    {
-      "identity" : "collectionconcurrencykit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/JohnSundell/CollectionConcurrencyKit",
-      "state" : {
-        "revision" : "b4f23e24b5a1bff301efc5e70871083ca029ff95",
-        "version" : "0.2.0"
       }
     },
     {
@@ -69,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tachyonics/smockable",
       "state" : {
-        "revision" : "2ebc2a33ba83f2bf87e784346ad8b70794150379",
-        "version" : "0.3.0"
+        "revision" : "2df8f192eab94fd789d56f57119eb83eec3601fd",
+        "version" : "0.4.0"
       }
     },
     {
@@ -269,15 +260,6 @@
       "state" : {
         "revision" : "890830fff1a577dc83134890c7984020c5f6b43b",
         "version" : "1.6.2"
-      }
-    },
-    {
-      "identity" : "swiftformat",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/nicklockwood/SwiftFormat",
-      "state" : {
-        "revision" : "b83a8f132ff5430f3b6ff7d912baa407caea9e29",
-        "version" : "0.57.2"
       }
     },
     {
