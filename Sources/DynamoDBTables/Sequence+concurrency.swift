@@ -22,9 +22,6 @@
 //  Sequence+concurrency.swift
 //  DynamoDBTables
 //
-//
-//
-//
 
 // MARK: - ForEach
 
@@ -45,87 +42,11 @@ extension Sequence {
             try await operation(element)
         }
     }
-    /*
-     /// Run an async closure for each element within the sequence.
-     ///
-     /// The closure calls will be performed concurrently, but the call
-     /// to this function won't return until all of the closure calls
-     /// have completed.
-     ///
-     /// - parameter priority: Any specific `TaskPriority` to assign to
-     ///   the async tasks that will perform the closure calls. The
-     ///   default is `nil` (meaning that the system picks a priority).
-     /// - parameter operation: The closure to run for each element.
-     func concurrentForEach(
-         withPriority priority: TaskPriority? = nil,
-         _ operation: @Sendable @escaping (Element) async -> Void
-     ) async {
-         await withTaskGroup(of: Void.self) { group in
-             for element in self {
-                 group.addTask(priority: priority) {
-                     await operation(element)
-                 }
-             }
-         }
-     }
-
-     /// Run an async closure for each element within the sequence.
-     ///
-     /// The closure calls will be performed concurrently, but the call
-     /// to this function won't return until all of the closure calls
-     /// have completed. If any of the closure calls throw an error,
-     /// then the first error will be rethrown once all closure calls have
-     /// completed.
-     ///
-     /// - parameter priority: Any specific `TaskPriority` to assign to
-     ///   the async tasks that will perform the closure calls. The
-     ///   default is `nil` (meaning that the system picks a priority).
-     /// - parameter operation: The closure to run for each element.
-     /// - throws: Rethrows any error thrown by the passed closure.
-     func concurrentForEach(
-         withPriority priority: TaskPriority? = nil,
-         _ operation: @Sendable @escaping (Element) async throws -> Void
-     ) async throws {
-         try await withThrowingTaskGroup(of: Void.self) { group in
-             for element in self {
-                 group.addTask(priority: priority) {
-                     try await operation(element)
-                 }
-             }
-
-             // Propagate any errors thrown by the group's tasks:
-             for try await _ in group {}
-         }
-     }*/
 }
 
 // MARK: - Map
 
 extension Sequence where Element: Sendable {
-    /*    /// Transform the sequence into an array of new values using
-     /// an async closure.
-     ///
-     /// The closure calls will be performed in order, by waiting for
-     /// each call to complete before proceeding with the next one. If
-     /// any of the closure calls throw an error, then the iteration
-     /// will be terminated and the error rethrown.
-     ///
-     /// - parameter transform: The transform to run on each element.
-     /// - returns: The transformed values as an array. The order of
-     ///   the transformed values will match the original sequence.
-     /// - throws: Rethrows any error thrown by the passed closure.
-     func asyncMap<T>(
-         _ transform: @Sendable (Element) async throws -> T
-     ) async rethrows -> [T] {
-         var values = [T]()
-
-         for element in self {
-             try await values.append(transform(element))
-         }
-
-         return values
-     }
-     */
     /// Transform the sequence into an array of new values using
     /// an async closure.
     ///
@@ -157,7 +78,7 @@ extension Sequence where Element: Sendable {
             while let next = await group.next() {
                 res[next.offset] = next.value
             }
-            return res as! [T]
+            return res.asNonOptionalCollection()
         }
     }
 
@@ -195,7 +116,7 @@ extension Sequence where Element: Sendable {
             while let next = try await group.next() {
                 res[next.offset] = next.value
             }
-            return res as! [T]
+            return res.asNonOptionalCollection()
         }
     }
 }
@@ -266,7 +187,7 @@ extension Sequence where Element: Sendable {
             while let next = await group.next() {
                 res[next.offset] = next.value
             }
-            return (res as! [T?]).compactMap(\.self)
+            return (res.asNonOptionalCollection()).compactMap(\.self)
         }
     }
 
@@ -306,7 +227,7 @@ extension Sequence where Element: Sendable {
             while let next = try await group.next() {
                 res[next.offset] = next.value
             }
-            return (res as! [T?]).compactMap(\.self)
+            return (res.asNonOptionalCollection()).compactMap(\.self)
         }
     }
 }
@@ -314,33 +235,6 @@ extension Sequence where Element: Sendable {
 // MARK: - FlatMap
 
 extension Sequence where Element: Sendable {
-    /*    /// Transform the sequence into an array of new values using
-     /// an async closure that returns sequences. The returned sequences
-     /// will be flattened into the array returned from this function.
-     ///
-     /// The closure calls will be performed in order, by waiting for
-     /// each call to complete before proceeding with the next one. If
-     /// any of the closure calls throw an error, then the iteration
-     /// will be terminated and the error rethrown.
-     ///
-     /// - parameter transform: The transform to run on each element.
-     /// - returns: The transformed values as an array. The order of
-     ///   the transformed values will match the original sequence,
-     ///   with the results of each closure call appearing in-order
-     ///   within the returned array.
-     /// - throws: Rethrows any error thrown by the passed closure.
-     func asyncFlatMap<T: Sequence>(
-         _ transform: @Sendable (Element) async throws -> T
-     ) async rethrows -> [T.Element] {
-         var values = [T.Element]()
-
-         for element in self {
-             try await values.append(contentsOf: transform(element))
-         }
-
-         return values
-     }
-     */
     /// Transform the sequence into an array of new values using
     /// an async closure that returns sequences. The returned sequences
     /// will be flattened into the array returned from this function.
@@ -375,7 +269,7 @@ extension Sequence where Element: Sendable {
             while let next = await group.next() {
                 res[next.offset] = next.value
             }
-            return (res as! [T]).flatMap(\.self)
+            return (res.asNonOptionalCollection()).flatMap(\.self)
         }
     }
 
@@ -416,7 +310,19 @@ extension Sequence where Element: Sendable {
             while let next = try await group.next() {
                 res[next.offset] = next.value
             }
-            return (res as! [T]).flatMap(\.self)
+            return (res.asNonOptionalCollection()).flatMap(\.self)
+        }
+    }
+}
+
+extension Collection{
+    func asNonOptionalCollection<T>() -> [T] where Element == Optional<T> {
+        return self.map { optional in
+            guard let finalValue = optional else {
+                fatalError("Mapped task did not complete as expected")
+            }
+
+            return finalValue
         }
     }
 }
