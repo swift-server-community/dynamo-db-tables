@@ -1,5 +1,5 @@
 {
-  "originHash" : "4d3e06790cea6d7326e933f8433c6f6854f0bd90072b780af74424588538f4e9",
+  "originHash" : "b8d578da116fe1b590bea4f316292e87acb6948448c0ad902304d8c900337388",
   "pins" : [
     {
       "identity" : "aws-crt-swift",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/awslabs/aws-sdk-swift.git",
       "state" : {
-        "revision" : "58ce4f68a2f20c6cd75922e89a25fb5ee1376d0c",
-        "version" : "1.5.20"
+        "revision" : "5fe79c7ec1c87d4b789af3e37ebc5f3c3256cd67",
+        "version" : "1.5.22"
       }
     },
     {
@@ -35,15 +35,6 @@
       "state" : {
         "revision" : "ef63c346d05f4fa7c9ca883f92631fd139eb2cfe",
         "version" : "1.17.1"
-      }
-    },
-    {
-      "identity" : "opentracing-objc",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/undefinedlabs/opentracing-objc",
-      "state" : {
-        "revision" : "18c1a35ca966236cee0c5a714a51a73ff33384c1",
-        "version" : "0.5.2"
       }
     },
     {
@@ -260,15 +251,6 @@
       "state" : {
         "revision" : "890830fff1a577dc83134890c7984020c5f6b43b",
         "version" : "1.6.2"
-      }
-    },
-    {
-      "identity" : "thrift-swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/undefinedlabs/Thrift-Swift",
-      "state" : {
-        "revision" : "18ff09e6b30e589ed38f90a1af23e193b8ecef8e",
-        "version" : "1.1.2"
       }
     }
   ],
