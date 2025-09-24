@@ -29,10 +29,7 @@ let swiftSettings: [SwiftSetting] = []
 let package = Package(
     name: "dynamo-db-tables",
     platforms: [
-        .macOS(.v12),
-        .iOS(.v13),
-        .tvOS(.v13),
-        .watchOS(.v6),
+        .macOS(.v15), .iOS(.v18), .watchOS(.v11), .tvOS(.v18),
     ],
     products: [
         .library(
@@ -44,8 +41,8 @@ let package = Package(
         .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
-        .package(url: "https://github.com/apple/swift-syntax", from: "601.0.0"),
-        .package(url: "https://github.com/tachyonics/smockable", from: "0.4.0"),
+        .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"603.0.0"),
+        .package(url: "https://github.com/tachyonics/smockable", from: "0.6.0"),
     ],
     targets: [
         .macro(
