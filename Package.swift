@@ -42,7 +42,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"603.0.0"),
-        .package(url: "https://github.com/tachyonics/smockable", from: "0.6.0"),
+        .package(url: "https://github.com/tachyonics/smockable", from: "0.7.0"),
     ],
     targets: [
         .macro(
@@ -68,6 +68,7 @@ let package = Package(
             dependencies: [
                 .target(name: "DynamoDBTables"),
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+                .product(name: "Smockable", package: "smockable"),
             ],
             swiftSettings: swiftSettings
         ),

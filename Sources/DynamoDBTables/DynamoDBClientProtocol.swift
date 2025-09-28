@@ -30,7 +30,7 @@ import Smockable
 ///
 /// ```swift
 /// // Production usage with AWS DynamoDB
-/// let awsClient = AWSDynamoDB.DynamoDBClient(config: config)
+/// let awsClient = DynamoDBClient(config: config)
 /// let table = AWSDynamoDBCompositePrimaryKeyTable(tableName: "MyTable", client: awsClient)
 ///
 /// // Testing usage with a mock implementation
@@ -47,7 +47,18 @@ import Smockable
 ///
 /// Implementations of this protocol should be thread-safe and support concurrent access,
 /// as the table implementation may call these methods from multiple concurrent contexts.
-@Smock
+@Smock(
+    additionalEquatableTypes: [
+        PutItemInput.self,
+        GetItemInput.self,
+        DeleteItemInput.self,
+        QueryInput.self,
+        BatchGetItemInput.self,
+        BatchExecuteStatementInput.self,
+        ExecuteStatementInput.self,
+        ExecuteTransactionInput.self,
+    ]
+)
 public protocol DynamoDBClientProtocol {
     // MARK: - Single Item Operations
 
@@ -69,7 +80,7 @@ public protocol DynamoDBClientProtocol {
     /// )
     /// let response = try await client.putItem(input: putInput)
     /// ```
-    func putItem(input: AWSDynamoDB.PutItemInput) async throws -> AWSDynamoDB.PutItemOutput
+    func putItem(input: PutItemInput) async throws -> PutItemOutput
 
     /// Retrieves an item from a DynamoDB table by its primary key.
     ///
@@ -89,7 +100,7 @@ public protocol DynamoDBClientProtocol {
     /// )
     /// let response = try await client.getItem(input: getInput)
     /// ```
-    func getItem(input: AWSDynamoDB.GetItemInput) async throws -> AWSDynamoDB.GetItemOutput
+    func getItem(input: GetItemInput) async throws -> GetItemOutput
 
     /// Deletes an item from a DynamoDB table.
     ///
@@ -109,7 +120,7 @@ public protocol DynamoDBClientProtocol {
     /// )
     /// let response = try await client.deleteItem(input: deleteInput)
     /// ```
-    func deleteItem(input: AWSDynamoDB.DeleteItemInput) async throws -> AWSDynamoDB.DeleteItemOutput
+    func deleteItem(input: DeleteItemInput) async throws -> DeleteItemOutput
 
     // MARK: - Query Operations
 
@@ -131,7 +142,7 @@ public protocol DynamoDBClientProtocol {
     /// )
     /// let response = try await client.query(input: queryInput)
     /// ```
-    func query(input: AWSDynamoDB.QueryInput) async throws -> AWSDynamoDB.QueryOutput
+    func query(input: QueryInput) async throws -> QueryOutput
 
     // MARK: - Batch Operations
 
@@ -153,7 +164,7 @@ public protocol DynamoDBClientProtocol {
     /// )
     /// let response = try await client.batchGetItem(input: batchInput)
     /// ```
-    func batchGetItem(input: AWSDynamoDB.BatchGetItemInput) async throws -> AWSDynamoDB.BatchGetItemOutput
+    func batchGetItem(input: BatchGetItemInput) async throws -> BatchGetItemOutput
 
     /// Executes multiple PartiQL statements in a single batch request.
     ///
@@ -174,8 +185,8 @@ public protocol DynamoDBClientProtocol {
     /// let response = try await client.batchExecuteStatement(input: batchInput)
     /// ```
     func batchExecuteStatement(
-        input: AWSDynamoDB.BatchExecuteStatementInput
-    ) async throws -> AWSDynamoDB.BatchExecuteStatementOutput
+        input: BatchExecuteStatementInput
+    ) async throws -> BatchExecuteStatementOutput
 
     // MARK: - Advanced Operations
 
@@ -196,7 +207,7 @@ public protocol DynamoDBClientProtocol {
     /// )
     /// let response = try await client.executeStatement(input: executeInput)
     /// ```
-    func executeStatement(input: AWSDynamoDB.ExecuteStatementInput) async throws -> AWSDynamoDB.ExecuteStatementOutput
+    func executeStatement(input: ExecuteStatementInput) async throws -> ExecuteStatementOutput
 
     /// Executes multiple PartiQL statements as a single transaction.
     ///
@@ -217,13 +228,13 @@ public protocol DynamoDBClientProtocol {
     /// let response = try await client.executeTransaction(input: transactionInput)
     /// ```
     func executeTransaction(
-        input: AWSDynamoDB.ExecuteTransactionInput
-    ) async throws -> AWSDynamoDB.ExecuteTransactionOutput
+        input: ExecuteTransactionInput
+    ) async throws -> ExecuteTransactionOutput
 }
 
 // MARK: - AWS DynamoDB Client Conformance
 
 /// Retroactive conformance of AWS DynamoDB Client to the protocol.
-extension AWSDynamoDB.DynamoDBClient: DynamoDBClientProtocol {
+extension DynamoDBClient: DynamoDBClientProtocol {
     // No implementation needed - the client already has all required methods
 }
