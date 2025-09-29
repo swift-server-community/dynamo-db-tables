@@ -1,5 +1,5 @@
 {
-  "originHash" : "ee88c4cf79df1c96b3a9555a9cc70f169cea588ce6b216a2e648683b855c4727",
+  "originHash" : "d7375a61126c4d52ec9ba36dc7ca57dde8fed5ca64b1c23eeb5e06e1e34b96ed",
   "pins" : [
     {
       "identity" : "aws-crt-swift",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/awslabs/aws-sdk-swift.git",
       "state" : {
-        "revision" : "ba08b3d326c8beed5127587a294370e9b5b35a0e",
-        "version" : "1.5.46"
+        "revision" : "a719629ed24cbe193fb0df8da0d81cfff29455eb",
+        "version" : "1.5.51"
       }
     },
     {
@@ -38,15 +38,6 @@
       }
     },
     {
-      "identity" : "opentracing-objc",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/undefinedlabs/opentracing-objc",
-      "state" : {
-        "revision" : "18c1a35ca966236cee0c5a714a51a73ff33384c1",
-        "version" : "0.5.2"
-      }
-    },
-    {
       "identity" : "smithy-swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/smithy-lang/smithy-swift",
@@ -60,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tachyonics/smockable",
       "state" : {
-        "revision" : "14cd7daa73e764dc6602fdeef94187f9729449e6",
-        "version" : "0.6.0"
+        "revision" : "0a98019efbf969e1508caa536333c8dc32ebee10",
+        "version" : "0.7.0"
       }
     },
     {
@@ -132,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-crypto.git",
       "state" : {
-        "revision" : "d1c6b70f7c5f19fb0b8750cb8dcdf2ea6e2d8c34",
-        "version" : "3.15.0"
+        "revision" : "95ba0316a9b733e92bb6b071255ff46263bbe7dc",
+        "version" : "3.15.1"
       }
     },
     {
@@ -177,8 +168,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "1c30f0f2053b654e3d1302492124aa6d242cdba7",
-        "version" : "2.86.0"
+        "revision" : "a18bddb0acf7a40d982b2f128ce73ce4ee31f352",
+        "version" : "2.86.2"
       }
     },
     {
@@ -204,8 +195,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio-ssl.git",
       "state" : {
-        "revision" : "737e550e607d82bf15bdfddf158ec61652ce836f",
-        "version" : "2.34.0"
+        "revision" : "b2b043a8810ab6d51b3ff4df17f057d87ef1ec7c",
+        "version" : "2.34.1"
       }
     },
     {
@@ -222,8 +213,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-numerics.git",
       "state" : {
-        "revision" : "bbadd4b853a33fd78c4ae977d17bb2af15eb3f2a",
-        "version" : "1.1.0"
+        "revision" : "0c0290ff6b24942dadb83a929ffaaa1481df04a2",
+        "version" : "1.1.1"
       }
     },
     {
@@ -260,15 +251,6 @@
       "state" : {
         "revision" : "395a77f0aa927f0ff73941d7ac35f2b46d47c9db",
         "version" : "1.6.3"
-      }
-    },
-    {
-      "identity" : "thrift-swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/undefinedlabs/Thrift-Swift",
-      "state" : {
-        "revision" : "18ff09e6b30e589ed38f90a1af23e193b8ecef8e",
-        "version" : "1.1.2"
       }
     }
   ],
