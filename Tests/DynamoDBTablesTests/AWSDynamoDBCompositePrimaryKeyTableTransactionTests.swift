@@ -298,4 +298,178 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
         // Verify
         verifyNoInteractions(mockClient)
     }
+
+    // MARK: - Conditional Transaction Write Retry Tests
+
+    private let constraintKey = CompositePrimaryKey<StandardPrimaryKeyAttributes>(
+        partitionKey: "constraint_pk",
+        sortKey: "constraint_sk"
+    )
+
+    private var constraintItem: StandardTypedDatabaseItem<TestTypeA> {
+        StandardTypedDatabaseItem.newItem(
+            withKey: constraintKey,
+            andValue: TestTypeA(firstly: "c1", secondly: "c2")
+        )
+    }
+
+    @Test("Constraint failure short-circuits retry in transactWrite(forKeys:)")
+    func constraintFailureShortCircuitsRetry() async throws {
+        // Given
+        var expectations = MockTestDynamoDBClientProtocol.Expectations()
+
+        let itemAAttributes = try getAttributes(forItem: testItemA)
+        let batchGetOutput = AWSDynamoDB.BatchGetItemOutput(
+            responses: [testTableName: [itemAAttributes]]
+        )
+        when(expectations.batchGetItem(input: .any), return: batchGetOutput)
+
+        // ConditionalCheckFailed at the constraint's position (index 1), None at write entry (index 0)
+        let canceledError = AWSDynamoDB.TransactionCanceledException(
+            cancellationReasons: [
+                DynamoDBClientTypes.CancellationReason(code: "None"),
+                DynamoDBClientTypes.CancellationReason(
+                    code: "ConditionalCheckFailed",
+                    message: "Constraint not met"
+                ),
+            ],
+            message: "Transaction canceled"
+        )
+        when(expectations.executeTransaction(input: .any), throw: canceledError)
+
+        let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
+        let table = createTable(with: mockClient)
+
+        // When/Then
+        do {
+            try await table.transactWrite(
+                forKeys: [testKey1],
+                withRetries: 5,
+                constraints: [.required(existing: constraintItem)]
+            ) { key, _ -> StandardWriteEntry<TestTypeA>? in
+                .insert(
+                    new: StandardTypedDatabaseItem.newItem(
+                        withKey: key,
+                        andValue: TestTypeA(firstly: "t1", secondly: "t2")
+                    )
+                )
+            }
+            Issue.record("Expected constraintFailure error")
+        } catch let error as ConditionalTransactWriteError<StandardPrimaryKeyAttributes> {
+            guard case .constraintFailure = error else {
+                Issue.record("Expected constraintFailure, got \(error)")
+                return
+            }
+        }
+
+        // Short-circuited: executeTransaction called only once
+        verify(mockClient, times: 1).executeTransaction(input: .any)
+        verify(mockClient, times: 1).batchGetItem(input: .any)
+    }
+
+    @Test("Write entry failure retries normally in transactWrite(forKeys:)")
+    func writeEntryFailureRetriesNormally() async throws {
+        // Given
+        var expectations = MockTestDynamoDBClientProtocol.Expectations()
+
+        let itemAAttributes = try getAttributes(forItem: testItemA)
+        let batchGetOutput = AWSDynamoDB.BatchGetItemOutput(
+            responses: [testTableName: [itemAAttributes]]
+        )
+        when(expectations.batchGetItem(input: .any), times: .unbounded, return: batchGetOutput)
+
+        // ConditionalCheckFailed at the write entry's position (index 0), None at constraint (index 1)
+        let canceledError = AWSDynamoDB.TransactionCanceledException(
+            cancellationReasons: [
+                DynamoDBClientTypes.CancellationReason(
+                    code: "ConditionalCheckFailed",
+                    message: "Write conflict"
+                ),
+                DynamoDBClientTypes.CancellationReason(code: "None"),
+            ],
+            message: "Transaction canceled"
+        )
+        when(expectations.executeTransaction(input: .any), times: .unbounded, throw: canceledError)
+
+        let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
+        let table = createTable(with: mockClient)
+
+        // When/Then - retries exhausted, should get concurrencyError
+        do {
+            try await table.transactWrite(
+                forKeys: [testKey1],
+                withRetries: 2,
+                constraints: [.required(existing: constraintItem)]
+            ) { key, _ -> StandardWriteEntry<TestTypeA>? in
+                .insert(
+                    new: StandardTypedDatabaseItem.newItem(
+                        withKey: key,
+                        andValue: TestTypeA(firstly: "t1", secondly: "t2")
+                    )
+                )
+            }
+            Issue.record("Expected concurrencyError")
+        } catch let error as ConditionalTransactWriteError<StandardPrimaryKeyAttributes> {
+            guard case .concurrencyError = error else {
+                Issue.record("Expected concurrencyError, got \(error)")
+                return
+            }
+        }
+
+        // Retried: executeTransaction called twice (retries=2 → retries=1 → retries=0 throws)
+        verify(mockClient, times: 2).executeTransaction(input: .any)
+        verify(mockClient, times: 2).batchGetItem(input: .any)
+    }
+
+    @Test("No constraints retries as before in transactWrite(forKeys:)")
+    func noConstraintsRetriesAsBefore() async throws {
+        // Given
+        var expectations = MockTestDynamoDBClientProtocol.Expectations()
+
+        let itemAAttributes = try getAttributes(forItem: testItemA)
+        let batchGetOutput = AWSDynamoDB.BatchGetItemOutput(
+            responses: [testTableName: [itemAAttributes]]
+        )
+        when(expectations.batchGetItem(input: .any), times: .unbounded, return: batchGetOutput)
+
+        // ConditionalCheckFailed at the write entry's position
+        let canceledError = AWSDynamoDB.TransactionCanceledException(
+            cancellationReasons: [
+                DynamoDBClientTypes.CancellationReason(
+                    code: "ConditionalCheckFailed",
+                    message: "Write conflict"
+                )
+            ],
+            message: "Transaction canceled"
+        )
+        when(expectations.executeTransaction(input: .any), times: .unbounded, throw: canceledError)
+
+        let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
+        let table = createTable(with: mockClient)
+
+        // When/Then - no constraints, should retry until exhaustion
+        do {
+            try await table.transactWrite(
+                forKeys: [testKey1],
+                withRetries: 2
+            ) { key, _ -> StandardWriteEntry<TestTypeA>? in
+                .insert(
+                    new: StandardTypedDatabaseItem.newItem(
+                        withKey: key,
+                        andValue: TestTypeA(firstly: "t1", secondly: "t2")
+                    )
+                )
+            }
+            Issue.record("Expected concurrencyError")
+        } catch let error as ConditionalTransactWriteError<StandardPrimaryKeyAttributes> {
+            guard case .concurrencyError = error else {
+                Issue.record("Expected concurrencyError, got \(error)")
+                return
+            }
+        }
+
+        // Retried until exhaustion
+        verify(mockClient, times: 2).executeTransaction(input: .any)
+        verify(mockClient, times: 2).batchGetItem(input: .any)
+    }
 }

@@ -27,12 +27,29 @@
 import Foundation
 
 public enum ConditionalTransactWriteError<AttributesType: PrimaryKeyAttributes>: Error {
-    case transactionCanceled(
-        partitionKey: String,
-        sortKey: String,
-        reasons: [DynamoDBTableError]
-    )
+    case constraintFailure(reasons: [DynamoDBTableError])
     case concurrencyError(keys: [CompositePrimaryKey<AttributesType>], message: String?)
+}
+
+private struct TableKey: Hashable {
+    let partitionKey: String
+    let sortKey: String
+}
+
+private func hasConstraintFailure(
+    reasons: [DynamoDBTableError],
+    constraintKeys: Set<TableKey>
+) -> Bool {
+    guard !constraintKeys.isEmpty else { return false }
+
+    return reasons.contains { reason in
+        switch reason {
+        case .conditionalCheckFailed(let pk, let sk, _):
+            constraintKeys.contains(TableKey(partitionKey: pk, sortKey: sk))
+        default:
+            false
+        }
+    }
 }
 
 extension DynamoDBCompositePrimaryKeyTable {
@@ -64,6 +81,36 @@ extension DynamoDBCompositePrimaryKeyTable {
     ) async throws
         -> [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
+        let constraintKeys = Set(
+            constraints.map {
+                TableKey(partitionKey: $0.compositePrimaryKey.partitionKey, sortKey: $0.compositePrimaryKey.sortKey)
+            }
+        )
+
+        return try await self.transactWrite(
+            forKeys: keys,
+            withRetries: retries,
+            constraintKeys: constraintKeys,
+            constraints: constraints,
+            writeEntryProvider: writeEntryProvider
+        )
+    }
+
+    @discardableResult
+    private func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forKeys keys: [CompositePrimaryKey<AttributesType>],
+        withRetries retries: Int,
+        constraintKeys: Set<TableKey>,
+        constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
+        writeEntryProvider:
+            @Sendable @escaping (
+                CompositePrimaryKey<AttributesType>,
+                TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
+            )
+            async throws -> WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>?
+    ) async throws
+        -> [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
+    {
         guard retries > 0 else {
             throw ConditionalTransactWriteError.concurrencyError(
                 keys: keys,
@@ -84,11 +131,15 @@ extension DynamoDBCompositePrimaryKeyTable {
             try await self.transactWrite(entries, constraints: constraints)
 
             return entries
-        } catch DynamoDBTableError.transactionCanceled {
-            // try again
+        } catch DynamoDBTableError.transactionCanceled(let reasons) {
+            if hasConstraintFailure(reasons: reasons, constraintKeys: constraintKeys) {
+                throw ConditionalTransactWriteError<AttributesType>.constraintFailure(reasons: reasons)
+            }
+
             return try await self.transactWrite(
                 forKeys: keys,
                 withRetries: retries - 1,
+                constraintKeys: constraintKeys,
                 constraints: constraints,
                 writeEntryProvider: writeEntryProvider
             )
@@ -162,6 +213,40 @@ extension DynamoDBCompositePrimaryKeyTable {
         WriteEntryType.AttributesType == ReturnedType.AttributesType,
         WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
     {
+        let constraintKeys = Set(
+            constraints.map {
+                TableKey(partitionKey: $0.compositePrimaryKey.partitionKey, sortKey: $0.compositePrimaryKey.sortKey)
+            }
+        )
+
+        return try await self.polymorphicTransactWrite(
+            forKeys: keys,
+            withRetries: retries,
+            constraintKeys: constraintKeys,
+            constraints: constraints,
+            writeEntryProvider: writeEntryProvider
+        )
+    }
+
+    @discardableResult
+    private func polymorphicTransactWrite<
+        WriteEntryType: PolymorphicWriteEntry,
+        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry,
+        ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType
+    >(
+        forKeys keys: [CompositePrimaryKey<WriteEntryType.AttributesType>],
+        withRetries retries: Int,
+        constraintKeys: Set<TableKey>,
+        constraints: [TransactionConstraintEntryType],
+        writeEntryProvider:
+            @Sendable @escaping (CompositePrimaryKey<WriteEntryType.AttributesType>, ReturnedType?)
+            async throws -> WriteEntryType?
+    ) async throws
+        -> [WriteEntryType]
+    where
+        WriteEntryType.AttributesType == ReturnedType.AttributesType,
+        WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
+    {
         guard retries > 0 else {
             throw ConditionalTransactWriteError.concurrencyError(
                 keys: keys,
@@ -180,11 +265,17 @@ extension DynamoDBCompositePrimaryKeyTable {
             try await self.polymorphicTransactWrite(entries, constraints: constraints)
 
             return entries
-        } catch DynamoDBTableError.transactionCanceled {
-            // try again
+        } catch DynamoDBTableError.transactionCanceled(let reasons) {
+            if hasConstraintFailure(reasons: reasons, constraintKeys: constraintKeys) {
+                throw ConditionalTransactWriteError<WriteEntryType.AttributesType>.constraintFailure(
+                    reasons: reasons
+                )
+            }
+
             return try await self.polymorphicTransactWrite(
                 forKeys: keys,
                 withRetries: retries - 1,
+                constraintKeys: constraintKeys,
                 constraints: constraints,
                 writeEntryProvider: writeEntryProvider
             )
