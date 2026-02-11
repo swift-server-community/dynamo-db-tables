@@ -302,9 +302,14 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
 }
 
 extension DynamoDBClientTypes.BatchStatementError {
-    func asDynamoDBTableError(partitionKey: String, sortKey: String, entryCount: Int) -> DynamoDBTableError? {
+    func asDynamoDBTableError(partitionKey: String, sortKey: String, entryCount: Int) -> DynamoDBTableError {
         guard let code = self.code else {
-            return nil
+            return DynamoDBTableError.unknown(
+                code: nil,
+                partitionKey: partitionKey,
+                sortKey: sortKey,
+                message: self.message
+            )
         }
 
         // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchStatementError.html
