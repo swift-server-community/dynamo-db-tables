@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  DynamoDBCompositePrimaryKeyTable+clobberVersionedItemWithHistoricalRow.swift
+//  DynamoDBCompositePrimaryKeyTable+retryingUpsertVersionedItemWithHistoricalRow.swift
 //  DynamoDBTables
 //
 
@@ -34,7 +34,7 @@ extension DynamoDBCompositePrimaryKeyTable {
      * with a payload that replicates the current version of the row. This
      * historical partition contains rows for each version, including the
      * current version under a sort key for that version.
-    
+
      - Parameters:
         - partitionKey: the partition key to use for the primary (v0) item
         - historicalKey: the partition key to use for the historical items
@@ -42,9 +42,10 @@ extension DynamoDBCompositePrimaryKeyTable {
         - AttributesType: the row identity type
         - generateSortKey: generator to provide a sort key for a provided
                            version number.
-     - completion: completion handler providing an error that was thrown or nil
+     - Returns: the item that was written to the database.
      */
-    public func clobberVersionedItemWithHistoricalRow<
+    @discardableResult
+    public func retryingUpsertVersionedItemWithHistoricalRow<
         AttributesType: PrimaryKeyAttributes,
         ItemType: Codable & Sendable,
         TimeToLiveAttributesType: TimeToLiveAttributes
@@ -55,49 +56,54 @@ extension DynamoDBCompositePrimaryKeyTable {
         primaryKeyType _: AttributesType.Type = StandardPrimaryKeyAttributes.self,
         timeToLiveAttributesType _: TimeToLiveAttributesType.Type = StandardTimeToLiveAttributes.self,
         generateSortKey: @escaping (Int) -> String
-    ) async throws {
-        func primaryItemProvider(
-            _ existingItem: TypedTTLDatabaseItem<
+    ) async throws -> TypedTTLDatabaseItem<
+        AttributesType, RowWithItemVersion<ItemType>, TimeToLiveAttributesType
+    > {
+        let key = CompositePrimaryKey<AttributesType>(
+            partitionKey: partitionKey,
+            sortKey: generateSortKey(0)
+        )
+
+        func newItemProvider()
+            -> TypedTTLDatabaseItem<AttributesType, RowWithItemVersion<ItemType>, TimeToLiveAttributesType>
+        {
+            let newItemRowValue = RowWithItemVersion.newItem(withValue: item)
+            return TypedTTLDatabaseItem.newItem(withKey: key, andValue: newItemRowValue)
+        }
+
+        func updatedItemProvider(
+            existingItem: TypedTTLDatabaseItem<
                 AttributesType, RowWithItemVersion<ItemType>, TimeToLiveAttributesType
-            >?
+            >
         )
             -> TypedTTLDatabaseItem<AttributesType, RowWithItemVersion<ItemType>, TimeToLiveAttributesType>
         {
-            if let existingItem {
-                // If an item already exists, the inserted item should be created
-                // from that item (to get an accurate version number)
-                // with the payload from the default item.
-                let overWrittenItemRowValue = existingItem.rowValue.createUpdatedItem(
-                    withVersion: existingItem.rowValue.itemVersion + 1,
-                    withValue: item
-                )
-                return existingItem.createUpdatedItem(withValue: overWrittenItemRowValue)
-            }
-
-            // If there is no existing item to be overwritten, a new item should be constructed.
-            let newItemRowValue = RowWithItemVersion.newItem(withValue: item)
-            let defaultKey = CompositePrimaryKey<AttributesType>(
-                partitionKey: partitionKey,
-                sortKey: generateSortKey(0)
+            let overWrittenItemRowValue = existingItem.rowValue.createUpdatedItem(
+                withVersion: existingItem.rowValue.itemVersion + 1,
+                withValue: item
             )
-            return TypedTTLDatabaseItem.newItem(withKey: defaultKey, andValue: newItemRowValue)
+            return existingItem.createUpdatedItem(withValue: overWrittenItemRowValue)
         }
 
         func historicalItemProvider(
-            _ primaryItem: TypedTTLDatabaseItem<AttributesType, RowWithItemVersion<ItemType>, TimeToLiveAttributesType>
+            _ primaryItem: TypedTTLDatabaseItem<
+                AttributesType, RowWithItemVersion<ItemType>, TimeToLiveAttributesType
+            >
         )
             -> TypedTTLDatabaseItem<AttributesType, RowWithItemVersion<ItemType>, TimeToLiveAttributesType>
         {
             let sortKey = generateSortKey(primaryItem.rowValue.itemVersion)
-            let key = CompositePrimaryKey<AttributesType>(
+            let historicalKey = CompositePrimaryKey<AttributesType>(
                 partitionKey: historicalKey,
                 sortKey: sortKey
             )
-            return TypedTTLDatabaseItem.newItem(withKey: key, andValue: primaryItem.rowValue)
+            return TypedTTLDatabaseItem.newItem(withKey: historicalKey, andValue: primaryItem.rowValue)
         }
 
-        return try await clobberItemWithHistoricalRow(
-            primaryItemProvider: primaryItemProvider,
+        return try await retryingUpsertItemWithHistoricalRow(
+            forKey: key,
+            newItemProvider: newItemProvider,
+            updatedItemProvider: updatedItemProvider,
             historicalItemProvider: historicalItemProvider
         )
     }

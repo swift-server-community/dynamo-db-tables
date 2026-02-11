@@ -33,33 +33,24 @@ import Testing
 private typealias DatabaseRowType =
     TypedTTLDatabaseItem<StandardPrimaryKeyAttributes, RowWithItemVersion<TestTypeA>, StandardTimeToLiveAttributes>
 
-/// For these tests, a primary item Provider should always return a default value for nil arguments. The Provider Provider requires a non-nil default in order to initialize a Provider.
-private func primaryItemProviderProvider(_ defaultItem: DatabaseRowType) -> (DatabaseRowType?) -> DatabaseRowType {
-    func primaryItemProvider(_ item: DatabaseRowType?) -> DatabaseRowType {
-        guard let item else {
-            return defaultItem
-        }
-
-        let newItemRowValue = item.rowValue.createUpdatedItem(
-            withVersion: item.rowValue.itemVersion + 1,
-            withValue: defaultItem.rowValue.rowValue
-        )
-        return item.createUpdatedItem(withValue: newItemRowValue)
-    }
-
-    return primaryItemProvider
-}
-
 struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
     static let dKey = StandardCompositePrimaryKey(partitionKey: "partitionId", sortKey: "sortId")
     static let dPayload = TestTypeA(firstly: "firstly", secondly: "secondly")
 
-    private let testPrimaryItemProvider = primaryItemProviderProvider(
+    private func testNewItemProvider() -> DatabaseRowType {
         StandardTypedDatabaseItem.newItem(
-            withKey: dKey,
-            andValue: RowWithItemVersion.newItem(withValue: dPayload)
+            withKey: Self.dKey,
+            andValue: RowWithItemVersion.newItem(withValue: Self.dPayload)
         )
-    )
+    }
+
+    private func testUpdatedItemProvider(existingItem: DatabaseRowType) -> DatabaseRowType {
+        let newItemRowValue = existingItem.rowValue.createUpdatedItem(
+            withVersion: existingItem.rowValue.itemVersion + 1,
+            withValue: Self.dPayload
+        )
+        return existingItem.createUpdatedItem(withValue: newItemRowValue)
+    }
 
     private func testHistoricalItemProvider(_ item: DatabaseRowType) -> DatabaseRowType {
         DatabaseRowType.newItem(
@@ -173,40 +164,41 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
     }
 
     @Test
-    func clobberItemSuccess() async throws {
+    func upsertItemSuccess() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let databaseItem = self.testPrimaryItemProvider(nil)
-
-        try await table.clobberItemWithHistoricalRow(
-            primaryItemProvider: self.testPrimaryItemProvider,
+        try await table.retryingUpsertItemWithHistoricalRow(
+            forKey: Self.dKey,
+            newItemProvider: self.testNewItemProvider,
+            updatedItemProvider: self.testUpdatedItemProvider,
             historicalItemProvider: self.testHistoricalItemProvider
         )
-        let inserted: DatabaseRowType = try await (table.getItem(forKey: databaseItem.compositePrimaryKey))!
-        #expect(inserted.compositePrimaryKey.partitionKey == databaseItem.compositePrimaryKey.partitionKey)
-        #expect(inserted.compositePrimaryKey.sortKey == databaseItem.compositePrimaryKey.sortKey)
+        let inserted: DatabaseRowType = try await (table.getItem(forKey: Self.dKey))!
+        #expect(inserted.compositePrimaryKey.partitionKey == Self.dKey.partitionKey)
+        #expect(inserted.compositePrimaryKey.sortKey == Self.dKey.sortKey)
     }
 
     @Test
-    func clobberItemSuccessAfterRetry() async throws {
-        let databaseItem = self.testPrimaryItemProvider(nil)
-
+    func upsertItemSuccessAfterRetry() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
         let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
             wrappedDynamoDBTable: wrappedTable,
             simulateConcurrencyModifications: 5
         )
 
-        try await table.clobberItemWithHistoricalRow(
-            primaryItemProvider: self.testPrimaryItemProvider,
+        try await table.retryingUpsertItemWithHistoricalRow(
+            forKey: Self.dKey,
+            newItemProvider: self.testNewItemProvider,
+            updatedItemProvider: self.testUpdatedItemProvider,
             historicalItemProvider: self.testHistoricalItemProvider
         )
-        let inserted: DatabaseRowType = try await table.getItem(forKey: databaseItem.compositePrimaryKey)!
-        #expect(inserted.rowStatus.rowVersion > databaseItem.rowStatus.rowVersion)
+        let inserted: DatabaseRowType = try await table.getItem(forKey: Self.dKey)!
+        let newItem = self.testNewItemProvider()
+        #expect(inserted.rowStatus.rowVersion > newItem.rowStatus.rowVersion)
     }
 
     @Test
-    func clobberItemFailure() async throws {
+    func upsertItemFailure() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
         let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
             wrappedDynamoDBTable: wrappedTable,
@@ -214,10 +206,12 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
         )
 
         do {
-            try await table.clobberItemWithHistoricalRow(
-                primaryItemProvider: self.testPrimaryItemProvider,
-                historicalItemProvider: self.testHistoricalItemProvider,
-                withRetries: 9
+            try await table.retryingUpsertItemWithHistoricalRow(
+                forKey: Self.dKey,
+                withRetries: 9,
+                newItemProvider: self.testNewItemProvider,
+                updatedItemProvider: self.testUpdatedItemProvider,
+                historicalItemProvider: self.testHistoricalItemProvider
             )
 
             Issue.record("Expected error not thrown.")
@@ -265,14 +259,14 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
     }
 
     @Test
-    func conditionallyUpdateItemWithHistoricalRow() async throws {
+    func retryingUpdateItemWithHistoricalRow() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let databaseItem = self.testPrimaryItemProvider(nil)
+        let databaseItem = self.testNewItemProvider()
         try await table.insertItem(databaseItem)
 
-        let updated = try await table.conditionallyUpdateItemWithHistoricalRow(
-            compositePrimaryKey: Self.dKey,
+        let updated = try await table.retryingUpdateItemWithHistoricalRow(
+            forKey: Self.dKey,
             primaryItemProvider: self.conditionalUpdatePrimaryItemProvider,
             historicalItemProvider: self.conditionalUpdateHistoricalItemProvider
         )
@@ -296,15 +290,15 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
     }
 
     @Test
-    func conditionallyUpdateItemWithHistoricalRowWithAsyncProvider() async throws {
+    func retryingUpdateItemWithHistoricalRowWithAsyncProvider() async throws {
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        let databaseItem = self.testPrimaryItemProvider(nil)
+        let databaseItem = self.testNewItemProvider()
         try await table.insertItem(databaseItem)
 
         let asyncConditionalUpdatePrimaryItemProvider = self.getConditionalUpdatePrimaryItemProviderAsync()
-        let updated = try await table.conditionallyUpdateItemWithHistoricalRow(
-            compositePrimaryKey: Self.dKey,
+        let updated = try await table.retryingUpdateItemWithHistoricalRow(
+            forKey: Self.dKey,
             primaryItemProvider: asyncConditionalUpdatePrimaryItemProvider,
             historicalItemProvider: self.conditionalUpdateHistoricalItemProvider
         )
@@ -328,7 +322,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
     }
 
     @Test
-    func conditionallyUpdateItemWithHistoricalRowAcceptableConcurrency() async throws {
+    func retryingUpdateItemWithHistoricalRowAcceptableConcurrency() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
         let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
             wrappedDynamoDBTable: wrappedTable,
@@ -336,11 +330,11 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
             simulateOnInsertItem: false
         )
 
-        let databaseItem = self.testPrimaryItemProvider(nil)
+        let databaseItem = self.testNewItemProvider()
         try await table.insertItem(databaseItem)
 
-        let updated = try await table.conditionallyUpdateItemWithHistoricalRow(
-            compositePrimaryKey: Self.dKey,
+        let updated = try await table.retryingUpdateItemWithHistoricalRow(
+            forKey: Self.dKey,
             primaryItemProvider: self.conditionalUpdatePrimaryItemProvider,
             historicalItemProvider: self.conditionalUpdateHistoricalItemProvider
         )
@@ -349,7 +343,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
         #expect(inserted.rowValue.rowValue.firstly == "firstly_6")
         #expect(inserted.rowValue.rowValue.secondly == "secondly_6")
         // the row version has been updated by the SimulateConcurrencyDynamoDBCompositePrimaryKeyTable an
-        // additional 5 fives, item updated by conditionallyUpdateItemWithHistoricalRow
+        // additional 5 fives, item updated by retryingUpdateItemWithHistoricalRow
         // (which increments itemVersion) only once
         #expect(inserted.rowStatus.rowVersion == 7)
         #expect(inserted.rowValue.itemVersion == 2)
@@ -361,7 +355,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
     }
 
     @Test
-    func conditionallyUpdateItemWithHistoricalRowAcceptableConcurrencyWithAsyncProvider() async throws {
+    func retryingUpdateItemWithHistoricalRowAcceptableConcurrencyWithAsyncProvider() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
         let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
             wrappedDynamoDBTable: wrappedTable,
@@ -369,12 +363,12 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
             simulateOnInsertItem: false
         )
 
-        let databaseItem = self.testPrimaryItemProvider(nil)
+        let databaseItem = self.testNewItemProvider()
         try await table.insertItem(databaseItem)
 
         let asyncConditionalUpdatePrimaryItemProvider = self.getConditionalUpdatePrimaryItemProviderAsync()
-        let updated = try await table.conditionallyUpdateItemWithHistoricalRow(
-            compositePrimaryKey: Self.dKey,
+        let updated = try await table.retryingUpdateItemWithHistoricalRow(
+            forKey: Self.dKey,
             primaryItemProvider: asyncConditionalUpdatePrimaryItemProvider,
             historicalItemProvider: self.conditionalUpdateHistoricalItemProvider
         )
@@ -383,7 +377,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
         #expect(inserted.rowValue.rowValue.firstly == "firstly_6")
         #expect(inserted.rowValue.rowValue.secondly == "secondly_6")
         // the row version has been updated by the SimulateConcurrencyDynamoDBCompositePrimaryKeyTable an
-        // additional 5 fives, item updated by conditionallyUpdateItemWithHistoricalRow
+        // additional 5 fives, item updated by retryingUpdateItemWithHistoricalRow
         // (which increments itemVersion) only once
         #expect(inserted.rowStatus.rowVersion == 7)
         #expect(inserted.rowValue.itemVersion == 2)
@@ -395,7 +389,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
     }
 
     @Test
-    func conditionallyUpdateItemWithHistoricalRowUnacceptableConcurrency() async throws {
+    func retryingUpdateItemWithHistoricalRowUnacceptableConcurrency() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
         let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
             wrappedDynamoDBTable: wrappedTable,
@@ -403,12 +397,12 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
             simulateOnInsertItem: false
         )
 
-        let databaseItem = self.testPrimaryItemProvider(nil)
+        let databaseItem = self.testNewItemProvider()
         try await table.insertItem(databaseItem)
 
         do {
-            _ = try await table.conditionallyUpdateItemWithHistoricalRow(
-                compositePrimaryKey: Self.dKey,
+            _ = try await table.retryingUpdateItemWithHistoricalRow(
+                forKey: Self.dKey,
                 primaryItemProvider: self.conditionalUpdatePrimaryItemProvider,
                 historicalItemProvider: self.conditionalUpdateHistoricalItemProvider
             )
@@ -421,7 +415,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
         }
 
         let inserted: DatabaseRowType = try await (table.getItem(forKey: databaseItem.compositePrimaryKey))!
-        // confirm row has not been updated by conditionallyUpdateItemWithHistoricalRow
+        // confirm row has not been updated by retryingUpdateItemWithHistoricalRow
         #expect(inserted.rowValue.rowValue.firstly == "firstly")
         #expect(inserted.rowValue.rowValue.secondly == "secondly")
         #expect(inserted.rowStatus.rowVersion == 11)
@@ -429,7 +423,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
     }
 
     @Test
-    func conditionallyUpdateItemWithHistoricalRowUnacceptableConcurrencyWithAsyncProvider() async throws {
+    func retryingUpdateItemWithHistoricalRowUnacceptableConcurrencyWithAsyncProvider() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
         let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
             wrappedDynamoDBTable: wrappedTable,
@@ -437,13 +431,13 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
             simulateOnInsertItem: false
         )
 
-        let databaseItem = self.testPrimaryItemProvider(nil)
+        let databaseItem = self.testNewItemProvider()
         try await table.insertItem(databaseItem)
 
         let asyncConditionalUpdatePrimaryItemProvider = self.getConditionalUpdatePrimaryItemProviderAsync()
         do {
-            _ = try await table.conditionallyUpdateItemWithHistoricalRow(
-                compositePrimaryKey: Self.dKey,
+            _ = try await table.retryingUpdateItemWithHistoricalRow(
+                forKey: Self.dKey,
                 primaryItemProvider: asyncConditionalUpdatePrimaryItemProvider,
                 historicalItemProvider: self.conditionalUpdateHistoricalItemProvider
             )
@@ -456,7 +450,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
         }
 
         let inserted: DatabaseRowType = try await (table.getItem(forKey: databaseItem.compositePrimaryKey))!
-        // confirm row has not been updated by conditionallyUpdateItemWithHistoricalRow
+        // confirm row has not been updated by retryingUpdateItemWithHistoricalRow
         #expect(inserted.rowValue.rowValue.firstly == "firstly")
         #expect(inserted.rowValue.rowValue.secondly == "secondly")
         #expect(inserted.rowStatus.rowVersion == 11)
@@ -468,7 +462,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
     }
 
     @Test
-    func conditionallyUpdateItemWithHistoricalRowPrimaryItemProviderError() async throws {
+    func retryingUpdateItemWithHistoricalRowPrimaryItemProviderError() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
         let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
             wrappedDynamoDBTable: wrappedTable,
@@ -476,7 +470,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
             simulateOnInsertItem: false
         )
 
-        let databaseItem = self.testPrimaryItemProvider(nil)
+        let databaseItem = self.testNewItemProvider()
         try await table.insertItem(databaseItem)
 
         var providerCount = 0
@@ -496,8 +490,8 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
         }
 
         do {
-            _ = try await table.conditionallyUpdateItemWithHistoricalRow(
-                compositePrimaryKey: Self.dKey,
+            _ = try await table.retryingUpdateItemWithHistoricalRow(
+                forKey: Self.dKey,
                 primaryItemProvider: primaryItemProvider,
                 historicalItemProvider: self.conditionalUpdateHistoricalItemProvider
             )
@@ -510,7 +504,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
         }
 
         let inserted: DatabaseRowType = try await (table.getItem(forKey: databaseItem.compositePrimaryKey))!
-        // confirm row has not been updated by conditionallyUpdateItemWithHistoricalRow
+        // confirm row has not been updated by retryingUpdateItemWithHistoricalRow
         #expect(inserted.rowValue.rowValue.firstly == "firstly")
         #expect(inserted.rowValue.rowValue.secondly == "secondly")
         #expect(inserted.rowStatus.rowVersion == 6)
@@ -518,7 +512,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
     }
 
     @Test
-    func conditionallyUpdateItemWithHistoricalRowPrimaryItemProviderErrorWithAsyncProvider() async throws {
+    func retryingUpdateItemWithHistoricalRowPrimaryItemProviderErrorWithAsyncProvider() async throws {
         let wrappedTable = InMemoryDynamoDBCompositePrimaryKeyTable()
         let table = SimulateConcurrencyDynamoDBCompositePrimaryKeyTable(
             wrappedDynamoDBTable: wrappedTable,
@@ -526,7 +520,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
             simulateOnInsertItem: false
         )
 
-        let databaseItem = self.testPrimaryItemProvider(nil)
+        let databaseItem = self.testNewItemProvider()
         try await table.insertItem(databaseItem)
 
         var providerCount = 0
@@ -546,8 +540,8 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
         }
 
         do {
-            _ = try await table.conditionallyUpdateItemWithHistoricalRow(
-                compositePrimaryKey: Self.dKey,
+            _ = try await table.retryingUpdateItemWithHistoricalRow(
+                forKey: Self.dKey,
                 primaryItemProvider: primaryItemProvider,
                 historicalItemProvider: self.conditionalUpdateHistoricalItemProvider
             )
@@ -560,7 +554,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
         }
 
         let inserted: DatabaseRowType = try await (table.getItem(forKey: databaseItem.compositePrimaryKey))!
-        // confirm row has not been updated by conditionallyUpdateItemWithHistoricalRow
+        // confirm row has not been updated by retryingUpdateItemWithHistoricalRow
         #expect(inserted.rowValue.rowValue.firstly == "firstly")
         #expect(inserted.rowValue.rowValue.secondly == "secondly")
         #expect(inserted.rowStatus.rowVersion == 6)

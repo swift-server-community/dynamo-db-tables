@@ -31,7 +31,7 @@ import Testing
 
 struct DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTests {
     @Test
-    func clobberVersionedItemWithHistoricalRow() async throws {
+    func retryingUpsertVersionedItemWithHistoricalRow() async throws {
         let payload1 = TestTypeA(firstly: "firstly", secondly: "secondly")
         let partitionKey = "partitionId"
         let historicalPartitionPrefix = "historical"
@@ -44,7 +44,7 @@ struct DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTest
 
         let table = InMemoryDynamoDBCompositePrimaryKeyTable()
 
-        try await table.clobberVersionedItemWithHistoricalRow(
+        try await table.retryingUpsertVersionedItemWithHistoricalRow(
             forPrimaryKey: partitionKey,
             andHistoricalKey: historicalPartitionKey,
             item: payload1,
@@ -71,7 +71,7 @@ struct DynamoDBCompositePrimaryKeyTableClobberVersionedItemWithHistoricalRowTest
 
         let payload2 = TestTypeA(firstly: "thirdly", secondly: "fourthly")
 
-        try await table.clobberVersionedItemWithHistoricalRow(
+        try await table.retryingUpsertVersionedItemWithHistoricalRow(
             forPrimaryKey: partitionKey,
             andHistoricalKey: historicalPartitionKey,
             item: payload2,
