@@ -91,7 +91,7 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
 
         do {
             _ = try await self.dynamodb.deleteItem(input: deleteItemInput)
-        } catch  {
+        } catch {
             throw error.asDynamoDBTableError(
                 partitionKey: key.partitionKey,
                 sortKey: key.sortKey
@@ -108,9 +108,9 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
 
         self.logger.trace("\(logMessage)")
 
-         do {
+        do {
             _ = try await self.dynamodb.deleteItem(input: deleteItemInput)
-        } catch  {
+        } catch {
             throw error.asDynamoDBTableError(
                 partitionKey: existingItem.compositePrimaryKey.partitionKey,
                 sortKey: existingItem.compositePrimaryKey.sortKey
@@ -252,7 +252,7 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
 
         do {
             _ = try await self.dynamodb.putItem(input: putItemInput)
-        } catch  {
+        } catch {
             throw error.asDynamoDBTableError(
                 partitionKey: compositePrimaryKey.partitionKey,
                 sortKey: compositePrimaryKey.sortKey

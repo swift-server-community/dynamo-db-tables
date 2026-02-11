@@ -19,13 +19,12 @@
 
 import AWSDynamoDB
 
-
 extension DynamoDBClientTypes.AttributeValue {
     var asString: String? {
         if case .s(let string) = self {
             return string
         }
-        
+
         return nil
     }
 }

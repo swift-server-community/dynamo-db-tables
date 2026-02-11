@@ -24,44 +24,35 @@ import Foundation
 
 extension AWSDynamoDB.PutItemInput: @retroactive Equatable {
     public static func == (lhs: AWSDynamoDB.PutItemInput, rhs: AWSDynamoDB.PutItemInput) -> Bool {
-        return lhs.tableName == rhs.tableName &&
-               lhs.conditionExpression == rhs.conditionExpression &&
-               lhs.item == rhs.item &&
-               lhs.expressionAttributeNames == rhs.expressionAttributeNames &&
-               lhs.expressionAttributeValues == rhs.expressionAttributeValues
+        return lhs.tableName == rhs.tableName && lhs.conditionExpression == rhs.conditionExpression
+            && lhs.item == rhs.item && lhs.expressionAttributeNames == rhs.expressionAttributeNames
+            && lhs.expressionAttributeValues == rhs.expressionAttributeValues
     }
 }
 
 extension AWSDynamoDB.GetItemInput: @retroactive Equatable {
     public static func == (lhs: AWSDynamoDB.GetItemInput, rhs: AWSDynamoDB.GetItemInput) -> Bool {
-        return lhs.tableName == rhs.tableName &&
-               lhs.consistentRead == rhs.consistentRead &&
-               lhs.key == rhs.key &&
-               lhs.projectionExpression == rhs.projectionExpression &&
-               lhs.expressionAttributeNames == rhs.expressionAttributeNames
+        return lhs.tableName == rhs.tableName && lhs.consistentRead == rhs.consistentRead && lhs.key == rhs.key
+            && lhs.projectionExpression == rhs.projectionExpression
+            && lhs.expressionAttributeNames == rhs.expressionAttributeNames
     }
 }
 
 extension AWSDynamoDB.DeleteItemInput: @retroactive Equatable {
     public static func == (lhs: AWSDynamoDB.DeleteItemInput, rhs: AWSDynamoDB.DeleteItemInput) -> Bool {
-        return lhs.tableName == rhs.tableName &&
-               lhs.conditionExpression == rhs.conditionExpression &&
-               lhs.key == rhs.key &&
-               lhs.expressionAttributeNames == rhs.expressionAttributeNames &&
-               lhs.expressionAttributeValues == rhs.expressionAttributeValues
+        return lhs.tableName == rhs.tableName && lhs.conditionExpression == rhs.conditionExpression
+            && lhs.key == rhs.key && lhs.expressionAttributeNames == rhs.expressionAttributeNames
+            && lhs.expressionAttributeValues == rhs.expressionAttributeValues
     }
 }
 
 extension AWSDynamoDB.QueryInput: @retroactive Equatable {
     public static func == (lhs: AWSDynamoDB.QueryInput, rhs: AWSDynamoDB.QueryInput) -> Bool {
-        return lhs.tableName == rhs.tableName &&
-               lhs.keyConditionExpression == rhs.keyConditionExpression &&
-               lhs.limit == rhs.limit &&
-               lhs.scanIndexForward == rhs.scanIndexForward &&
-               lhs.consistentRead == rhs.consistentRead &&
-               lhs.exclusiveStartKey == rhs.exclusiveStartKey &&
-               lhs.expressionAttributeNames == rhs.expressionAttributeNames &&
-               lhs.expressionAttributeValues == rhs.expressionAttributeValues
+        return lhs.tableName == rhs.tableName && lhs.keyConditionExpression == rhs.keyConditionExpression
+            && lhs.limit == rhs.limit && lhs.scanIndexForward == rhs.scanIndexForward
+            && lhs.consistentRead == rhs.consistentRead && lhs.exclusiveStartKey == rhs.exclusiveStartKey
+            && lhs.expressionAttributeNames == rhs.expressionAttributeNames
+            && lhs.expressionAttributeValues == rhs.expressionAttributeValues
     }
 }
 
@@ -72,24 +63,24 @@ extension AWSDynamoDB.BatchGetItemInput: @retroactive Equatable {
 }
 
 extension AWSDynamoDB.BatchExecuteStatementInput: @retroactive Equatable {
-    public static func == (lhs: AWSDynamoDB.BatchExecuteStatementInput, rhs: AWSDynamoDB.BatchExecuteStatementInput) -> Bool {
+    public static func == (
+        lhs: AWSDynamoDB.BatchExecuteStatementInput,
+        rhs: AWSDynamoDB.BatchExecuteStatementInput
+    ) -> Bool {
         return lhs.statements == rhs.statements
     }
 }
 
 extension AWSDynamoDB.ExecuteStatementInput: @retroactive Equatable {
     public static func == (lhs: AWSDynamoDB.ExecuteStatementInput, rhs: AWSDynamoDB.ExecuteStatementInput) -> Bool {
-        return lhs.statement == rhs.statement &&
-               lhs.consistentRead == rhs.consistentRead &&
-               lhs.nextToken == rhs.nextToken &&
-               lhs.parameters == rhs.parameters
+        return lhs.statement == rhs.statement && lhs.consistentRead == rhs.consistentRead
+            && lhs.nextToken == rhs.nextToken && lhs.parameters == rhs.parameters
     }
 }
 
 extension AWSDynamoDB.ExecuteTransactionInput: @retroactive Equatable {
     public static func == (lhs: AWSDynamoDB.ExecuteTransactionInput, rhs: AWSDynamoDB.ExecuteTransactionInput) -> Bool {
-        return lhs.transactStatements == rhs.transactStatements &&
-               lhs.clientRequestToken == rhs.clientRequestToken
+        return lhs.transactStatements == rhs.transactStatements && lhs.clientRequestToken == rhs.clientRequestToken
     }
 }
 /*
@@ -178,27 +169,32 @@ extension DynamoDBClientTypes.ItemCollectionMetrics: @retroactive Equatable {
 }
 */
 extension DynamoDBClientTypes.KeysAndAttributes: @retroactive Equatable {
-    public static func == (lhs: DynamoDBClientTypes.KeysAndAttributes, rhs: DynamoDBClientTypes.KeysAndAttributes) -> Bool {
-        return lhs.keys == rhs.keys &&
-               lhs.consistentRead == rhs.consistentRead &&
-               lhs.attributesToGet == rhs.attributesToGet &&
-               lhs.projectionExpression == rhs.projectionExpression &&
-               lhs.expressionAttributeNames == rhs.expressionAttributeNames
+    public static func == (
+        lhs: DynamoDBClientTypes.KeysAndAttributes,
+        rhs: DynamoDBClientTypes.KeysAndAttributes
+    ) -> Bool {
+        return lhs.keys == rhs.keys && lhs.consistentRead == rhs.consistentRead
+            && lhs.attributesToGet == rhs.attributesToGet && lhs.projectionExpression == rhs.projectionExpression
+            && lhs.expressionAttributeNames == rhs.expressionAttributeNames
     }
 }
 
 extension DynamoDBClientTypes.BatchStatementRequest: @retroactive Equatable {
-    public static func == (lhs: DynamoDBClientTypes.BatchStatementRequest, rhs: DynamoDBClientTypes.BatchStatementRequest) -> Bool {
-        return lhs.statement == rhs.statement &&
-               lhs.consistentRead == rhs.consistentRead &&
-               lhs.parameters == rhs.parameters
+    public static func == (
+        lhs: DynamoDBClientTypes.BatchStatementRequest,
+        rhs: DynamoDBClientTypes.BatchStatementRequest
+    ) -> Bool {
+        return lhs.statement == rhs.statement && lhs.consistentRead == rhs.consistentRead
+            && lhs.parameters == rhs.parameters
     }
 }
 
 extension DynamoDBClientTypes.ParameterizedStatement: @retroactive Equatable {
-    public static func == (lhs: DynamoDBClientTypes.ParameterizedStatement, rhs: DynamoDBClientTypes.ParameterizedStatement) -> Bool {
-        return lhs.statement == rhs.statement &&
-               lhs.parameters == rhs.parameters
+    public static func == (
+        lhs: DynamoDBClientTypes.ParameterizedStatement,
+        rhs: DynamoDBClientTypes.ParameterizedStatement
+    ) -> Bool {
+        return lhs.statement == rhs.statement && lhs.parameters == rhs.parameters
     }
 }
 /*
@@ -237,7 +233,7 @@ private func compareItemArrays(
         return false
     case let (lhsArray?, rhsArray?):
         guard lhsArray.count == rhsArray.count else { return false }
-        
+
         for (lhsItem, rhsItem) in zip(lhsArray, rhsArray) {
             if !compareAttributeValueMaps(lhsItem, rhsItem) {
                 return false
@@ -265,7 +261,7 @@ private func compareResponseMaps(
         return false
     case let (lhsMap?, rhsMap?):
         guard lhsMap.count == rhsMap.count else { return false }
-        
+
         for (tableName, lhsItems) in lhsMap {
             guard let rhsItems = rhsMap[tableName],
                   compareItemArrays(lhsItems, rhsItems) else {
@@ -287,7 +283,7 @@ private func compareUnprocessedKeyMaps(
         return false
     case let (lhsMap?, rhsMap?):
         guard lhsMap.count == rhsMap.count else { return false }
-        
+
         for (tableName, lhsKeys) in lhsMap {
             guard let rhsKeys = rhsMap[tableName],
                   lhsKeys == rhsKeys else {
@@ -309,7 +305,7 @@ private func compareConsumedCapacityArrays(
         return false
     case let (lhsArray?, rhsArray?):
         guard lhsArray.count == rhsArray.count else { return false }
-        
+
         for (lhsCapacity, rhsCapacity) in zip(lhsArray, rhsArray) {
             if lhsCapacity != rhsCapacity {
                 return false
@@ -330,7 +326,7 @@ private func compareBatchStatementResponseArrays(
         return false
     case let (lhsArray?, rhsArray?):
         guard lhsArray.count == rhsArray.count else { return false }
-        
+
         for (lhsResponse, rhsResponse) in zip(lhsArray, rhsArray) {
             if lhsResponse != rhsResponse {
                 return false
@@ -351,7 +347,7 @@ private func compareItemTransactionResponseArrays(
         return false
     case let (lhsArray?, rhsArray?):
         guard lhsArray.count == rhsArray.count else { return false }
-        
+
         for (lhsResponse, rhsResponse) in zip(lhsArray, rhsArray) {
             if lhsResponse != rhsResponse {
                 return false
@@ -372,7 +368,7 @@ private func compareRequestItemMaps(
         return false
     case let (lhsMap?, rhsMap?):
         guard lhsMap.count == rhsMap.count else { return false }
-        
+
         for (tableName, lhsKeys) in lhsMap {
             guard let rhsKeys = rhsMap[tableName],
                   lhsKeys == rhsKeys else {
@@ -394,7 +390,7 @@ private func compareBatchStatementRequestArrays(
         return false
     case let (lhsArray?, rhsArray?):
         guard lhsArray.count == rhsArray.count else { return false }
-        
+
         for (lhsRequest, rhsRequest) in zip(lhsArray, rhsArray) {
             if lhsRequest != rhsRequest {
                 return false
@@ -415,7 +411,7 @@ private func compareParameterizedStatementArrays(
         return false
     case let (lhsArray?, rhsArray?):
         guard lhsArray.count == rhsArray.count else { return false }
-        
+
         for (lhsStatement, rhsStatement) in zip(lhsArray, rhsArray) {
             if lhsStatement != rhsStatement {
                 return false
@@ -436,7 +432,7 @@ private func compareAttributeValueArrays(
         return false
     case let (lhsArray?, rhsArray?):
         guard lhsArray.count == rhsArray.count else { return false }
-        
+
         for (lhsValue, rhsValue) in zip(lhsArray, rhsArray) {
             if lhsValue != rhsValue {
                 return false

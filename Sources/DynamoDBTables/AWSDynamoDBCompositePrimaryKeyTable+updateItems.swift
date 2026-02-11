@@ -346,7 +346,8 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
                 throw DynamoDBTableError.transactionCanceled(reasons: [])
             }
 
-            let keys: [CompositePrimaryKey<AttributesType>] = entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
+            let keys: [CompositePrimaryKey<AttributesType>] =
+                entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
 
             let (reasons, isTransactionConflict) = try getErrorReasons(
                 cancellationReasons: cancellationReasons,
@@ -612,7 +613,11 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    private enum FallbackResult<AttributesType: PrimaryKeyAttributes, ItemType: Codable & Sendable, TimeToLiveAttributesType: TimeToLiveAttributes> {
+    private enum FallbackResult<
+        AttributesType: PrimaryKeyAttributes,
+        ItemType: Codable & Sendable,
+        TimeToLiveAttributesType: TimeToLiveAttributes
+    > {
         case unevaluated(WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>)
         case success
         case failure(DynamoDBTableError)
