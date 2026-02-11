@@ -67,6 +67,48 @@ extension Swift.Error {
     }
 }
 
+extension Swift.Error {
+    func asDynamoDBTableError(partitionKey: String, sortKey: String) -> DynamoDBTableError {
+        return switch self {
+        case let exception as ConditionalCheckFailedException:
+            DynamoDBTableError.conditionalCheckFailed(
+                partitionKey: partitionKey,
+                sortKey: sortKey,
+                message: exception.properties.message
+            )
+        case let exception as DuplicateItemException:
+            DynamoDBTableError.duplicateItem(
+                partitionKey: partitionKey,
+                sortKey: sortKey,
+                message: exception.properties.message
+            )
+        case let exception as InternalServerError:
+            DynamoDBTableError.internalServerError(message: exception.properties.message)
+        case let exception as ProvisionedThroughputExceededException:
+            DynamoDBTableError.provisionedThroughputExceeded(message: exception.properties.message)
+        case let exception as RequestLimitExceeded:
+            DynamoDBTableError.requestLimitExceeded(message: exception.properties.message)
+        case let exception as ResourceNotFoundException:
+            DynamoDBTableError.resourceNotFound(
+                partitionKey: partitionKey,
+                sortKey: sortKey,
+                message: exception.properties.message
+            )
+        case let exception as ThrottlingException:
+            DynamoDBTableError.throttling(message: exception.properties.message)
+        case let exception as TransactionConflictException:
+            DynamoDBTableError.transactionConflict(message: exception.properties.message)
+        default:
+            DynamoDBTableError.unknown(
+                code: nil,
+                partitionKey: partitionKey,
+                sortKey: sortKey,
+                message: nil
+            )
+        }
+    }
+}
+
 /// Enumeration of the types of conditions that can be specified for an attribute.
 public enum AttributeCondition: Sendable {
     case equals(String)

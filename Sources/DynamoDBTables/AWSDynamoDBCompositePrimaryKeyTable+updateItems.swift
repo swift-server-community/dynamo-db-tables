@@ -346,7 +346,8 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
                 throw DynamoDBTableError.transactionCanceled(reasons: [])
             }
 
-            let keys = entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
+            let keys: [CompositePrimaryKey<AttributesType>] =
+                entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
 
             let (reasons, isTransactionConflict) = try getErrorReasons(
                 cancellationReasons: cancellationReasons,
@@ -372,7 +373,7 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
                 )
             }
 
-            let reason = DynamoDBTableError.transactionConflict(message: exception.message)
+            let reason = DynamoDBTableError.transactionConflict(message: exception.properties.message)
 
             result = .failure(DynamoDBTableError.transactionCanceled(reasons: [reason]))
         }
@@ -581,8 +582,12 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
 
         let executeInput = BatchExecuteStatementInput(statements: statements)
 
-        let response = try await dynamodb.batchExecuteStatement(input: executeInput)
-        return response.responses ?? []
+        do {
+            let response = try await dynamodb.batchExecuteStatement(input: executeInput)
+            return response.responses ?? []
+        } catch {
+            throw error.asUnrecognizedDynamoDBTableError()
+        }
     }
 
     public func bulkWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
@@ -608,14 +613,26 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         }
     }
 
+    private enum FallbackResult<
+        AttributesType: PrimaryKeyAttributes,
+        ItemType: Codable & Sendable,
+        TimeToLiveAttributesType: TimeToLiveAttributes
+    > {
+        case unevaluated(WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>)
+        case success
+        case failure(DynamoDBTableError)
+    }
+
     public func bulkWriteWithFallback<AttributesType, ItemType: Sendable, TimeToLiveAttributesType>(
         _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
     ) async throws {
         // fall back to single operation if the write entry exceeds the statement length limitation
-        let results: [Result<WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>, DynamoDBTableError>] =
+        let results: [FallbackResult<AttributesType, ItemType, TimeToLiveAttributesType>] =
             try await entries.concurrentMap { entry in
                 do {
                     try self.validateEntry(entry: entry)
+
+                    return .unevaluated(entry)
                 } catch DynamoDBTableError.statementLengthExceeded {
                     do {
                         switch entry {
@@ -633,25 +650,34 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
                     }
                 }
 
-                return .success(entry)
+                return .success
             }
 
         var bulkWriteEntries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>] = []
         var errors: [DynamoDBTableError] = []
         for result in results {
             switch result {
-            case let .success(entry):
+            case let .unevaluated(entry):
                 bulkWriteEntries.append(entry)
             case let .failure(error):
                 errors.append(error)
+            case .success:
+                break
             }
         }
 
+        let batchErrors: [DynamoDBTableError]
         do {
-            return try await self.bulkWrite(bulkWriteEntries)
+            try await self.bulkWrite(bulkWriteEntries)
+            batchErrors = []
         } catch let DynamoDBTableError.batchFailures(bulkErrors) {
+            batchErrors = bulkErrors
+        }
+
+        let combinedErrors = errors + batchErrors
+        if !combinedErrors.isEmpty {
             // combine all errors and re-throw
-            throw DynamoDBTableError.batchFailures(errors: (errors + bulkErrors).removeDuplicates())
+            throw DynamoDBTableError.batchFailures(errors: combinedErrors.removeDuplicates())
         }
     }
 }

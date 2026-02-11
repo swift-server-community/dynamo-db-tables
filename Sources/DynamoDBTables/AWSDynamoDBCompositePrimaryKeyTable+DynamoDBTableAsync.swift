@@ -88,7 +88,15 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
         let deleteItemInput = try getInputForDeleteItem(forKey: key)
 
         self.logger.trace("dynamodb.deleteItem with key: \(key) and table name \(targetTableName)")
-        _ = try await self.dynamodb.deleteItem(input: deleteItemInput)
+
+        do {
+            _ = try await self.dynamodb.deleteItem(input: deleteItemInput)
+        } catch {
+            throw error.asDynamoDBTableError(
+                partitionKey: key.partitionKey,
+                sortKey: key.sortKey
+            )
+        }
     }
 
     public func deleteItem(existingItem: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
@@ -99,7 +107,15 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
             + " version \(existingItem.rowStatus.rowVersion) and table name \(targetTableName)"
 
         self.logger.trace("\(logMessage)")
-        _ = try await self.dynamodb.deleteItem(input: deleteItemInput)
+
+        do {
+            _ = try await self.dynamodb.deleteItem(input: deleteItemInput)
+        } catch {
+            throw error.asDynamoDBTableError(
+                partitionKey: existingItem.compositePrimaryKey.partitionKey,
+                sortKey: existingItem.compositePrimaryKey.sortKey
+            )
+        }
     }
 
     public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
@@ -236,16 +252,11 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
 
         do {
             _ = try await self.dynamodb.putItem(input: putItemInput)
-        } catch let error as ConditionalCheckFailedException {
-            throw DynamoDBTableError.conditionalCheckFailed(
-                partitionKey: compositePrimaryKey.partitionKey,
-                sortKey: compositePrimaryKey.sortKey,
-                message: error.message
-            )
         } catch {
-            self.logger.warning("Error from AWSDynamoDBTable: \(error)")
-
-            throw DynamoDBTableError.unexpectedError(cause: error)
+            throw error.asDynamoDBTableError(
+                partitionKey: compositePrimaryKey.partitionKey,
+                sortKey: compositePrimaryKey.sortKey
+            )
         }
     }
 

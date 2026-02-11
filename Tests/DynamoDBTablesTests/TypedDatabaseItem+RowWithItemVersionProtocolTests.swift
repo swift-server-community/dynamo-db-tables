@@ -136,10 +136,10 @@ struct TypedTTLDatabaseItemRowWithItemVersionProtocolTests {
 
     func getTable(
         escapeSingleQuoteInPartiQL: Bool = false
-    ) throws -> GenericAWSDynamoDBCompositePrimaryKeyTable<MockDynamoDBClientProtocol> {
+    ) throws -> GenericAWSDynamoDBCompositePrimaryKeyTable<MockTestDynamoDBClientProtocol> {
         GenericAWSDynamoDBCompositePrimaryKeyTable(
             tableName: "DummyTable",
-            client: MockDynamoDBClientProtocol(),
+            client: MockTestDynamoDBClientProtocol(),
             tableConfiguration: .init(escapeSingleQuoteInPartiQL: escapeSingleQuoteInPartiQL)
         )
     }
