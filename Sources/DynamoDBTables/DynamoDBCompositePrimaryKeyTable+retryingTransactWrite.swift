@@ -26,11 +26,6 @@
 
 import Foundation
 
-public enum RetryingTransactWriteError<AttributesType: PrimaryKeyAttributes>: Error {
-    case constraintFailure(reasons: [DynamoDBTableError])
-    case concurrencyError(keys: [CompositePrimaryKey<AttributesType>], message: String?)
-}
-
 private struct TableKey: Hashable {
     let partitionKey: String
     let sortKey: String
@@ -112,9 +107,13 @@ extension DynamoDBCompositePrimaryKeyTable {
         -> [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         guard retries > 0 else {
-            throw RetryingTransactWriteError.concurrencyError(
-                keys: keys,
-                message: "Unable to complete conditional transact write in specified number of attempts"
+            let firstKey = keys.first
+            let allKeysDescription = keys.map { "(\($0.partitionKey), \($0.sortKey))" }.joined(separator: ", ")
+            throw DynamoDBTableError.concurrencyError(
+                partitionKey: firstKey?.partitionKey ?? "",
+                sortKey: firstKey?.sortKey ?? "",
+                message:
+                    "Unable to complete conditional transact write in specified number of attempts for keys: \(allKeysDescription)"
             )
         }
 
@@ -133,7 +132,7 @@ extension DynamoDBCompositePrimaryKeyTable {
             return entries
         } catch DynamoDBTableError.transactionCanceled(let reasons) {
             if hasConstraintFailure(reasons: reasons, constraintKeys: constraintKeys) {
-                throw RetryingTransactWriteError<AttributesType>.constraintFailure(reasons: reasons)
+                throw DynamoDBTableError.constraintFailure(reasons: reasons)
             }
 
             return try await self.retryingTransactWriteInternal(
@@ -248,9 +247,13 @@ extension DynamoDBCompositePrimaryKeyTable {
         WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
     {
         guard retries > 0 else {
-            throw RetryingTransactWriteError.concurrencyError(
-                keys: keys,
-                message: "Unable to complete conditional transact write in specified number of attempts"
+            let firstKey = keys.first
+            let allKeysDescription = keys.map { "(\($0.partitionKey), \($0.sortKey))" }.joined(separator: ", ")
+            throw DynamoDBTableError.concurrencyError(
+                partitionKey: firstKey?.partitionKey ?? "",
+                sortKey: firstKey?.sortKey ?? "",
+                message:
+                    "Unable to complete conditional transact write in specified number of attempts for keys: \(allKeysDescription)"
             )
         }
 
@@ -267,9 +270,7 @@ extension DynamoDBCompositePrimaryKeyTable {
             return entries
         } catch DynamoDBTableError.transactionCanceled(let reasons) {
             if hasConstraintFailure(reasons: reasons, constraintKeys: constraintKeys) {
-                throw RetryingTransactWriteError<WriteEntryType.AttributesType>.constraintFailure(
-                    reasons: reasons
-                )
+                throw DynamoDBTableError.constraintFailure(reasons: reasons)
             }
 
             return try await self.retryingPolymorphicTransactWriteInternal(

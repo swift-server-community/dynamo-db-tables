@@ -115,6 +115,25 @@ public actor SimulateConcurrencyDynamoDBCompositePrimaryKeyTable<Wrapped: Dynamo
     }
 
     public func transactWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
+        if self.previousConcurrencyModifications < self.simulateConcurrencyModifications {
+            simulateLoop: for entry in entries {
+                switch entry {
+                case let .update(new: _, existing: existing) where self.simulateOnUpdateItem:
+                    try await self.wrappedDynamoDBTable.updateItem(
+                        newItem: existing.createUpdatedItem(withValue: existing.rowValue),
+                        existingItem: existing
+                    )
+                    self.previousConcurrencyModifications += 1
+                    break simulateLoop
+                case let .insert(new: new) where self.simulateOnInsertItem:
+                    try await self.wrappedDynamoDBTable.insertItem(new)
+                    self.previousConcurrencyModifications += 1
+                    break simulateLoop
+                default:
+                    continue
+                }
+            }
+        }
         try await self.wrappedDynamoDBTable.transactWrite(entries)
     }
 
@@ -122,6 +141,25 @@ public actor SimulateConcurrencyDynamoDBCompositePrimaryKeyTable<Wrapped: Dynamo
         _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
         constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
     ) async throws {
+        if self.previousConcurrencyModifications < self.simulateConcurrencyModifications {
+            simulateLoop: for entry in entries {
+                switch entry {
+                case let .update(new: _, existing: existing) where self.simulateOnUpdateItem:
+                    try await self.wrappedDynamoDBTable.updateItem(
+                        newItem: existing.createUpdatedItem(withValue: existing.rowValue),
+                        existingItem: existing
+                    )
+                    self.previousConcurrencyModifications += 1
+                    break simulateLoop
+                case let .insert(new: new) where self.simulateOnInsertItem:
+                    try await self.wrappedDynamoDBTable.insertItem(new)
+                    self.previousConcurrencyModifications += 1
+                    break simulateLoop
+                default:
+                    continue
+                }
+            }
+        }
         try await self.wrappedDynamoDBTable.transactWrite(entries, constraints: constraints)
     }
 

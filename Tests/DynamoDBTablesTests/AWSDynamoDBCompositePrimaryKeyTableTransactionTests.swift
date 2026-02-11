@@ -355,7 +355,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
                 )
             }
             Issue.record("Expected constraintFailure error")
-        } catch let error as RetryingTransactWriteError<StandardPrimaryKeyAttributes> {
+        } catch let error as DynamoDBTableError {
             guard case .constraintFailure = error else {
                 Issue.record("Expected constraintFailure, got \(error)")
                 return
@@ -409,7 +409,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
                 )
             }
             Issue.record("Expected concurrencyError")
-        } catch let error as RetryingTransactWriteError<StandardPrimaryKeyAttributes> {
+        } catch let error as DynamoDBTableError {
             guard case .concurrencyError = error else {
                 Issue.record("Expected concurrencyError, got \(error)")
                 return
@@ -461,7 +461,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
                 )
             }
             Issue.record("Expected concurrencyError")
-        } catch let error as RetryingTransactWriteError<StandardPrimaryKeyAttributes> {
+        } catch let error as DynamoDBTableError {
             guard case .concurrencyError = error else {
                 Issue.record("Expected concurrencyError, got \(error)")
                 return

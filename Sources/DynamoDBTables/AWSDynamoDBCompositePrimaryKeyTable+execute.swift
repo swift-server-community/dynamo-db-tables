@@ -402,7 +402,7 @@ extension [DynamoDBTableError] {
             case .conditionalCheckFailed, .duplicateItem, .concurrencyError, .validation, .throttling, .databaseError,
                 .unexpectedError, .unexpectedResponse, .resourceNotFound, .typeMismatch, .batchAPIExceededRetries,
                 .unexpectedType, .unableToUpdateError, .unrecognizedError, .multipleUnexpectedErrors,
-                .transactionCanceled,
+                .transactionCanceled, .constraintFailure,
                 .transactionConflict, .batchFailures, .unknown:
                 // always pass through these errors
                 error

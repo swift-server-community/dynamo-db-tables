@@ -55,6 +55,7 @@ public enum DynamoDBTableError: Error {
     case unknown(code: String?, partitionKey: String?, sortKey: String?, message: String?)
     case transactionConflict(message: String?)
     case transactionCanceled(reasons: [DynamoDBTableError])
+    case constraintFailure(reasons: [DynamoDBTableError])
 }
 
 public typealias DynamoDBTableErrorResult<SuccessPayload> = Result<SuccessPayload, DynamoDBTableError>

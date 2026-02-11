@@ -38,8 +38,10 @@ extension DynamoDBCompositePrimaryKeyTable {
         primaryItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         historicalItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
     ) async throws {
-        try await insertItem(primaryItem)
-        try await insertItem(historicalItem)
+        try await transactWrite([
+            .insert(new: primaryItem),
+            .insert(new: historicalItem),
+        ])
     }
 
     public func updateItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
@@ -47,7 +49,9 @@ extension DynamoDBCompositePrimaryKeyTable {
         existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         historicalItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
     ) async throws {
-        try await updateItem(newItem: primaryItem, existingItem: existingItem)
-        try await insertItem(historicalItem)
+        try await transactWrite([
+            .update(new: primaryItem, existing: existingItem),
+            .insert(new: historicalItem),
+        ])
     }
 }

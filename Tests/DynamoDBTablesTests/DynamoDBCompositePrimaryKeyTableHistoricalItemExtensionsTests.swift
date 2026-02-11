@@ -95,7 +95,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
         do {
             // Second insert will fail.
             try await table.insertItemWithHistoricalRow(primaryItem: databaseItem, historicalItem: historicalItem)
-        } catch DynamoDBTableError.conditionalCheckFailed {
+        } catch DynamoDBTableError.transactionCanceled {
             // Success
         } catch {
             Issue.record("Unexpected exception")
@@ -156,7 +156,7 @@ struct CompositePrimaryKeyDynamoDBHistoricalClientTests {
                 existingItem: databaseItem,
                 historicalItem: historicalItem
             )
-        } catch DynamoDBTableError.conditionalCheckFailed {
+        } catch DynamoDBTableError.transactionCanceled {
             // Success
         } catch {
             Issue.record("Unexpected exception")

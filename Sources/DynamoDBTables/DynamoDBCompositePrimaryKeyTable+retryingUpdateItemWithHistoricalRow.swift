@@ -105,7 +105,7 @@ extension DynamoDBCompositePrimaryKeyTable {
             )
 
             return updatedItem
-        } catch DynamoDBTableError.conditionalCheckFailed {
+        } catch DynamoDBTableError.transactionCanceled {
             // try again
             return try await self.retryingUpdateItemWithHistoricalRowInternal(
                 forKey: key,
