@@ -103,7 +103,7 @@ public struct GenericAWSDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientP
         logger: Logging.Logger? = nil
     ) throws where Client == AWSDynamoDB.DynamoDBClient {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeyTable")
-        let config = try DynamoDBClient.DynamoDBClientConfiguration(
+        let config = try DynamoDBClient.DynamoDBClientConfig(
             awsCredentialIdentityResolver: awsCredentialIdentityResolver,
             region: region,
             httpClientConfiguration: httpClientConfiguration
