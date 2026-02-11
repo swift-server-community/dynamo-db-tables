@@ -64,9 +64,11 @@ extension DynamoDBCompositePrimaryKeyTable {
      * historical data.
      */
     public func clobberItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
-        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?) ->
+        primaryItemProvider:
+            @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?) ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        historicalItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
+        historicalItemProvider:
+            @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         withRetries retries: Int = 10
     ) async throws {
@@ -135,10 +137,12 @@ extension DynamoDBCompositePrimaryKeyTable {
      */
     public func conditionallyUpdateItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
         compositePrimaryKey: CompositePrimaryKey<AttributesType>,
-        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
+        primaryItemProvider:
+            @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
             async throws ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        historicalItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
+        historicalItemProvider:
+            @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         withRetries retries: Int = 10
     ) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> {
@@ -152,10 +156,12 @@ extension DynamoDBCompositePrimaryKeyTable {
 
     private func conditionallyUpdateItemWithHistoricalRowInternal<AttributesType, ItemType, TimeToLiveAttributesType>(
         compositePrimaryKey: CompositePrimaryKey<AttributesType>,
-        primaryItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
+        primaryItemProvider:
+            @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
             async throws ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
-        historicalItemProvider: @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
+        historicalItemProvider:
+            @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) ->
             TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         withRetries retries: Int = 10
     ) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> {
