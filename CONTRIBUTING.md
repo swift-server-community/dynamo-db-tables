@@ -1,61 +1,62 @@
-# Contributing Guidelines
+# Contributing to DynamoDBTables
 
-Thank you for your interest in contributing to our project. Whether it's a bug report, new feature, correction, or additional 
-documentation, we greatly value feedback and contributions from our community.
+## Requirements
 
-Please read through this document before submitting any issues or pull requests to ensure we have all the necessary 
-information to effectively respond to your bug report or contribution.
+- Swift 6.1 or later
+- macOS 15.0+
 
+## Building and Testing
 
-## Reporting Bugs/Feature Requests
+Build the package in release mode with strict concurrency checking (matching CI):
 
-We welcome you to use the GitHub issue tracker to report bugs or suggest features.
+```bash
+swift build -c release -Xswiftc -strict-concurrency=complete
+```
 
-When filing an issue, please check [existing open](https://github.com/amzn/smoke-dynamodb/issues), or [recently closed](https://github.com/amzn/smoke-dynamodb/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aclosed%20), issues to make sure somebody else hasn't already 
-reported the issue. Please try to include as much information as you can. Details like these are incredibly useful:
+Run the test suite:
 
-* A reproducible test case or series of steps
-* The version of our code being used
-* Any modifications you've made relevant to the bug
-* Anything unusual about your environment or deployment
+```bash
+swift test
+```
 
+## Tooling
 
-## Contributing via Pull Requests
-Contributions via pull requests are much appreciated. Before sending us a pull request, please ensure that:
+### swift-format
 
-1. You are working against the latest source on the *master* branch.
-2. You check existing open, and recently merged, pull requests to make sure someone else hasn't addressed the problem already.
-3. You open an issue to discuss any significant work - we would hate for your time to be wasted.
+This repository uses [swift-format](https://github.com/swiftlang/swift-format) to enforce a consistent code style. The configuration is defined in `.swift-format` at the repository root.
 
-To send us a pull request, please:
+To format all source files in place:
 
-1. Fork the repository.
-2. Modify the source; please focus on the specific change you are contributing. If you also reformat all the code, it will be hard for us to focus on your change.
-3. Ensure local tests pass.
-4. Commit to your fork using clear commit messages.
-5. Send us a pull request, answering any default questions in the pull request interface.
-6. Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation.
+```bash
+swift-format format --recursive --in-place .
+```
 
-GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and 
-[creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
+To check for formatting issues without modifying files:
 
+```bash
+swift-format lint --recursive .
+```
 
-## Finding contributions to work on
-Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/amzn/smoke-dynamodb/labels/help%20wanted) issues is a great place to start. 
+swift-format ships with the Swift 6.0+ toolchain, so no separate installation is needed.
 
+### SwiftLint
 
-## Code of Conduct
-This project has adopted the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct). 
-For more information see the [Code of Conduct FAQ](https://aws.github.io/code-of-conduct-faq) or contact 
-opensource-codeofconduct@amazon.com with any additional questions or comments.
+[SwiftLint](https://github.com/realm/SwiftLint) is run in CI (version 3.2.1) against the `Sources/` directory. The configuration is defined in `.swiftlint.yml`.
 
+If you have SwiftLint installed locally you can run it with:
 
-## Security issue notifications
-If you discover a potential security issue in this project we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public github issue.
+```bash
+swiftlint
+```
 
+## CI
 
-## Licensing
+Pull requests are validated by three GitHub Actions jobs:
 
-See the [LICENSE](https://github.com/amzn/smoke-dynamodb/blob/master/LICENSE) file for our project's licensing. We will ask you to confirm the licensing of your contribution.
+| Job | Description |
+|---|---|
+| **Build & Test** | Builds and tests against the latest Swift toolchains |
+| **SwiftLint** | Lints `Sources/` with SwiftLint 3.2.1 |
+| **swift-format** | Verifies that all code in `Sources/` and `Tests/` is formatted correctly |
 
-We may ask you to sign a [Contributor License Agreement (CLA)](http://en.wikipedia.org/wiki/Contributor_License_Agreement) for larger changes.
+All three jobs must pass before a pull request can be merged.

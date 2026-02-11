@@ -34,7 +34,8 @@ extension TypedTTLDatabaseItem {
     }
 }
 
-public typealias ExecuteItemFilterType = @Sendable (String, String, String, InMemoryDatabaseItem)
+public typealias ExecuteItemFilterType =
+    @Sendable (String, String, String, InMemoryDatabaseItem)
     -> Bool
 
 public protocol InMemoryTransactionDelegate: Sendable {

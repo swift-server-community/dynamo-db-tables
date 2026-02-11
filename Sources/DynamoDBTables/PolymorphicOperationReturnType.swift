@@ -50,7 +50,8 @@ public struct PolymorphicOperationReturnOption<
     private let typeConvertingPayloadHander: @Sendable (Any) throws -> ReturnType
 
     public init<RowType: Codable>(
-        _ payloadHandler: @escaping @Sendable (TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>)
+        _ payloadHandler:
+            @escaping @Sendable (TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>)
             -> ReturnType
     ) {
         @Sendable
