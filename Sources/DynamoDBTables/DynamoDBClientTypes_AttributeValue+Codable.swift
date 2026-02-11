@@ -23,7 +23,7 @@ public struct Key: CodingKey {
     }
 }
 
-extension DynamoDBClientTypes.AttributeValue: Swift.Codable {
+extension DynamoDBClientTypes.AttributeValue: @retroactive Swift.Decodable, @retroactive Swift.Encodable {
     enum CodingKeys: Swift.String, Swift.CodingKey {
         case b = "B"
         case bool = "BOOL"

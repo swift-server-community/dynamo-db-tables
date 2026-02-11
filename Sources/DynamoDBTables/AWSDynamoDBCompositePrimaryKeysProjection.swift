@@ -51,7 +51,7 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
         logger: Logging.Logger? = nil
     ) throws {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeysProjection")
-        let config = try DynamoDBClient.DynamoDBClientConfiguration(
+        let config = try DynamoDBClient.DynamoDBClientConfig(
             awsCredentialIdentityResolver: awsCredentialIdentityResolver,
             region: region,
             httpClientConfiguration: httpClientConfiguration
