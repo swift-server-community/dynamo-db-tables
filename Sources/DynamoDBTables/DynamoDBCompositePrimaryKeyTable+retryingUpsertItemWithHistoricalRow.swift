@@ -92,7 +92,7 @@ extension DynamoDBCompositePrimaryKeyTable {
 
                 return newItem
             }
-        } catch DynamoDBTableError.conditionalCheckFailed {
+        } catch DynamoDBTableError.transactionCanceled {
             return try await self.retryingUpsertItemWithHistoricalRow(
                 forKey: key,
                 withRetries: retries - 1,
