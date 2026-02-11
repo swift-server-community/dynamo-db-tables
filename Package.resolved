@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/awslabs/aws-sdk-swift.git",
       "state" : {
-        "revision" : "d687f7767c4ad13d725676cd2795261e1de7f815",
-        "version" : "1.6.50"
+        "revision" : "764295c793f79130d661d0786f78a27d7513233e",
+        "version" : "1.6.52"
       }
     },
     {
@@ -47,12 +47,21 @@
       }
     },
     {
+      "identity" : "opentracing-objc",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/undefinedlabs/opentracing-objc",
+      "state" : {
+        "revision" : "18c1a35ca966236cee0c5a714a51a73ff33384c1",
+        "version" : "0.5.2"
+      }
+    },
+    {
       "identity" : "smithy-swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/smithy-lang/smithy-swift",
       "state" : {
-        "revision" : "0ef3fa34819658ccc7f965252ece8865da30f470",
-        "version" : "0.181.0"
+        "revision" : "6db4f69e682ad026da09454ac96be3b0cba80352",
+        "version" : "0.182.0"
       }
     },
     {
@@ -60,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tachyonics/smockable",
       "state" : {
-        "revision" : "63292c007f760796305d4921aa623130369322f8",
-        "version" : "0.7.1"
+        "revision" : "7b9a201ca24c5cf66b32118484ce6a0aae51358e",
+        "version" : "0.9.0"
       }
     },
     {
@@ -278,6 +287,15 @@
       "state" : {
         "revision" : "7c6ad0fc39d0763e0b699210e4124afd5041c5df",
         "version" : "1.6.4"
+      }
+    },
+    {
+      "identity" : "thrift-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/undefinedlabs/Thrift-Swift",
+      "state" : {
+        "revision" : "18ff09e6b30e589ed38f90a1af23e193b8ecef8e",
+        "version" : "1.1.2"
       }
     }
   ],
