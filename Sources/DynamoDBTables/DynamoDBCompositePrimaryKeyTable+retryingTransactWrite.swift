@@ -59,7 +59,7 @@ extension DynamoDBCompositePrimaryKeyTable {
      item currently doesn't exist. The `writeEntryProvider` should return the `WriteEntry` for this key in
      the transaction or nil if the key should not be part of the transaction. The transaction may fail in
      which case the process repeats until the retry limit has been reached.
-
+    
      - Parameters:
         - keys: the item keys to use in the transaction
         - withRetries: the number of times to attempt to retry the update before failing.
@@ -152,7 +152,7 @@ extension DynamoDBCompositePrimaryKeyTable {
      item currently doesn't exist. The `writeEntryProvider` should return the `WriteEntry` for this key in
      the transaction or nil if the key should not be part of the transaction. The transaction may fail in
      which case the process repeats until the retry limit has been reached.
-
+    
      - Parameters:
         - keys: the item keys to use in the transaction
         - withRetries: the number of times to attempt to retry the update before failing.
@@ -187,7 +187,7 @@ extension DynamoDBCompositePrimaryKeyTable {
      item currently doesn't exist. The `writeEntryProvider` should return the `WriteEntry` for this key in
      the transaction or nil if the key should not be part of the transaction. The transaction may fail in
      which case the process repeats until the retry limit has been reached.
-
+    
      - Parameters:
         - keys: the item keys to use in the transaction
         - withRetries: the number of times to attempt to retry the update before failing.

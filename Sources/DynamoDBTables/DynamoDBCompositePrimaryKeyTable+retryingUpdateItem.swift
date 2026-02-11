@@ -37,7 +37,7 @@ extension DynamoDBCompositePrimaryKeyTable {
      generate an updated payload or fail with an error if an updated payload is not valid. If an updated
      payload is returned, this method will attempt to update the row. This update may fail due to
      concurrency, in which case the process will repeat until the retry limit has been reached.
-
+    
      - Parameters:
          _: the key of the item to update
          withRetries: the number of times to attempt to retry the update before failing.
@@ -76,7 +76,7 @@ extension DynamoDBCompositePrimaryKeyTable {
      generate an updated row or fail with an error if an updated row is not valid. If an updated
      row is returned, this method will attempt to update the row. This update may fail due to
      concurrency, in which case the process will repeat until the retry limit has been reached.
-
+    
      - Parameters:
          _: the key of the item to update
          withRetries: the number of times to attempt to retry the update before failing.

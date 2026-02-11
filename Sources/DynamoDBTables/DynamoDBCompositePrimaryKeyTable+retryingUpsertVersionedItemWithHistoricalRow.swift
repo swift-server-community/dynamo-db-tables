@@ -34,7 +34,7 @@ extension DynamoDBCompositePrimaryKeyTable {
      * with a payload that replicates the current version of the row. This
      * historical partition contains rows for each version, including the
      * current version under a sort key for that version.
-
+    
      - Parameters:
         - partitionKey: the partition key to use for the primary (v0) item
         - historicalKey: the partition key to use for the historical items

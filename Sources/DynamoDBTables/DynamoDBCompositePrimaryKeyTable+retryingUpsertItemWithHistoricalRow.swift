@@ -49,7 +49,8 @@ extension DynamoDBCompositePrimaryKeyTable {
     public func retryingUpsertItemWithHistoricalRow<AttributesType, ItemType, TimeToLiveAttributesType>(
         forKey key: CompositePrimaryKey<AttributesType>,
         withRetries retries: Int = 10,
-        newItemProvider: @escaping () async throws
+        newItemProvider:
+            @escaping () async throws
             -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         updatedItemProvider:
             @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
