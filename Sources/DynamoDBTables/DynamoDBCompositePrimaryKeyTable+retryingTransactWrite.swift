@@ -26,12 +26,12 @@
 
 import Foundation
 
-private struct TableKey: Hashable {
+struct TableKey: Hashable {
     let partitionKey: String
     let sortKey: String
 }
 
-private func hasConstraintFailure(
+func hasConstraintFailure(
     reasons: [DynamoDBTableError],
     constraintKeys: Set<TableKey>
 ) -> Bool {
@@ -124,6 +124,14 @@ extension DynamoDBCompositePrimaryKeyTable {
 
         let entries = try await keys.asyncCompactMap { key in
             try await writeEntryProvider(key, existingItems[key])
+        }
+
+        let entryCount = entries.count + constraints.count
+        if entryCount > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
+            throw DynamoDBTableError.itemCollectionSizeLimitExceeded(
+                attemptedSize: entryCount,
+                maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement
+            )
         }
 
         do {
@@ -264,6 +272,14 @@ extension DynamoDBCompositePrimaryKeyTable {
             try await writeEntryProvider(key, existingItems[key])
         }
 
+        let entryCount = entries.count + constraints.count
+        if entryCount > AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement {
+            throw DynamoDBTableError.itemCollectionSizeLimitExceeded(
+                attemptedSize: entryCount,
+                maximumSize: AWSDynamoDBLimits.maximumUpdatesPerTransactionStatement
+            )
+        }
+
         do {
             try await self.polymorphicTransactWrite(entries, constraints: constraints)
 
@@ -282,4 +298,5 @@ extension DynamoDBCompositePrimaryKeyTable {
             )
         }
     }
+
 }
