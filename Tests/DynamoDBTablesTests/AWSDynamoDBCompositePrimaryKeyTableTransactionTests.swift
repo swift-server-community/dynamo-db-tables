@@ -438,7 +438,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
                 DynamoDBClientTypes.CancellationReason(
                     code: "ConditionalCheckFailed",
                     message: "Write conflict"
-                ),
+                )
             ],
             message: "Transaction canceled"
         )

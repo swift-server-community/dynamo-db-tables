@@ -81,9 +81,11 @@ extension DynamoDBCompositePrimaryKeyTable {
     ) async throws
         -> [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
-        let constraintKeys = Set(constraints.map {
-            TableKey(partitionKey: $0.compositePrimaryKey.partitionKey, sortKey: $0.compositePrimaryKey.sortKey)
-        })
+        let constraintKeys = Set(
+            constraints.map {
+                TableKey(partitionKey: $0.compositePrimaryKey.partitionKey, sortKey: $0.compositePrimaryKey.sortKey)
+            }
+        )
 
         return try await self.transactWrite(
             forKeys: keys,
@@ -211,9 +213,11 @@ extension DynamoDBCompositePrimaryKeyTable {
         WriteEntryType.AttributesType == ReturnedType.AttributesType,
         WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
     {
-        let constraintKeys = Set(constraints.map {
-            TableKey(partitionKey: $0.compositePrimaryKey.partitionKey, sortKey: $0.compositePrimaryKey.sortKey)
-        })
+        let constraintKeys = Set(
+            constraints.map {
+                TableKey(partitionKey: $0.compositePrimaryKey.partitionKey, sortKey: $0.compositePrimaryKey.sortKey)
+            }
+        )
 
         return try await self.polymorphicTransactWrite(
             forKeys: keys,
