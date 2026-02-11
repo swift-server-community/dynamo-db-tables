@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  DynamoDBCompositePrimaryKeyTable+conditionallyUpdateItem.swift
+//  DynamoDBCompositePrimaryKeyTable+retryingUpdateItem.swift
 //  DynamoDBTables
 //
 
@@ -30,7 +30,7 @@ import Logging
 
 extension DynamoDBCompositePrimaryKeyTable {
     /**
-     Method to conditionally update an item at the specified key for a number of retries.
+     Method to update an item at the specified key, retrying on concurrency errors.
      This method is useful for database rows that may be updated simultaneously by different clients
      and each client will only attempt to update based on the current row value.
      On each attempt, the updatedPayloadProvider will be passed the current row value. It can either
@@ -42,8 +42,10 @@ extension DynamoDBCompositePrimaryKeyTable {
          _: the key of the item to update
          withRetries: the number of times to attempt to retry the update before failing.
          updatedPayloadProvider: the provider that will return updated payloads.
+     - Returns: the updated database item.
      */
-    public func conditionallyUpdateItem<
+    @discardableResult
+    public func retryingUpdateItem<
         AttributesType,
         ItemType: Codable & Sendable,
         TimeToLiveAttributesType: TimeToLiveAttributes
@@ -52,14 +54,14 @@ extension DynamoDBCompositePrimaryKeyTable {
         withRetries retries: Int = 10,
         timeToLiveAttributesType _: TimeToLiveAttributesType.Type = StandardTimeToLiveAttributes.self,
         updatedPayloadProvider: @escaping (ItemType) async throws -> ItemType
-    ) async throws {
+    ) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> {
         let updatedItemProvider:
             (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>) async throws
                 -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> = { existingItem in
                     let updatedPayload = try await updatedPayloadProvider(existingItem.rowValue)
                     return existingItem.createUpdatedItem(withValue: updatedPayload)
                 }
-        try await self.conditionallyUpdateItemInternal(
+        return try await self.retryingUpdateItemInternal(
             forKey: key,
             withRetries: retries,
             updatedItemProvider: updatedItemProvider
@@ -67,7 +69,7 @@ extension DynamoDBCompositePrimaryKeyTable {
     }
 
     /**
-     Method to conditionally update an item at the specified key for a number of retries.
+     Method to update an item at the specified key, retrying on concurrency errors.
      This method is useful for database rows that may be updated simultaneously by different clients
      and each client will only attempt to update based on the current row value.
      On each attempt, the updatedItemProvider will be passed the current row. It can either
@@ -79,8 +81,10 @@ extension DynamoDBCompositePrimaryKeyTable {
          _: the key of the item to update
          withRetries: the number of times to attempt to retry the update before failing.
          updatedItemProvider: the provider that will return updated items.
+     - Returns: the updated database item.
      */
-    public func conditionallyUpdateItem<
+    @discardableResult
+    public func retryingUpdateItem<
         AttributesType,
         ItemType: Codable,
         TimeToLiveAttributesType: TimeToLiveAttributes
@@ -91,15 +95,15 @@ extension DynamoDBCompositePrimaryKeyTable {
             @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
             async throws
             -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
-    ) async throws {
-        try await self.conditionallyUpdateItemInternal(
+    ) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> {
+        try await self.retryingUpdateItemInternal(
             forKey: key,
             withRetries: retries,
             updatedItemProvider: updatedItemProvider
         )
     }
 
-    private func conditionallyUpdateItemInternal<
+    private func retryingUpdateItemInternal<
         AttributesType,
         ItemType: Codable,
         TimeToLiveAttributesType: TimeToLiveAttributes
@@ -110,7 +114,7 @@ extension DynamoDBCompositePrimaryKeyTable {
             @escaping (TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>)
             async throws
             -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
-    ) async throws {
+    ) async throws -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> {
         guard retries > 0 else {
             throw DynamoDBTableError.concurrencyError(
                 partitionKey: key.partitionKey,
@@ -134,9 +138,10 @@ extension DynamoDBCompositePrimaryKeyTable {
 
         do {
             try await self.updateItem(newItem: updatedDatabaseItem, existingItem: databaseItem)
+            return updatedDatabaseItem
         } catch DynamoDBTableError.conditionalCheckFailed {
             // try again
-            return try await self.conditionallyUpdateItem(
+            return try await self.retryingUpdateItemInternal(
                 forKey: key,
                 withRetries: retries - 1,
                 updatedItemProvider: updatedItemProvider

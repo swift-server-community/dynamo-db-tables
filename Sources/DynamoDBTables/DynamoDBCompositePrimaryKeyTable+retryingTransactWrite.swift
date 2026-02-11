@@ -20,13 +20,13 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  DynamoDBCompositePrimaryKeyTable+conditionallyInTransaction.swift
+//  DynamoDBCompositePrimaryKeyTable+retryingTransactWrite.swift
 //  DynamoDBTables
 //
 
 import Foundation
 
-public enum ConditionalTransactWriteError<AttributesType: PrimaryKeyAttributes>: Error {
+public enum RetryingTransactWriteError<AttributesType: PrimaryKeyAttributes>: Error {
     case constraintFailure(reasons: [DynamoDBTableError])
     case concurrencyError(keys: [CompositePrimaryKey<AttributesType>], message: String?)
 }
@@ -68,7 +68,7 @@ extension DynamoDBCompositePrimaryKeyTable {
      - Returns: the list of `WriteEntry` used in the successful transaction
      */
     @discardableResult
-    public func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
+    public func retryingTransactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
         forKeys keys: [CompositePrimaryKey<AttributesType>],
         withRetries retries: Int = 10,
         constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>] = [],
@@ -87,7 +87,7 @@ extension DynamoDBCompositePrimaryKeyTable {
             }
         )
 
-        return try await self.transactWrite(
+        return try await self.retryingTransactWriteInternal(
             forKeys: keys,
             withRetries: retries,
             constraintKeys: constraintKeys,
@@ -97,7 +97,7 @@ extension DynamoDBCompositePrimaryKeyTable {
     }
 
     @discardableResult
-    private func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
+    private func retryingTransactWriteInternal<AttributesType, ItemType, TimeToLiveAttributesType>(
         forKeys keys: [CompositePrimaryKey<AttributesType>],
         withRetries retries: Int,
         constraintKeys: Set<TableKey>,
@@ -112,7 +112,7 @@ extension DynamoDBCompositePrimaryKeyTable {
         -> [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
     {
         guard retries > 0 else {
-            throw ConditionalTransactWriteError.concurrencyError(
+            throw RetryingTransactWriteError.concurrencyError(
                 keys: keys,
                 message: "Unable to complete conditional transact write in specified number of attempts"
             )
@@ -133,10 +133,10 @@ extension DynamoDBCompositePrimaryKeyTable {
             return entries
         } catch DynamoDBTableError.transactionCanceled(let reasons) {
             if hasConstraintFailure(reasons: reasons, constraintKeys: constraintKeys) {
-                throw ConditionalTransactWriteError<AttributesType>.constraintFailure(reasons: reasons)
+                throw RetryingTransactWriteError<AttributesType>.constraintFailure(reasons: reasons)
             }
 
-            return try await self.transactWrite(
+            return try await self.retryingTransactWriteInternal(
                 forKeys: keys,
                 withRetries: retries - 1,
                 constraintKeys: constraintKeys,
@@ -160,7 +160,7 @@ extension DynamoDBCompositePrimaryKeyTable {
      - Returns: the list of `WriteEntry` used in the successful transaction
      */
     @discardableResult
-    public func polymorphicTransactWrite<
+    public func retryingPolymorphicTransactWrite<
         WriteEntryType: PolymorphicWriteEntry,
         ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType
     >(
@@ -173,7 +173,7 @@ extension DynamoDBCompositePrimaryKeyTable {
         -> [WriteEntryType] where WriteEntryType.AttributesType == ReturnedType.AttributesType
     {
         let noConstraints: [EmptyPolymorphicTransactionConstraintEntry<WriteEntryType.AttributesType>] = []
-        return try await self.polymorphicTransactWrite(
+        return try await self.retryingPolymorphicTransactWrite(
             forKeys: keys,
             withRetries: retries,
             constraints: noConstraints,
@@ -196,7 +196,7 @@ extension DynamoDBCompositePrimaryKeyTable {
      - Returns: the list of `WriteEntry` used in the successful transaction
      */
     @discardableResult
-    public func polymorphicTransactWrite<
+    public func retryingPolymorphicTransactWrite<
         WriteEntryType: PolymorphicWriteEntry,
         TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry,
         ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType
@@ -219,7 +219,7 @@ extension DynamoDBCompositePrimaryKeyTable {
             }
         )
 
-        return try await self.polymorphicTransactWrite(
+        return try await self.retryingPolymorphicTransactWriteInternal(
             forKeys: keys,
             withRetries: retries,
             constraintKeys: constraintKeys,
@@ -229,7 +229,7 @@ extension DynamoDBCompositePrimaryKeyTable {
     }
 
     @discardableResult
-    private func polymorphicTransactWrite<
+    private func retryingPolymorphicTransactWriteInternal<
         WriteEntryType: PolymorphicWriteEntry,
         TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry,
         ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType
@@ -248,7 +248,7 @@ extension DynamoDBCompositePrimaryKeyTable {
         WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType
     {
         guard retries > 0 else {
-            throw ConditionalTransactWriteError.concurrencyError(
+            throw RetryingTransactWriteError.concurrencyError(
                 keys: keys,
                 message: "Unable to complete conditional transact write in specified number of attempts"
             )
@@ -267,12 +267,12 @@ extension DynamoDBCompositePrimaryKeyTable {
             return entries
         } catch DynamoDBTableError.transactionCanceled(let reasons) {
             if hasConstraintFailure(reasons: reasons, constraintKeys: constraintKeys) {
-                throw ConditionalTransactWriteError<WriteEntryType.AttributesType>.constraintFailure(
+                throw RetryingTransactWriteError<WriteEntryType.AttributesType>.constraintFailure(
                     reasons: reasons
                 )
             }
 
-            return try await self.polymorphicTransactWrite(
+            return try await self.retryingPolymorphicTransactWriteInternal(
                 forKeys: keys,
                 withRetries: retries - 1,
                 constraintKeys: constraintKeys,

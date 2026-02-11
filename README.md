@@ -147,19 +147,32 @@ The `updateItem` (or `updateItem`) operation will attempt to insert the followin
 
 By default, this operation will fail if an item with the same partition key and sort key doesn't exist in the table and if the existing row doesn't have the same version number as the `existingItem` submitted in the operation. The `DynamoDBCompositePrimaryKeyTable` protocol also provides the `clobberItem` operation which will overwrite a row in the database regardless of the existing row.
 
-## Conditionally Update
+## Retrying Update
 
-The `conditionallyUpdateItem` operation will attempt to update the primary item, repeatedly calling the `updatedPayloadProvider` to retrieve an updated version of the current row value until the  `update` operation succeeds. The `updatedPayloadProvider` can throw an exception to indicate that the current row value is unable to be updated.
-
-```swift
-try await table.conditionallyUpdateItem(forKey: key, updatedPayloadProvider: updatedPayloadProvider)
-```
-
-The `conditionallyUpdateItem` operation could also be provided with `updatedItemProvider`. It will attempt to update the primary item, repeatedly calling the `updatedItemProvider` to retrieve an updated version of the current row until the  `update` operation succeeds. The `updatedItemProvider` can throw an exception to indicate that the current row is unable to be updated.
+The `retryingUpdateItem` operation will attempt to update the primary item, repeatedly calling the `updatedPayloadProvider` to retrieve an updated version of the current row value until the  `update` operation succeeds. The `updatedPayloadProvider` can throw an exception to indicate that the current row value is unable to be updated.
 
 ```swift
-try await table.conditionallyUpdateItem(forKey: key, updatedItemProvider: updatedItemProvider)
+try await table.retryingUpdateItem(forKey: key, updatedPayloadProvider: updatedPayloadProvider)
 ```
+
+The `retryingUpdateItem` operation can also be provided with `updatedItemProvider`. It will attempt to update the primary item, repeatedly calling the `updatedItemProvider` to retrieve an updated version of the current row until the  `update` operation succeeds. The `updatedItemProvider` can throw an exception to indicate that the current row is unable to be updated.
+
+```swift
+try await table.retryingUpdateItem(forKey: key, updatedItemProvider: updatedItemProvider)
+```
+
+## Retrying Upsert
+
+The `retryingUpsertItem` operation will attempt to insert or update the primary item, repeatedly retrying on concurrency errors until the appropriate `insert` or `update` operation succeeds. The `newItemProvider` is called when the item does not yet exist. The `updatedItemProvider` is called with the existing item when it already exists.
+
+```swift
+try await table.retryingUpsertItem(
+    forKey: key,
+    newItemProvider: newItemProvider,
+    updatedItemProvider: updatedItemProvider)
+```
+
+This operation can fail with a concurrency error if the `insert` or `update` operation repeatedly fails (the default is after 10 attempts).
 
 ## Delete
 
@@ -435,56 +448,49 @@ try await table.updateItemWithHistoricalRow(primaryItem: updatedItem,
                                             historicalItem: historicalItem)
 ```
 
-### Clobber
+### Retrying Update
 
-The `clobberItemWithHistoricalRow` operation will attempt to insert or update the primary item, repeatedly calling the `primaryItemProvider` to retrieve an updated version of the current row (if it exists) until the appropriate `insert` or  `update` operation succeeds. The `historicalItemProvider` is called to provide the historical item based on the primary item that was inserted into the database table. The primary item may not exist in the database table to begin with.
-
-```swift
-try await table.clobberItemWithHistoricalRow(primaryItemProvider: primaryItemProvider,
-                                             historicalItemProvider: historicalItemProvider)
-```
-
-The `clobberItemWithHistoricalRow` operation is typically used when it is unknown if the primary item already exists in the database table and you want to either insert it or write a new version of that row (which may or may not be based on the existing item).
-
-This operation can fail with a concurrency error if the `insert` or  `update` operation repeatedly fails (the default is after 10 attempts).
-
-### Conditionally Update
-
-The `conditionallyUpdateItemWithHistoricalRow` operation will attempt to update the primary item, repeatedly calling the `primaryItemProvider` to retrieve an updated version of the current row until the  `update` operation succeeds. The `primaryItemProvider` can thrown an exception to indicate that the current row is unable to be updated. The `historicalItemProvider` is called to provide the historical item based on the primary item that was inserted into the database table.
+The `retryingUpdateItemWithHistoricalRow` operation will attempt to update the primary item, repeatedly calling the `primaryItemProvider` to retrieve an updated version of the current row until the  `update` operation succeeds. The `historicalItemProvider` is called to provide the historical item based on the primary item that was inserted into the database table.
 
 ```swift
-try await table.conditionallyUpdateItemWithHistoricalRow(
-    forPrimaryKey: dKey,
+try await table.retryingUpdateItemWithHistoricalRow(
+    forKey: dKey,
     primaryItemProvider: conditionalUpdatePrimaryItemProvider,
     historicalItemProvider: conditionalUpdateHistoricalItemProvider)
 ```
 
-The `conditionallyUpdateItemWithHistoricalRow` operation is typically used when it is known that the primary item exists and you want to test if you can update it based on some attribute of its current version. A common scenario is adding a subordinate related item to the primary item where there is a limit of the number of related items. Here you would want to test the current version of the primary item to ensure the number of related items isn't exceeded.
+### Retrying Upsert
 
-This operation can fail with a concurrency error if the  `update` operation repeatedly fails (the default is after 10 attempts).
+The `retryingUpsertItemWithHistoricalRow` operation will attempt to insert or update the primary item, repeatedly retrying on concurrency errors until the appropriate `insert` or `update` operation succeeds. The `historicalItemProvider` is called to provide the historical item based on the primary item that was written to the database table.
 
-**Note:** The `clobberItemWithHistoricalRow` operation is similar in nature but have slightly different use cases. The `clobber` operation is typically used to create or update the primary item. The `conditionallyUpdate` operation is typically used when creating a subordinate related item that requires checking if the primary item can be updated.
+```swift
+try await table.retryingUpsertItemWithHistoricalRow(
+    forKey: key,
+    newItemProvider: newItemProvider,
+    updatedItemProvider: updatedItemProvider,
+    historicalItemProvider: historicalItemProvider)
+```
 
 ## Managing versioned rows
 
-The `clobberVersionedItemWithHistoricalRow` operation provide a mechanism for managing mutable database rows and storing all previous versions of that row in a historical partition. This operation stores the primary item under a "version zero" sort key with a payload that replicates the current version of the row. This historical partition contains rows for each version, including the current version under a sort key for that version.
+The `retryingUpsertVersionedItemWithHistoricalRow` operation provide a mechanism for managing mutable database rows and storing all previous versions of that row in a historical partition. This operation stores the primary item under a "version zero" sort key with a payload that replicates the current version of the row. This historical partition contains rows for each version, including the current version under a sort key for that version.
 
 ```swift
 let payload1 = PayloadType(firstly: "firstly", secondly: "secondly")
 let partitionKey = "partitionId"
 let historicalPartitionPrefix = "historical"
 let historicalPartitionKey = "\(historicalPartitionPrefix).\(partitionKey)"
-                
+
 func generateSortKey(withVersion version: Int) -> String {
     let prefix = String(format: "v%05d", version)
     return [prefix, "sortId"].dynamodbKey
 }
-    
-try await table.clobberVersionedItemWithHistoricalRow(forPrimaryKey: partitionKey,
-                                                      andHistoricalKey: historicalPartitionKey,
-                                                      item: payload1,
-                                                      primaryKeyType: StandardPrimaryKeyAttributes.self,
-                                                      generateSortKey: generateSortKey)
+
+try await table.retryingUpsertVersionedItemWithHistoricalRow(forPrimaryKey: partitionKey,
+                                                             andHistoricalKey: historicalPartitionKey,
+                                                             item: payload1,
+                                                             primaryKeyType: StandardPrimaryKeyAttributes.self,
+                                                             generateSortKey: generateSortKey)
                                                              
 // the v0 row, copy of version 1
 let key1 = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: generateSortKey(withVersion: 0))
@@ -502,11 +508,11 @@ item1.rowValue.rowValue // payload1
         
 let payload2 = PayloadType(firstly: "thirdly", secondly: "fourthly")
         
-try await table.clobberVersionedItemWithHistoricalRow(forPrimaryKey: partitionKey,
-                                                      andHistoricalKey: historicalPartitionKey,
-                                                      item: payload2,
-                                                      primaryKeyType: StandardPrimaryKeyAttributes.self,
-                                                      generateSortKey: generateSortKey)
+try await table.retryingUpsertVersionedItemWithHistoricalRow(forPrimaryKey: partitionKey,
+                                                             andHistoricalKey: historicalPartitionKey,
+                                                             item: payload2,
+                                                             primaryKeyType: StandardPrimaryKeyAttributes.self,
+                                                             generateSortKey: generateSortKey)
         
 // the v0 row, copy of version 2
 let key3 = StandardCompositePrimaryKey(partitionKey: partitionKey, sortKey: generateSortKey(withVersion: 0))

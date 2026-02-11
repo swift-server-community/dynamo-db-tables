@@ -342,7 +342,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
 
         // When/Then
         do {
-            try await table.transactWrite(
+            try await table.retryingTransactWrite(
                 forKeys: [testKey1],
                 withRetries: 5,
                 constraints: [.required(existing: constraintItem)]
@@ -355,7 +355,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
                 )
             }
             Issue.record("Expected constraintFailure error")
-        } catch let error as ConditionalTransactWriteError<StandardPrimaryKeyAttributes> {
+        } catch let error as RetryingTransactWriteError<StandardPrimaryKeyAttributes> {
             guard case .constraintFailure = error else {
                 Issue.record("Expected constraintFailure, got \(error)")
                 return
@@ -396,7 +396,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
 
         // When/Then - retries exhausted, should get concurrencyError
         do {
-            try await table.transactWrite(
+            try await table.retryingTransactWrite(
                 forKeys: [testKey1],
                 withRetries: 2,
                 constraints: [.required(existing: constraintItem)]
@@ -409,7 +409,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
                 )
             }
             Issue.record("Expected concurrencyError")
-        } catch let error as ConditionalTransactWriteError<StandardPrimaryKeyAttributes> {
+        } catch let error as RetryingTransactWriteError<StandardPrimaryKeyAttributes> {
             guard case .concurrencyError = error else {
                 Issue.record("Expected concurrencyError, got \(error)")
                 return
@@ -449,7 +449,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
 
         // When/Then - no constraints, should retry until exhaustion
         do {
-            try await table.transactWrite(
+            try await table.retryingTransactWrite(
                 forKeys: [testKey1],
                 withRetries: 2
             ) { key, _ -> StandardWriteEntry<TestTypeA>? in
@@ -461,7 +461,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
                 )
             }
             Issue.record("Expected concurrencyError")
-        } catch let error as ConditionalTransactWriteError<StandardPrimaryKeyAttributes> {
+        } catch let error as RetryingTransactWriteError<StandardPrimaryKeyAttributes> {
             guard case .concurrencyError = error else {
                 Issue.record("Expected concurrencyError, got \(error)")
                 return

@@ -1494,7 +1494,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             }
         }
 
-        try await table.transactWrite(forKeys: [key1, key2], writeEntryProvider: writeEntryProvider)
+        try await table.retryingTransactWrite(forKeys: [key1, key2], writeEntryProvider: writeEntryProvider)
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key1)!
 
@@ -1555,7 +1555,7 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
             }
         }
 
-        try await table.polymorphicTransactWrite(forKeys: [key1, key2], writeEntryProvider: writeEntryProvider)
+        try await table.retryingPolymorphicTransactWrite(forKeys: [key1, key2], writeEntryProvider: writeEntryProvider)
 
         let retrievedItem: StandardTypedDatabaseItem<TestTypeA> = try await table.getItem(forKey: key1)!
 

@@ -64,7 +64,7 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         #expect(databaseItem.rowValue.firstly == retrievedItem.rowValue.firstly)
         #expect(databaseItem.rowValue.secondly == retrievedItem.rowValue.secondly)
 
-        _ = try await table.conditionallyUpdateItem(forKey: key, updatedPayloadProvider: self.updatedPayloadProvider)
+        _ = try await table.retryingUpdateItem(forKey: key, updatedPayloadProvider: self.updatedPayloadProvider)
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
@@ -92,7 +92,7 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         #expect(databaseItem.rowValue.firstly == retrievedItem.rowValue.firstly)
         #expect(databaseItem.rowValue.secondly == retrievedItem.rowValue.secondly)
 
-        _ = try await table.conditionallyUpdateItem(forKey: key, updatedItemProvider: self.updatedItemProvider)
+        _ = try await table.retryingUpdateItem(forKey: key, updatedItemProvider: self.updatedItemProvider)
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
@@ -125,7 +125,7 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         #expect(databaseItem.rowValue.firstly == retrievedItem.rowValue.firstly)
         #expect(databaseItem.rowValue.secondly == retrievedItem.rowValue.secondly)
 
-        _ = try await table.conditionallyUpdateItem(forKey: key, updatedPayloadProvider: self.updatedPayloadProvider)
+        _ = try await table.retryingUpdateItem(forKey: key, updatedPayloadProvider: self.updatedPayloadProvider)
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
@@ -158,7 +158,7 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         #expect(databaseItem.rowValue.firstly == retrievedItem.rowValue.firstly)
         #expect(databaseItem.rowValue.secondly == retrievedItem.rowValue.secondly)
 
-        _ = try await table.conditionallyUpdateItem(forKey: key, updatedItemProvider: self.updatedItemProvider)
+        _ = try await table.retryingUpdateItem(forKey: key, updatedItemProvider: self.updatedItemProvider)
 
         let secondRetrievedItem: TestTypeADatabaseItem = try await table.getItem(forKey: key)!
 
@@ -192,7 +192,7 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         #expect(databaseItem.rowValue.secondly == retrievedItem.rowValue.secondly)
 
         do {
-            try await table.conditionallyUpdateItem(forKey: key, updatedPayloadProvider: self.updatedPayloadProvider)
+            try await table.retryingUpdateItem(forKey: key, updatedPayloadProvider: self.updatedPayloadProvider)
 
             Issue.record("Expected concurrency error not thrown.")
         } catch DynamoDBTableError.concurrencyError {
@@ -234,7 +234,7 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         #expect(databaseItem.rowValue.secondly == retrievedItem.rowValue.secondly)
 
         do {
-            try await table.conditionallyUpdateItem(forKey: key, updatedItemProvider: self.updatedItemProvider)
+            try await table.retryingUpdateItem(forKey: key, updatedItemProvider: self.updatedItemProvider)
 
             Issue.record("Expected concurrency error not thrown.")
         } catch DynamoDBTableError.concurrencyError {
@@ -276,7 +276,7 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         #expect(databaseItem.rowValue.secondly == retrievedItem.rowValue.secondly)
 
         do {
-            try await table.conditionallyUpdateItem(forKey: key, updatedPayloadProvider: self.updatedPayloadProvider)
+            try await table.retryingUpdateItem(forKey: key, updatedPayloadProvider: self.updatedPayloadProvider)
 
             Issue.record("Expected concurrency error not thrown.")
         } catch DynamoDBTableError.concurrencyError {
@@ -334,7 +334,7 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         }
 
         do {
-            try await table.conditionallyUpdateItem(forKey: key, updatedPayloadProvider: failingUpdatedPayloadProvider)
+            try await table.retryingUpdateItem(forKey: key, updatedPayloadProvider: failingUpdatedPayloadProvider)
 
             Issue.record("Expected everythingIsWrong error not thrown.")
         } catch TestError.everythingIsWrong {
@@ -395,7 +395,7 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         }
 
         do {
-            try await table.conditionallyUpdateItem(forKey: key, updatedItemProvider: failingUpdatedItemProvider)
+            try await table.retryingUpdateItem(forKey: key, updatedItemProvider: failingUpdatedItemProvider)
 
             Issue.record("Expected everythingIsWrong error not thrown.")
         } catch TestError.everythingIsWrong {
@@ -422,7 +422,7 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         )
 
         do {
-            try await table.conditionallyUpdateItem(forKey: key, updatedPayloadProvider: self.updatedPayloadProvider)
+            try await table.retryingUpdateItem(forKey: key, updatedPayloadProvider: self.updatedPayloadProvider)
 
             Issue.record("Expected concurrency error not thrown.")
         } catch DynamoDBTableError.conditionalCheckFailed {
@@ -446,7 +446,7 @@ struct DynamoDBCompositePrimaryKeyTableUpdateItemConditionallyAtKeyTests {
         )
 
         do {
-            try await table.conditionallyUpdateItem(forKey: key, updatedItemProvider: self.updatedItemProvider)
+            try await table.retryingUpdateItem(forKey: key, updatedItemProvider: self.updatedItemProvider)
 
             Issue.record("Expected concurrency error not thrown.")
         } catch DynamoDBTableError.conditionalCheckFailed {
