@@ -1569,4 +1569,64 @@ struct InMemoryDynamoDBCompositePrimaryKeyTableTests {
         #expect(databaseItem2.rowValue.thirdly == secondRetrievedItem.rowValue.thirdly)
         #expect(databaseItem2.rowValue.fourthly == secondRetrievedItem.rowValue.fourthly)
     }
+
+    @Test
+    func retryingTransactWriteExceedsTransactionSizeLimit() async throws {
+        let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
+
+        let keys = (0..<101).map { i in
+            StandardCompositePrimaryKey(partitionKey: "pk\(i)", sortKey: "sk\(i)")
+        }
+
+        do {
+            try await table.retryingTransactWrite(
+                forKeys: keys
+            ) { key, _ -> StandardWriteEntry<TestTypeA>? in
+                let payload = TestTypeA(firstly: "f", secondly: "s")
+                return .insert(new: StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload))
+            }
+
+            Issue.record("Expected error not thrown.")
+        } catch DynamoDBTableError.itemCollectionSizeLimitExceeded(let attemptedSize, let maximumSize) {
+            #expect(attemptedSize == 101)
+            #expect(maximumSize == 100)
+        } catch {
+            Issue.record("Unexpected exception: \(error)")
+        }
+    }
+
+    @Test
+    func retryingTransactWriteWithConstraintsExceedsTransactionSizeLimit() async throws {
+        let table: DynamoDBCompositePrimaryKeyTable = InMemoryDynamoDBCompositePrimaryKeyTable()
+
+        let keys = (0..<50).map { i in
+            StandardCompositePrimaryKey(partitionKey: "pk\(i)", sortKey: "sk\(i)")
+        }
+
+        let constraints: [StandardTransactionConstraintEntry<TestTypeA>] = (0..<51).map { i in
+            let key = StandardCompositePrimaryKey(partitionKey: "cpk\(i)", sortKey: "csk\(i)")
+            let item = StandardTypedDatabaseItem.newItem(
+                withKey: key,
+                andValue: TestTypeA(firstly: "f", secondly: "s")
+            )
+            return .required(existing: item)
+        }
+
+        do {
+            try await table.retryingTransactWrite(
+                forKeys: keys,
+                constraints: constraints
+            ) { key, _ -> StandardWriteEntry<TestTypeA>? in
+                let payload = TestTypeA(firstly: "f", secondly: "s")
+                return .insert(new: StandardTypedDatabaseItem.newItem(withKey: key, andValue: payload))
+            }
+
+            Issue.record("Expected error not thrown.")
+        } catch DynamoDBTableError.itemCollectionSizeLimitExceeded(let attemptedSize, let maximumSize) {
+            #expect(attemptedSize == 101)
+            #expect(maximumSize == 100)
+        } catch {
+            Issue.record("Unexpected exception: \(error)")
+        }
+    }
 }
