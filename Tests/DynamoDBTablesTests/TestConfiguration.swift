@@ -60,17 +60,6 @@ enum TestQueryableTypes {
     case testTypeB(StandardTypedDatabaseItem<TestTypeB>)
 }
 
-extension TestQueryableTypes: BatchCapableReturnType {
-    func getItemKey() -> CompositePrimaryKey<StandardPrimaryKeyAttributes> {
-        switch self {
-        case let .testTypeA(databaseItem):
-            databaseItem.compositePrimaryKey
-        case let .testTypeB(databaseItem):
-            databaseItem.compositePrimaryKey
-        }
-    }
-}
-
 typealias TestTypeAWriteEntry = StandardWriteEntry<TestTypeA>
 typealias TestTypeBWriteEntry = StandardWriteEntry<TestTypeB>
 typealias TestTypeAStandardTransactionConstraintEntry = StandardTransactionConstraintEntry<TestTypeA>

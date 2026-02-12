@@ -93,7 +93,7 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
             return []
         }
 
-        let (hasDiagnostics, handleCases) = self.getCases(
+        let (hasDiagnostics, handleCases, getItemKeyCases) = self.getCases(
             caseMembers: caseMembers,
             context: context,
             databaseItemType: databaseItemType
@@ -103,13 +103,13 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
             return []
         }
 
-        let type = TypeSyntax(
+        let polymorphicType = TypeSyntax(
             extendedGraphemeClusterLiteral: requiresProtocolConformance
                 ? "\(type.trimmed): \(Attributes.protocolName) "
                 : "\(type.trimmed) "
         )
         let extensionDecl = try ExtensionDeclSyntax(
-            extendedType: type,
+            extendedType: polymorphicType,
             memberBlockBuilder: {
                 try TypeAliasDeclSyntax("typealias AttributesType = StandardPrimaryKeyAttributes")
                 try TypeAliasDeclSyntax("typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes")
@@ -129,19 +129,44 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
             }
         )
 
-        return [extensionDecl]
+        let batchCapableExtensionDecl = try self.batchCapableExtension(
+            type: type,
+            getItemKeyCases: getItemKeyCases
+        )
+
+        return [extensionDecl, batchCapableExtensionDecl]
     }
 }
 
 extension PolymorphicOperationReturnTypeMacro {
+    private static func batchCapableExtension(
+        type: some TypeSyntaxProtocol,
+        getItemKeyCases: SwitchCaseListSyntax
+    ) throws -> ExtensionDeclSyntax {
+        let batchCapableType = TypeSyntax(
+            extendedGraphemeClusterLiteral: "\(type.trimmed): BatchCapableReturnType "
+        )
+        return try ExtensionDeclSyntax(
+            extendedType: batchCapableType,
+            memberBlockBuilder: {
+                try FunctionDeclSyntax(
+                    "func getItemKey() -> CompositePrimaryKey<AttributesType>"
+                ) {
+                    SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: getItemKeyCases)
+                }
+            }
+        )
+    }
+
     private static func getCases(
         caseMembers: [EnumCaseDeclSyntax],
         context: some MacroExpansionContext,
         databaseItemType: String
     )
-        -> (hasDiagnostics: Bool, handleCases: ArrayElementListSyntax)
+        -> (hasDiagnostics: Bool, handleCases: ArrayElementListSyntax, getItemKeyCases: SwitchCaseListSyntax)
     {
         var handleCases: ArrayElementListSyntax = []
+        var getItemKeyCases: SwitchCaseListSyntax = []
         var hasDiagnostics = false
         for caseMember in caseMembers {
             for element in caseMember.elements {
@@ -189,9 +214,18 @@ extension PolymorphicOperationReturnTypeMacro {
                 )
 
                 handleCases.append(handleCaseSyntax)
+
+                let getItemKeyCaseSyntax = SwitchCaseListSyntax.Element(
+                    """
+                    case let .\(element.name)(databaseItem):
+                        return databaseItem.compositePrimaryKey
+                    """
+                )
+
+                getItemKeyCases.append(getItemKeyCaseSyntax)
             }
         }
 
-        return (hasDiagnostics, handleCases)
+        return (hasDiagnostics, handleCases, getItemKeyCases)
     }
 }
