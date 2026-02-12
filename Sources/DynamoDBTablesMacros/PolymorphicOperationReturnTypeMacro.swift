@@ -129,10 +129,24 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
             }
         )
 
+        let batchCapableExtensionDecl = try self.batchCapableExtension(
+            type: type,
+            getItemKeyCases: getItemKeyCases
+        )
+
+        return [extensionDecl, batchCapableExtensionDecl]
+    }
+}
+
+extension PolymorphicOperationReturnTypeMacro {
+    private static func batchCapableExtension(
+        type: some TypeSyntaxProtocol,
+        getItemKeyCases: SwitchCaseListSyntax
+    ) throws -> ExtensionDeclSyntax {
         let batchCapableType = TypeSyntax(
             extendedGraphemeClusterLiteral: "\(type.trimmed): BatchCapableReturnType "
         )
-        let batchCapableExtensionDecl = try ExtensionDeclSyntax(
+        return try ExtensionDeclSyntax(
             extendedType: batchCapableType,
             memberBlockBuilder: {
                 try FunctionDeclSyntax(
@@ -142,12 +156,8 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
                 }
             }
         )
-
-        return [extensionDecl, batchCapableExtensionDecl]
     }
-}
 
-extension PolymorphicOperationReturnTypeMacro {
     private static func getCases(
         caseMembers: [EnumCaseDeclSyntax],
         context: some MacroExpansionContext,

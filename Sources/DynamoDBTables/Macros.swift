@@ -35,7 +35,8 @@ public macro PolymorphicTransactionConstraintEntry() =
 
 @attached(
     extension,
-    conformances: PolymorphicOperationReturnType, BatchCapableReturnType,
+    conformances: PolymorphicOperationReturnType,
+    BatchCapableReturnType,
     names: named(AttributesType),
     named(TimeToLiveAttributesType),
     named(types),
