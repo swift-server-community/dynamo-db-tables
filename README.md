@@ -20,14 +20,14 @@ DynamoDBTables is a fork of [smoke-dynamodb](https://github.com/amzn/smoke-dynam
 
 ## Features
 
-- **Strongly typed rows** — `Codable` models with automatic serialization
-- **Optimistic concurrency** — automatic row versioning and conditional writes
-- **Polymorphic tables** — store and query heterogeneous item types with `@PolymorphicOperationReturnType`
-- **Transactions** — atomic multi-item writes with constraint support
-- **Retrying operations** — automatic retry on concurrency conflicts
-- **Historical rows** — append-only audit trails alongside mutable state
-- **TTL support** — per-item time-to-live timestamps
-- **Testable** — in-memory table implementations for unit testing
+- ✅ **Strongly typed rows** — `Codable` models with automatic serialization
+- ✅ **Optimistic concurrency** — automatic row versioning and conditional writes
+- ✅ **Polymorphic tables** — support single table designs - store and query heterogeneous item types
+- ✅ **Transactions** — atomic multi-item writes with constraint support
+- ✅ **Retrying operations** — automatic retry on concurrency conflicts
+- ✅ **Historical rows** — append-only audit trails alongside mutable state
+- ✅ **TTL support** — per-item time-to-live timestamps
+- ✅ **Testable** — in-memory table implementations for unit testing
 
 ## Documentation
 
