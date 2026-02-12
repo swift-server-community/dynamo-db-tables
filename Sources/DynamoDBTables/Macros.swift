@@ -35,10 +35,11 @@ public macro PolymorphicTransactionConstraintEntry() =
 
 @attached(
     extension,
-    conformances: PolymorphicOperationReturnType,
+    conformances: PolymorphicOperationReturnType, BatchCapableReturnType,
     names: named(AttributesType),
     named(TimeToLiveAttributesType),
-    named(types)
+    named(types),
+    named(getItemKey)
 )
 public macro PolymorphicOperationReturnType(databaseItemType: String = "StandardTypedDatabaseItem") =
     #externalMacro(

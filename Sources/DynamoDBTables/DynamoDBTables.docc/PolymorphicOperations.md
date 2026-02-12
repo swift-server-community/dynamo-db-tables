@@ -20,7 +20,7 @@ enum AccountItem {
 }
 ```
 
-The macro generates the conformance to `PolymorphicOperationReturnType`, enabling the enum to be used with `polymorphicQuery`:
+The macro generates conformances to both `PolymorphicOperationReturnType` and `BatchCapableReturnType`, enabling the enum to be used with `polymorphicQuery` and `polymorphicGetItems`:
 
 ```swift
 let items: [AccountItem] = try await table.polymorphicQuery(
@@ -37,20 +37,11 @@ for item in items {
 }
 ```
 
-### BatchCapableReturnType
+### polymorphicGetItems
 
-To use `polymorphicGetItems`, the enum must also conform to `BatchCapableReturnType`:
+Batch-get multiple items by key, with each item decoded into the correct enum case:
 
 ```swift
-extension AccountItem: BatchCapableReturnType {
-    func getItemKey() -> StandardCompositePrimaryKey {
-        switch self {
-        case .customer(let item): item.compositePrimaryKey
-        case .order(let item): item.compositePrimaryKey
-        }
-    }
-}
-
 let batch: [StandardCompositePrimaryKey: AccountItem] =
     try await table.polymorphicGetItems(forKeys: [key1, key2])
 ```
