@@ -29,6 +29,10 @@ DynamoDBTables is a fork of [smoke-dynamodb](https://github.com/amzn/smoke-dynam
 - **TTL support** — per-item time-to-live timestamps
 - **Testable** — in-memory table implementations for unit testing
 
+## Documentation
+
+Full documentation is available on the [Swift Package Index](https://swiftpackageindex.com/swift-server-community/dynamo-db-tables/documentation/dynamodbtables).
+
 ## Installation
 
 Add DynamoDBTables to your `Package.swift`:
@@ -46,7 +50,7 @@ dependencies: [
 )
 ```
 
-## Quick Example
+## Basic Example
 
 ```swift
 import DynamoDBTables
@@ -69,10 +73,6 @@ if let retrieved: StandardTypedDatabaseItem<Customer> = try await table.getItem(
     print(retrieved.rowValue.name)  // "Alice"
 }
 ```
-
-## Documentation
-
-Full documentation is available on the [Swift Package Index](https://swiftpackageindex.com/swift-server-community/dynamo-db-tables/documentation/dynamodbtables).
 
 ## License
 
