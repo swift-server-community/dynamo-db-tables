@@ -24,9 +24,7 @@
 //  DynamoDBTables
 //
 
-#if canImport(Darwin)
 import Foundation
-#endif
 
 /// Type alias for a retry interval.
 public typealias RetryInterval = UInt32

@@ -24,9 +24,7 @@
 //  DynamoDBTables
 //
 
-#if canImport(Darwin)
 import Foundation
-#endif
 
 public struct RowStatus: Sendable, Codable {
     public let rowVersion: Int

@@ -25,10 +25,7 @@
 //
 
 import AWSDynamoDB
-
-#if canImport(Darwin)
 import Foundation
-#endif
 
 struct InternalSingleValueDecodingContainer {
     let codingPath: [CodingKey]

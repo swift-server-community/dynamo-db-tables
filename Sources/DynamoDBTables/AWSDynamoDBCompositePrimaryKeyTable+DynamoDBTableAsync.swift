@@ -25,11 +25,8 @@
 //
 
 import AWSDynamoDB
-import Logging
-
-#if canImport(Darwin)
 import Foundation
-#endif
+import Logging
 
 /// DynamoDBTable conformance async functions
 extension GenericAWSDynamoDBCompositePrimaryKeyTable {
