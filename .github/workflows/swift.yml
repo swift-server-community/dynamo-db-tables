@@ -31,7 +31,7 @@ jobs:
       - name: Generate compiler log
         run: swift build -v 2>&1 | tee build.log
       - name: SwiftLint unused imports
-        run: swiftlint analyze --strict --compiler-log-path build.log
+        run: swiftlint analyze --strict --quiet --compiler-log-path build.log
   BuildAndTest:
     name: Image ${{ matrix.image }}
     strategy:
