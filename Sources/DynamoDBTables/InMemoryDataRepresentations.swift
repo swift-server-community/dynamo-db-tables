@@ -20,8 +20,9 @@
 // MARK: - InMemory Data Representations
 
 @preconcurrency import AWSDynamoDB
+
 #if canImport(Darwin)
-    import Foundation
+import Foundation
 #endif
 
 /**

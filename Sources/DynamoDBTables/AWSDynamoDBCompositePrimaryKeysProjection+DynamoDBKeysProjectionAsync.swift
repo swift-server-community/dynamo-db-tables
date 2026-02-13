@@ -25,10 +25,11 @@
 //
 
 import AWSDynamoDB
-#if canImport(Darwin)
-    import Foundation
-#endif
 import Logging
+
+#if canImport(Darwin)
+import Foundation
+#endif
 
 /// DynamoDBKeysProjection conformance async functions
 extension AWSDynamoDBCompositePrimaryKeysProjection {

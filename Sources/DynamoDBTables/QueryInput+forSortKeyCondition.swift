@@ -25,8 +25,9 @@
 //
 
 import AWSDynamoDB
+
 #if canImport(Darwin)
-    import Foundation
+import Foundation
 #endif
 
 extension QueryInput {

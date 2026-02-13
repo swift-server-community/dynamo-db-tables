@@ -25,7 +25,7 @@
 //
 
 #if canImport(Darwin)
-    import Foundation
+import Foundation
 #endif
 
 public struct RowStatus: Sendable, Codable {

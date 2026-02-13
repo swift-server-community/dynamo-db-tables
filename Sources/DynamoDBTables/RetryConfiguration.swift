@@ -25,7 +25,7 @@
 //
 
 #if canImport(Darwin)
-    import Foundation
+import Foundation
 #endif
 
 /// Type alias for a retry interval.
