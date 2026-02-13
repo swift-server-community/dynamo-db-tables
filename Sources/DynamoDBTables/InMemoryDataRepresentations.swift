@@ -20,7 +20,9 @@
 // MARK: - InMemory Data Representations
 
 @preconcurrency import AWSDynamoDB
-import Foundation
+#if canImport(Darwin)
+    import Foundation
+#endif
 
 /**
  In-memory Sendable representations of database rows and their metadata, allowing rows to be stored `InMemoryDynamoDBCompositePrimaryKeyTableStore`

@@ -25,7 +25,9 @@
 //
 
 import AWSDynamoDB
-import Foundation
+#if canImport(Darwin)
+    import Foundation
+#endif
 import Logging
 
 /// DynamoDBTable conformance async functions

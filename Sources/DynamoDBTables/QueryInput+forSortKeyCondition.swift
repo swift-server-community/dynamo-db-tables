@@ -25,7 +25,9 @@
 //
 
 import AWSDynamoDB
-import Foundation
+#if canImport(Darwin)
+    import Foundation
+#endif
 
 extension QueryInput {
     static func forSortKeyCondition<AttributesType>(
