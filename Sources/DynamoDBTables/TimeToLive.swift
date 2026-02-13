@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-
 public protocol TimeToLiveAttributes {
     static var timeToLiveAttributeName: String { get }
 }

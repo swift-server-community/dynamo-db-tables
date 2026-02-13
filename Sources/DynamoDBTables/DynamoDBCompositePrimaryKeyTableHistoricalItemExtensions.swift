@@ -25,7 +25,6 @@
 //  DynamoDBTables
 //
 
-
 extension DynamoDBCompositePrimaryKeyTable {
     /**
      * Historical items exist across multiple rows. This method provides an interface to record all

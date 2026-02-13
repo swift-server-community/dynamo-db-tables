@@ -25,7 +25,6 @@
 //  DynamoDBTables
 //
 
-
 public struct InMemoryDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimaryKeysProjection {
     let keysWrapper: InMemoryDynamoDBCompositePrimaryKeysProjectionStore
 

@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-
 extension DynamoDBCompositePrimaryKeyTable {
     /**
       Operations will attempt to update the primary item, repeatedly calling the

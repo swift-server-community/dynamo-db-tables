@@ -25,7 +25,6 @@
 //  DynamoDBTables
 //
 
-
 extension TypedTTLDatabaseItem {
     public var rowTypeIdentifier: String {
         getTypeRowIdentifier(type: RowType.self)

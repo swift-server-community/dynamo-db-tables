@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-
 struct TableKey: Hashable {
     let partitionKey: String
     let sortKey: String

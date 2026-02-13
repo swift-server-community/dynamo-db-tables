@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-
 /// Protocol for a item payload wrapper that declares an item version.
 /// Primarily required to allow the constrained extension below.
 public protocol RowWithItemVersionProtocol {

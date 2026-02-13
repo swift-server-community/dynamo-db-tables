@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-
 public protocol IndexIdentity {
     static var codingKey: RowWithIndexCodingKey { get }
     static var identity: String { get }

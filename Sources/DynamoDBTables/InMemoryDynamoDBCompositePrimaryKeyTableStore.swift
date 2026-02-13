@@ -25,7 +25,6 @@
 //  DynamoDBTables
 //
 
-
 // MARK: - Store implementation
 
 actor InMemoryDynamoDBCompositePrimaryKeyTableStore {

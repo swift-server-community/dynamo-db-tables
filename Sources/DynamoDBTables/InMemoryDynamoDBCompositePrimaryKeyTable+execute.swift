@@ -14,7 +14,6 @@
 //  DynamoDBTables
 //
 
-
 // MARK: - Execute implementations
 
 extension InMemoryDynamoDBCompositePrimaryKeyTable {

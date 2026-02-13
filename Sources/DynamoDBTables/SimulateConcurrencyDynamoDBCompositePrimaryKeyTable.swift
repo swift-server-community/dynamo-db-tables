@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-
 private let maxStatementLength = 8192
 
 /**

@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-
 public protocol CustomRowTypeIdentifier {
     static var rowTypeIdentifier: String? { get }
 }

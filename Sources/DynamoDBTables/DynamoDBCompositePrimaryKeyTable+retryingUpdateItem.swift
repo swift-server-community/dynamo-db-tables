@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-
 extension DynamoDBCompositePrimaryKeyTable {
     /**
      Method to update an item at the specified key, retrying on concurrency errors.

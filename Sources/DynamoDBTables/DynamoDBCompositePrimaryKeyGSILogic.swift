@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-
 // Provide a default `PolymorphicWriteEntry` for the `DynamoDBCompositePrimaryKeyGSILogic` for backwards compatibility
 public struct NoOpPolymorphicWriteEntry<AttributesType: PrimaryKeyAttributes>: PolymorphicWriteEntry {
     public var compositePrimaryKey: CompositePrimaryKey<AttributesType> {

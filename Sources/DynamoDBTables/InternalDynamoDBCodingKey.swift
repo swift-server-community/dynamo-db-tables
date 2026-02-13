@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-
 struct InternalDynamoDBCodingKey: CodingKey {
     var stringValue: String
     var intValue: Int?

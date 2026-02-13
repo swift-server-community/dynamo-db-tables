@@ -17,7 +17,6 @@
 //  DynamoDBTables
 //
 
-
 extension DynamoDBCompositePrimaryKeyTable {
     /**
      Method to perform a transaction for a set of keys, where each write entry can optionally produce a

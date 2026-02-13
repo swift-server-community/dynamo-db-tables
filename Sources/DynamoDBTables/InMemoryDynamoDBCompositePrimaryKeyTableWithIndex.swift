@@ -25,7 +25,6 @@
 //  DynamoDBTables
 //
 
-
 private let maxStatementLength = 8192
 
 public enum GSIError: Error {

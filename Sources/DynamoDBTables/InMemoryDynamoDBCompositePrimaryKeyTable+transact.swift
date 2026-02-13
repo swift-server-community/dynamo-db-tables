@@ -14,7 +14,6 @@
 //  DynamoDBTables
 //
 
-
 // MARK: - Transaction implementations
 
 extension InMemoryDynamoDBCompositePrimaryKeyTable {

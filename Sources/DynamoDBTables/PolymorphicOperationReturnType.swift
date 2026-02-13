@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-
 public protocol BatchCapableReturnType {
     associatedtype AttributesType: PrimaryKeyAttributes
 
