@@ -24,8 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-
 // Conforming types are provided by the Table implementation to convert a `WriteEntry` into
 // something the table can use to perform the write.
 public protocol PolymorphicWriteEntryTransform {

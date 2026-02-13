@@ -15,7 +15,6 @@
 //
 
 @preconcurrency import AWSDynamoDB
-import Foundation
 
 // MARK: - Transforms
 

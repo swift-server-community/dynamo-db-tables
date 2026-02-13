@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import Foundation
 
 public protocol IndexIdentity {
     static var codingKey: RowWithIndexCodingKey { get }
@@ -44,7 +43,6 @@ public struct RowWithIndexCodingKey: CodingKey {
         nil
     }
 
-    static let index = InternalDynamoDBCodingKey(stringValue: "super")!
 }
 
 public func createRowWithIndexCodingKey(stringValue: String) -> RowWithIndexCodingKey {

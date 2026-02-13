@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import Foundation
 
 /// An extension for TypedTTLDatabaseItem that is constrained by the RowType conforming
 /// to RowWithItemVersionProtocol

@@ -7,11 +7,36 @@ on:
     branches: [ main ]
       
 jobs:
+  BuildTestAndLint:
+    name: Image ${{ matrix.image }}
+    strategy:
+      matrix:
+        image: ["swift:6.2.0-noble"]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y libssl-dev curl unzip
+      - uses: actions/checkout@v6
+      - name: Build
+        run: swift build -c release -Xswiftc -strict-concurrency=complete
+      - name: Run tests
+        run: swift test
+      - name: Install SwiftLint
+        run: |
+          curl -sL https://github.com/realm/SwiftLint/releases/download/0.63.2/swiftlint_linux_amd64.zip -o swiftlint.zip
+          unzip -o swiftlint.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/swiftlint
+      - name: Generate compiler log
+        run: swift build -v 2>&1 | tee build.log
+      - name: SwiftLint unused imports
+        run: swiftlint analyze --strict --compiler-log-path build.log
   BuildAndTest:
     name: Image ${{ matrix.image }}
     strategy:
       matrix:
-        image: ["swift:6.2.0-noble", "swift:6.2.0-jammy", "swift:6.1.2-noble"]
+        image: ["swift:6.2.0-jammy", "swift:6.1.2-noble"]
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.image }}

@@ -18,7 +18,6 @@
 //
 
 import AWSDynamoDB
-import Foundation
 
 // MARK: - Equatable Conformances for AWS DynamoDB Input Types
 

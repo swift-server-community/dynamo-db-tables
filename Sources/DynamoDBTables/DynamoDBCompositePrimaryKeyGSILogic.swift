@@ -24,8 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-import Foundation
 
 // Provide a default `PolymorphicWriteEntry` for the `DynamoDBCompositePrimaryKeyGSILogic` for backwards compatibility
 public struct NoOpPolymorphicWriteEntry<AttributesType: PrimaryKeyAttributes>: PolymorphicWriteEntry {

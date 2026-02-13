@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import Foundation
 
 struct InternalDynamoDBCodingKey: CodingKey {
     var stringValue: String

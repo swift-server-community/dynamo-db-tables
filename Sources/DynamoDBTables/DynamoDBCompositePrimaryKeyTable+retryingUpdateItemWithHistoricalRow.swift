@@ -24,9 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-import Foundation
-import Logging
 
 extension DynamoDBCompositePrimaryKeyTable {
     /**

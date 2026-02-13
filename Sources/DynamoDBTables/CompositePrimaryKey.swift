@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import Foundation
 
 public protocol PrimaryKeyAttributes {
     static var partitionKeyAttributeName: String { get }

@@ -25,8 +25,6 @@
 //
 
 import AWSDynamoDB
-import Foundation
-import Logging
 
 // ExecuteStatement has a maximum of 50 of decomposed read operations per request
 private let maximumKeysPerExecuteStatement = 50

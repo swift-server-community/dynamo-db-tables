@@ -24,8 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-import Foundation
 
 public protocol BatchCapableReturnType {
     associatedtype AttributesType: PrimaryKeyAttributes
@@ -47,7 +45,6 @@ public struct PolymorphicOperationReturnOption<
     TimeToLiveAttributesType: TimeToLiveAttributes
 >: Sendable {
     private let decodingPayloadHandler: @Sendable (Decoder) throws -> ReturnType
-    private let typeConvertingPayloadHander: @Sendable (Any) throws -> ReturnType
 
     public init<RowType: Codable>(
         _ payloadHandler:
@@ -62,26 +59,7 @@ public struct PolymorphicOperationReturnOption<
             return payloadHandler(typedTTLDatabaseItem)
         }
 
-        @Sendable
-        func newTypeConvertingPayloadHandler(input: Any) throws -> ReturnType {
-            guard
-                let typedTTLDatabaseItem = input
-                    as? TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>
-            else {
-                let description =
-                    "Expected to use item type \(TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>.self)."
-                let context = DecodingError.Context(codingPath: [], debugDescription: description)
-                throw DecodingError.typeMismatch(
-                    TypedTTLDatabaseItem<AttributesType, RowType, TimeToLiveAttributesType>.self,
-                    context
-                )
-            }
-
-            return payloadHandler(typedTTLDatabaseItem)
-        }
-
         self.decodingPayloadHandler = newDecodingPayloadHandler
-        self.typeConvertingPayloadHander = newTypeConvertingPayloadHandler
     }
 
     func getReturnType(from decoder: Decoder) throws -> ReturnType {

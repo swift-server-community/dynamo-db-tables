@@ -25,8 +25,6 @@
 //  DynamoDBTables
 //
 
-@preconcurrency import AWSDynamoDB
-import Foundation
 
 extension TypedTTLDatabaseItem {
     public var rowTypeIdentifier: String {

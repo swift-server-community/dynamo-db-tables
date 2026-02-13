@@ -14,8 +14,6 @@
 //  DynamoDBTables
 //
 
-@preconcurrency import AWSDynamoDB
-import Foundation
 
 // MARK: - Execute implementations
 

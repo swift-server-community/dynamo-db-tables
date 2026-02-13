@@ -14,7 +14,6 @@
 //  DynamoDBTablesMacros
 //
 
-import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
 

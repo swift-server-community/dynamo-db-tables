@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import Foundation
 
 struct TableKey: Hashable {
     let partitionKey: String

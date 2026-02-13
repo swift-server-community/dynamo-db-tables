@@ -25,8 +25,6 @@
 //
 
 import AWSDynamoDB
-import ClientRuntime
-import Foundation
 
 /// Enumeration of the errors that can be thrown by a DynamoDBTable.
 public enum DynamoDBTableError: Error {

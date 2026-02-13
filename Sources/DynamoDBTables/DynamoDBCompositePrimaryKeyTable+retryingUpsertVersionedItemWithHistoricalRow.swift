@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import Foundation
 
 extension DynamoDBCompositePrimaryKeyTable {
     /**

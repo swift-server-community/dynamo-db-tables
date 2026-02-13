@@ -25,8 +25,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-import Foundation
 
 private let maxStatementLength = 8192
 

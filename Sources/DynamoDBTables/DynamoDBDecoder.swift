@@ -25,7 +25,6 @@
 //
 
 import AWSDynamoDB
-import Foundation
 
 public class DynamoDBDecoder {
     let attributeNameTransform: ((String) -> String)?

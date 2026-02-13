@@ -51,16 +51,6 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         andValue: TestTypeA(firstly: "test3", secondly: "test4")
     )
 
-    private let testKey1 = CompositePrimaryKey<StandardPrimaryKeyAttributes>(
-        partitionKey: "partition1",
-        sortKey: "sort1"
-    )
-
-    private let testKey2 = CompositePrimaryKey<StandardPrimaryKeyAttributes>(
-        partitionKey: "partition2",
-        sortKey: "sort2"
-    )
-
     // MARK: - Helper Methods
 
     private func createTable(

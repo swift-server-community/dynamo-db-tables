@@ -25,7 +25,6 @@
 //
 
 import AWSDynamoDB
-import Foundation
 
 struct InternalKeyedDecodingContainer<K: CodingKey>: KeyedDecodingContainerProtocol {
     typealias Key = K

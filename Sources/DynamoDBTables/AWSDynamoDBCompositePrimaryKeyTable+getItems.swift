@@ -25,7 +25,6 @@
 //
 
 import AWSDynamoDB
-import Foundation
 import Logging
 
 // BatchGetItem has a maximum of 100 of items per request
