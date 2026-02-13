@@ -20,6 +20,7 @@
 // MARK: - InMemory Data Representations
 
 @preconcurrency import AWSDynamoDB
+// swiftlint:disable:next unused_import
 import Foundation
 
 /**

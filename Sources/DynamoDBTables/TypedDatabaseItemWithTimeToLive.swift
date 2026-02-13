@@ -24,6 +24,7 @@
 //  DynamoDBTables
 //
 
+// swiftlint:disable:next unused_import
 import Foundation
 
 public struct RowStatus: Sendable, Codable {
