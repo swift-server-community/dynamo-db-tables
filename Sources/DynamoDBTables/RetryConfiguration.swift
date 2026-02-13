@@ -24,6 +24,7 @@
 //  DynamoDBTables
 //
 
+// swiftlint:disable:next unused_import
 import Foundation
 
 /// Type alias for a retry interval.
