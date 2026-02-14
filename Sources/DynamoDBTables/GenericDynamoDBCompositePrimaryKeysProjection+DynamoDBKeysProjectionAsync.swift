@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeysProjection+DynamoDBKeysProjectionAsync.swift
+//  GenericDynamoDBCompositePrimaryKeysProjection+DynamoDBKeysProjectionAsync.swift
 //  DynamoDBTables
 //
 
@@ -30,7 +30,7 @@ import Foundation
 import Logging
 
 /// DynamoDBKeysProjection conformance async functions
-extension AWSDynamoDBCompositePrimaryKeysProjection {
+extension GenericDynamoDBCompositePrimaryKeysProjection {
     public func query<AttributesType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?
