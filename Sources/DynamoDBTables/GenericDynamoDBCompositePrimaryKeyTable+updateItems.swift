@@ -148,7 +148,9 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             return DynamoDBClientTypes.ParameterizedStatement(statement: statement)
         }
 
-        let transactionInput = DynamoDBModel.ExecuteTransactionInput(transactStatements: entryStatements + requiredItemsStatements)
+        let transactionInput = DynamoDBModel.ExecuteTransactionInput(
+            transactStatements: entryStatements + requiredItemsStatements
+        )
 
         _ = try await dynamodb.executeTransaction(input: transactionInput)
     }

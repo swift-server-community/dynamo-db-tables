@@ -183,7 +183,11 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
         let writeEntries = getWriteEntriesWithSomeLargeSortKeys()
 
         // First call to transaction fails
-        when(expectations.batchExecuteStatement(input: .any), times: .unbounded, return: DynamoDBModel.BatchExecuteStatementOutput())
+        when(
+            expectations.batchExecuteStatement(input: .any),
+            times: .unbounded,
+            return: DynamoDBModel.BatchExecuteStatementOutput()
+        )
         when(expectations.putItem(input: .any), times: .unbounded, complete: .withSuccess)
         when(expectations.deleteItem(input: .any), times: .unbounded, complete: .withSuccess)
 

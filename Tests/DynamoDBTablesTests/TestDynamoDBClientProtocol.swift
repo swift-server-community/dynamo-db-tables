@@ -45,6 +45,8 @@ protocol TestDynamoDBClientProtocol: DynamoDBClientProtocol {
     func batchExecuteStatement(
         input: DynamoDBModel.BatchExecuteStatementInput
     ) async throws -> DynamoDBModel.BatchExecuteStatementOutput
-    func executeStatement(input: DynamoDBModel.ExecuteStatementInput) async throws -> DynamoDBModel.ExecuteStatementOutput
+    func executeStatement(
+        input: DynamoDBModel.ExecuteStatementInput
+    ) async throws -> DynamoDBModel.ExecuteStatementOutput
     func executeTransaction(input: DynamoDBModel.ExecuteTransactionInput) async throws
 }
