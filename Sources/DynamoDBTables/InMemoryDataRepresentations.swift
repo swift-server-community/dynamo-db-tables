@@ -20,6 +20,7 @@
 // MARK: - InMemory Data Representations
 
 @preconcurrency import AWSDynamoDB
+// swiftlint:disable:next unused_import
 import Foundation
 
 /**
@@ -112,10 +113,6 @@ struct InMemoryDatabaseItemWithKey<AttributesType: PrimaryKeyAttributes>: Sendab
     var compositePrimaryKey: CompositePrimaryKey<AttributesType>
     var inMemoryDatabaseItem: InMemoryDatabaseItem
 
-    var createDate: Date {
-        self.inMemoryDatabaseItem.metadata.createDate
-    }
-
     var rowStatus: RowStatus {
         self.inMemoryDatabaseItem.metadata.rowStatus
     }
@@ -143,19 +140,6 @@ enum InMemoryWriteEntry<AttributesType: PrimaryKeyAttributes>: Sendable {
     case insert(new: InMemoryDatabaseItemWithKey<AttributesType>)
     case deleteAtKey(key: CompositePrimaryKey<AttributesType>)
     case deleteItem(existing: InMemoryDatabaseItemWithKey<AttributesType>)
-
-    var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
-        switch self {
-        case .update(let new, existing: _):
-            new.compositePrimaryKey
-        case let .insert(new: new):
-            new.compositePrimaryKey
-        case let .deleteAtKey(key: key):
-            key
-        case let .deleteItem(existing: existing):
-            existing.compositePrimaryKey
-        }
-    }
 }
 
 extension WriteEntry {
@@ -175,13 +159,6 @@ extension WriteEntry {
 
 enum InMemoryTransactionConstraintEntry<AttributesType: PrimaryKeyAttributes>: Sendable {
     case required(existing: InMemoryDatabaseItemWithKey<AttributesType>)
-
-    var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
-        switch self {
-        case let .required(existing: existing):
-            existing.compositePrimaryKey
-        }
-    }
 }
 
 extension TransactionConstraintEntry {

@@ -25,8 +25,6 @@
 //
 
 import AWSDynamoDB
-import Foundation
-import Logging
 
 // BatchExecuteStatement has a maximum of 25 statements
 private let maximumUpdatesPerExecuteStatement = 25

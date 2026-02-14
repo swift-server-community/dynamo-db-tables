@@ -25,9 +25,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-import Foundation
-
 // MARK: - Store implementation
 
 actor InMemoryDynamoDBCompositePrimaryKeysProjectionStore {

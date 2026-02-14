@@ -2,7 +2,6 @@
 // swiftlint:disable identifier_name cyclomatic_complexity function_body_length
 
 import AWSDynamoDB
-import ClientRuntime
 import Foundation
 
 public struct Key: CodingKey {

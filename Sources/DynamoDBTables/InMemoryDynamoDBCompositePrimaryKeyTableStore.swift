@@ -25,9 +25,6 @@
 //  DynamoDBTables
 //
 
-@preconcurrency import AWSDynamoDB
-import Foundation
-
 // MARK: - Store implementation
 
 actor InMemoryDynamoDBCompositePrimaryKeyTableStore {

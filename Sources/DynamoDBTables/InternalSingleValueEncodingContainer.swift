@@ -26,7 +26,6 @@
 
 import AWSDynamoDB
 import Foundation
-import Logging
 
 class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
     private(set) var containerValue: ContainerValueType?

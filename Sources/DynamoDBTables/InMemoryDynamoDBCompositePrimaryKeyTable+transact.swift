@@ -14,9 +14,6 @@
 //  DynamoDBTables
 //
 
-@preconcurrency import AWSDynamoDB
-import Foundation
-
 // MARK: - Transaction implementations
 
 extension InMemoryDynamoDBCompositePrimaryKeyTable {

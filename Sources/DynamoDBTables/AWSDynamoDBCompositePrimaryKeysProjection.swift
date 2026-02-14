@@ -25,9 +25,7 @@
 //
 
 import AWSDynamoDB
-import AwsCommonRuntimeKit
 import ClientRuntime
-import Foundation
 import Logging
 import SmithyIdentity
 
@@ -36,11 +34,6 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
     let targetTableName: String
     public let tableConfiguration: AWSDynamoDBTableConfiguration
     let logger: Logging.Logger
-
-    class QueryPaginationResults<AttributesType: PrimaryKeyAttributes> {
-        var items: [CompositePrimaryKey<AttributesType>] = []
-        var exclusiveStartKey: String?
-    }
 
     public init(
         tableName: String,

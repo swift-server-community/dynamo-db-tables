@@ -24,10 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-import Foundation
-import Logging
-
 extension DynamoDBCompositePrimaryKeyTable {
     /**
      Method to update an item at the specified key, retrying on concurrency errors.

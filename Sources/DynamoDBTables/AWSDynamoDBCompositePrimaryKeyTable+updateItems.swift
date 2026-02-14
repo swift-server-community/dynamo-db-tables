@@ -25,7 +25,6 @@
 //
 
 import AWSDynamoDB
-import Foundation
 import Logging
 
 private let millisecondsToNanoSeconds: UInt64 = 1_000_000
@@ -126,17 +125,6 @@ extension GenericAWSDynamoDBCompositePrimaryKeyTable {
             }
 
         return statement
-    }
-
-    private func entryToBatchStatementRequest(
-        _ entry: WriteEntry<some Any, some Any, some Any>
-    ) throws -> DynamoDBClientTypes.BatchStatementRequest {
-        let statement: String = try entryToStatement(entry)
-
-        return DynamoDBClientTypes.BatchStatementRequest(
-            consistentRead: self.tableConfiguration.consistentRead,
-            statement: statement
-        )
     }
 
     private func writeTransactionItems<AttributesType, ItemType, TimeToLiveAttributesType>(

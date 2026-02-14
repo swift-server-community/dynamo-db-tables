@@ -26,7 +26,6 @@
 
 import AWSDynamoDB
 import Foundation
-import Logging
 
 enum AttributeDifference: Equatable {
     case update(path: String, value: String)

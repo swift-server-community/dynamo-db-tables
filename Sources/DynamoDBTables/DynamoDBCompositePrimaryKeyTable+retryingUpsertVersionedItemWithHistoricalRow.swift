@@ -24,8 +24,6 @@
 //  DynamoDBTables
 //
 
-import Foundation
-
 extension DynamoDBCompositePrimaryKeyTable {
     /**
      * This operation provide a mechanism for managing mutable database rows

@@ -24,8 +24,6 @@
 //  DynamoDBTables
 //
 
-import Foundation
-
 public protocol PrimaryKeyAttributes {
     static var partitionKeyAttributeName: String { get }
     static var sortKeyAttributeName: String { get }

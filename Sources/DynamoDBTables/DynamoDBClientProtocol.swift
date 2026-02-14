@@ -18,7 +18,6 @@
 //
 
 import AWSDynamoDB
-import Foundation
 
 /// A protocol that abstracts DynamoDB client operations to enable testability and flexibility.
 ///

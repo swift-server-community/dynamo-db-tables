@@ -25,18 +25,11 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-import Foundation
-
 public struct InMemoryDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimaryKeysProjection {
     let keysWrapper: InMemoryDynamoDBCompositePrimaryKeysProjectionStore
 
     public init(keys: [CompositePrimaryKey<some Any>] = []) {
         self.keysWrapper = InMemoryDynamoDBCompositePrimaryKeysProjectionStore(keys: keys)
-    }
-
-    init(keysWrapper: InMemoryDynamoDBCompositePrimaryKeysProjectionStore) {
-        self.keysWrapper = keysWrapper
     }
 
     public var keys: [TypeErasedCompositePrimaryKey] {

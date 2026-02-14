@@ -24,10 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-import Foundation
-import Logging
-
 extension DynamoDBCompositePrimaryKeyTable {
     /**
       Operations will attempt to update the primary item, repeatedly calling the

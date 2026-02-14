@@ -25,9 +25,7 @@
 //
 
 @preconcurrency import AWSDynamoDB
-import AwsCommonRuntimeKit
 import ClientRuntime
-import Foundation
 import Logging
 import Metrics
 import SmithyIdentity

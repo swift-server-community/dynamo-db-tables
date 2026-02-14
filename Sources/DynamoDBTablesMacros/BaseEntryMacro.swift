@@ -41,8 +41,6 @@ enum BaseEntryDiagnostic<Attributes: CoreMacroAttributes>: String, DiagnosticMes
 
     var severity: DiagnosticSeverity { .error }
 
-    static var obj: String { "" }
-
     var message: String {
         switch self {
         case .notAttachedToEnumDeclaration:
