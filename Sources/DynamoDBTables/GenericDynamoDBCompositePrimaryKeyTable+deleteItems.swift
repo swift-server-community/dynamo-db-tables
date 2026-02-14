@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeyTable+deleteItems.swift
+//  GenericDynamoDBCompositePrimaryKeyTable+deleteItems.swift
 //  DynamoDBTables
 //
 
@@ -30,7 +30,7 @@ import AWSDynamoDB
 private let maximumUpdatesPerExecuteStatement = 25
 
 /// DynamoDBTable conformance updateItems function
-extension GenericAWSDynamoDBCompositePrimaryKeyTable {
+extension GenericDynamoDBCompositePrimaryKeyTable {
     private func deleteChunkedItems(
         _ keys: [CompositePrimaryKey<some Any>]
     ) async throws -> [DynamoDBClientTypes.BatchStatementResponse] {

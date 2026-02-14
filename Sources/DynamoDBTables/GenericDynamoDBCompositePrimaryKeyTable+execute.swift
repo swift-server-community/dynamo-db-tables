@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeyTable+execute.swift
+//  GenericDynamoDBCompositePrimaryKeyTable+execute.swift
 //  DynamoDBTables
 //
 
@@ -30,7 +30,7 @@ import AWSDynamoDB
 private let maximumKeysPerExecuteStatement = 50
 
 /// DynamoDBTable conformance execute function
-extension GenericAWSDynamoDBCompositePrimaryKeyTable {
+extension GenericDynamoDBCompositePrimaryKeyTable {
     private func getStatement(
         partitionKeys: [String],
         attributesFilter: [String]?,

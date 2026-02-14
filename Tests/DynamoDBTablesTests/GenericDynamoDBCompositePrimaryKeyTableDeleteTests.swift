@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeyTableDeleteTests.swift
+//  GenericDynamoDBCompositePrimaryKeyTableDeleteTests.swift
 //  DynamoDBTablesTests
 //
 
@@ -55,8 +55,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
 
     private func createTable(
         with mockClient: MockTestDynamoDBClientProtocol
-    ) -> GenericAWSDynamoDBCompositePrimaryKeyTable<MockTestDynamoDBClientProtocol> {
-        return GenericAWSDynamoDBCompositePrimaryKeyTable(
+    ) -> GenericDynamoDBCompositePrimaryKeyTable<MockTestDynamoDBClientProtocol> {
+        return GenericDynamoDBCompositePrimaryKeyTable(
             tableName: testTableName,
             client: mockClient,
             tableConfiguration: testConfiguration,
@@ -377,7 +377,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         when(expectations.batchExecuteStatement(input: .any), return: expectedOutput)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
-        let table = GenericAWSDynamoDBCompositePrimaryKeyTable(
+        let table = GenericDynamoDBCompositePrimaryKeyTable(
             tableName: testTableName,
             client: mockClient,
             tableConfiguration: inconsistentConfig,

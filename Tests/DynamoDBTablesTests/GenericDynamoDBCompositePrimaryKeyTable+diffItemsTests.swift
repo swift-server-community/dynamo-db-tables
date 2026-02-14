@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeyTable+diffItemsTests.swift
+//  GenericDynamoDBCompositePrimaryKeyTable+diffItemsTests.swift
 //  DynamoDBTablesTests
 //
 
@@ -33,8 +33,8 @@ import Testing
 struct AWSDynamoDBCompositePrimaryKeyTableDiffItemsTests {
     func getTable(
         escapeSingleQuoteInPartiQL: Bool = false
-    ) throws -> GenericAWSDynamoDBCompositePrimaryKeyTable<MockTestDynamoDBClientProtocol> {
-        GenericAWSDynamoDBCompositePrimaryKeyTable(
+    ) throws -> GenericDynamoDBCompositePrimaryKeyTable<MockTestDynamoDBClientProtocol> {
+        GenericDynamoDBCompositePrimaryKeyTable(
             tableName: "DummyTable",
             client: MockTestDynamoDBClientProtocol(),
             tableConfiguration: .init(escapeSingleQuoteInPartiQL: escapeSingleQuoteInPartiQL)
