@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeysProjection.swift
+//  GenericDynamoDBCompositePrimaryKeysProjection.swift
 //  DynamoDBTables
 //
 
@@ -29,8 +29,14 @@ import ClientRuntime
 import Logging
 import SmithyIdentity
 
-public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimaryKeysProjection {
-    let dynamodb: AWSDynamoDB.DynamoDBClient
+public typealias AWSDynamoDBCompositePrimaryKeysProjection = GenericDynamoDBCompositePrimaryKeysProjection<
+    AWSDynamoDB.DynamoDBClient
+>
+
+public struct GenericDynamoDBCompositePrimaryKeysProjection<Client: DynamoDBClientProtocol & Sendable>:
+    DynamoDBCompositePrimaryKeysProjection, Sendable
+{
+    let dynamodb: Client
     let targetTableName: String
     public let tableConfiguration: AWSDynamoDBTableConfiguration
     let logger: Logging.Logger
@@ -42,7 +48,7 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
         httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
         tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
         logger: Logging.Logger? = nil
-    ) throws {
+    ) throws where Client == AWSDynamoDB.DynamoDBClient {
         self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeysProjection")
         let config = try DynamoDBClient.DynamoDBClientConfig(
             awsCredentialIdentityResolver: awsCredentialIdentityResolver,
@@ -58,7 +64,7 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
 
     public init(
         tableName: String,
-        client: AWSDynamoDB.DynamoDBClient,
+        client: Client,
         tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
         logger: Logging.Logger? = nil
     ) {
