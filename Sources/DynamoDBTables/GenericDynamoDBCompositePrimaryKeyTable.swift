@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
 import Logging
 import Metrics
 
@@ -112,8 +111,8 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
                 .createDate.stringValue,
         ]
         let expressionAttributeValues = [
-            ":versionnumber": DynamoDBClientTypes.AttributeValue.n(String(existingItem.rowStatus.rowVersion)),
-            ":creationdate": DynamoDBClientTypes.AttributeValue.s(existingItem.createDate.iso8601),
+            ":versionnumber": DynamoDBModel.AttributeValue.n(String(existingItem.rowStatus.rowVersion)),
+            ":creationdate": DynamoDBModel.AttributeValue.s(existingItem.createDate.iso8601),
         ]
 
         let conditionExpression = "#rowversion = :versionnumber AND #createdate = :creationdate"
@@ -146,7 +145,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     ) throws
         -> DynamoDBModel.BatchGetItemInput
     {
-        let keys = try keys.map { key -> [String: DynamoDBClientTypes.AttributeValue] in
+        let keys = try keys.map { key -> [String: DynamoDBModel.AttributeValue] in
             let attributeValue = try DynamoDBEncoder().encode(key)
 
             if case let .m(keyAttributes) = attributeValue {
@@ -156,7 +155,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             }
         }
 
-        let keysAndAttributes = DynamoDBClientTypes.KeysAndAttributes(
+        let keysAndAttributes = DynamoDBModel.KeysAndAttributes(
             consistentRead: self.tableConfiguration.consistentRead,
             keys: keys
         )
@@ -192,8 +191,8 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
                 .createDate.stringValue,
         ]
         let expressionAttributeValues = [
-            ":versionnumber": DynamoDBClientTypes.AttributeValue.n(String(existingItem.rowStatus.rowVersion)),
-            ":creationdate": DynamoDBClientTypes.AttributeValue.s(existingItem.createDate.iso8601),
+            ":versionnumber": DynamoDBModel.AttributeValue.n(String(existingItem.rowStatus.rowVersion)),
+            ":creationdate": DynamoDBModel.AttributeValue.s(existingItem.createDate.iso8601),
         ]
 
         let conditionExpression = "#rowversion = :versionnumber AND #createdate = :creationdate"

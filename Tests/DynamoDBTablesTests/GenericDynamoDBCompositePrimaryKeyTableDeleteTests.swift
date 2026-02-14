@@ -179,8 +179,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         let existingItems = [testItemA, testItemB]
         let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: [
-                DynamoDBClientTypes.BatchStatementResponse(),
-                DynamoDBClientTypes.BatchStatementResponse(),
+                DynamoDBModel.BatchStatementResponse(),
+                DynamoDBModel.BatchStatementResponse(),
             ]
         )
 
@@ -222,7 +222,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let existingItems = [testItemA]
         let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
-            responses: [DynamoDBClientTypes.BatchStatementResponse()]
+            responses: [DynamoDBModel.BatchStatementResponse()]
         )
 
         when(expectations.batchExecuteStatement(input: .any), return: expectedOutput)
@@ -248,13 +248,13 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         let existingItems = [testItemA, testItemB]
         let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: [
-                DynamoDBClientTypes.BatchStatementResponse(
-                    error: DynamoDBClientTypes.BatchStatementError(
+                DynamoDBModel.BatchStatementResponse(
+                    error: DynamoDBModel.BatchStatementError(
                         code: .conditionalcheckfailed,
                         message: "Version check failed"
                     )
                 ),
-                DynamoDBClientTypes.BatchStatementResponse(),  // Success
+                DynamoDBModel.BatchStatementResponse(),  // Success
             ]
         )
 
@@ -295,10 +295,10 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         }
 
         let firstBatchOutput = DynamoDBModel.BatchExecuteStatementOutput(
-            responses: Array(repeating: DynamoDBClientTypes.BatchStatementResponse(), count: 25)
+            responses: Array(repeating: DynamoDBModel.BatchStatementResponse(), count: 25)
         )
         let secondBatchOutput = DynamoDBModel.BatchExecuteStatementOutput(
-            responses: Array(repeating: DynamoDBClientTypes.BatchStatementResponse(), count: 5)
+            responses: Array(repeating: DynamoDBModel.BatchStatementResponse(), count: 5)
         )
 
         when(expectations.batchExecuteStatement(input: .any), return: firstBatchOutput)
@@ -330,14 +330,14 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         let existingItems = [testItemA, testItemB]
         let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: [
-                DynamoDBClientTypes.BatchStatementResponse(
-                    error: DynamoDBClientTypes.BatchStatementError(
+                DynamoDBModel.BatchStatementResponse(
+                    error: DynamoDBModel.BatchStatementError(
                         code: .resourcenotfound,
                         message: "Item not found"
                     )
                 ),
-                DynamoDBClientTypes.BatchStatementResponse(
-                    error: DynamoDBClientTypes.BatchStatementError(
+                DynamoDBModel.BatchStatementResponse(
+                    error: DynamoDBModel.BatchStatementError(
                         code: .validationerror,
                         message: "Invalid input"
                     )
@@ -369,7 +369,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         let inconsistentConfig = AWSDynamoDBTableConfiguration(consistentRead: false)
         let existingItems = [testItemA]
         let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
-            responses: [DynamoDBClientTypes.BatchStatementResponse()]
+            responses: [DynamoDBModel.BatchStatementResponse()]
         )
 
         when(expectations.batchExecuteStatement(input: .any), return: expectedOutput)

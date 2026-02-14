@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
 // swiftlint:disable:next unused_import
 import Foundation
 import Logging
@@ -142,7 +141,7 @@ extension GenericDynamoDBCompositePrimaryKeysProjection {
 
             do {
                 items = try outputAttributeValues.map { values in
-                    let attributeValue: DynamoDBClientTypes.AttributeValue = .m(values)
+                    let attributeValue: DynamoDBModel.AttributeValue = .m(values)
 
                     return try DynamoDBDecoder().decode(attributeValue)
                 }

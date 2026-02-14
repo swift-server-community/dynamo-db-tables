@@ -14,8 +14,6 @@
 //  DynamoDBTables
 //
 
-@preconcurrency import AWSDynamoDB
-
 // MARK: - Query implementations
 
 extension InMemoryDynamoDBCompositePrimaryKeyTable {
@@ -34,7 +32,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
             >] = [:]
 
         try items.forEach { key, value in
-            map[key] = try DynamoDBDecoder().decode(DynamoDBClientTypes.AttributeValue.m(value.item))
+            map[key] = try DynamoDBDecoder().decode(DynamoDBModel.AttributeValue.m(value.item))
         }
 
         return map

@@ -24,8 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-
 public class DynamoDBEncoder {
     private let attributeNameTransform: ((String) -> String)?
 
@@ -36,7 +34,7 @@ public class DynamoDBEncoder {
     public func encode(
         _ value: some Swift.Encodable,
         userInfo: [CodingUserInfoKey: Any] = [:]
-    ) throws -> DynamoDBClientTypes.AttributeValue {
+    ) throws -> DynamoDBModel.AttributeValue {
         let container = InternalSingleValueEncodingContainer(
             userInfo: userInfo,
             codingPath: [],
@@ -50,11 +48,11 @@ public class DynamoDBEncoder {
 }
 
 protocol AttributeValueConvertable {
-    var attributeValue: DynamoDBClientTypes.AttributeValue { get }
+    var attributeValue: DynamoDBModel.AttributeValue { get }
 }
 
-extension DynamoDBClientTypes.AttributeValue: AttributeValueConvertable {
-    var attributeValue: DynamoDBClientTypes.AttributeValue {
+extension DynamoDBModel.AttributeValue: AttributeValueConvertable {
+    var attributeValue: DynamoDBModel.AttributeValue {
         self
     }
 }

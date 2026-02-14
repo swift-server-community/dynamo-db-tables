@@ -24,8 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-
 public class DynamoDBDecoder {
     let attributeNameTransform: ((String) -> String)?
 
@@ -34,7 +32,7 @@ public class DynamoDBDecoder {
     }
 
     public func decode<T: Swift.Decodable>(
-        _ value: DynamoDBClientTypes.AttributeValue,
+        _ value: DynamoDBModel.AttributeValue,
         userInfo: [CodingUserInfoKey: Any] = [:]
     ) throws
         -> T

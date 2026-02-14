@@ -62,7 +62,7 @@ struct DynamoDBTablesTests {
 
         guard
             let jsonAttributeValue = try assertNoThrow(
-                jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)
+                jsonDecoder.decode(DynamoDBModel.AttributeValue.self, from: inputData)
             )
         else {
             return
@@ -98,7 +98,7 @@ struct DynamoDBTablesTests {
 
         guard
             let jsonAttributeValue = try assertNoThrow(
-                jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)
+                jsonDecoder.decode(DynamoDBModel.AttributeValue.self, from: inputData)
             )
         else {
             return
@@ -134,7 +134,7 @@ struct DynamoDBTablesTests {
 
         guard
             let attributeValue = try assertNoThrow(
-                jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)
+                jsonDecoder.decode(DynamoDBModel.AttributeValue.self, from: inputData)
             )
         else {
             return
@@ -165,7 +165,7 @@ struct DynamoDBTablesTests {
 
         guard
             let attributeValue = try assertNoThrow(
-                jsonDecoder.decode(DynamoDBClientTypes.AttributeValue.self, from: inputData)
+                jsonDecoder.decode(DynamoDBModel.AttributeValue.self, from: inputData)
             )
         else {
             return
@@ -202,7 +202,7 @@ struct DynamoDBTablesTests {
 
         guard
             let attributeValues = try assertNoThrow(
-                jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData)
+                jsonDecoder.decode([DynamoDBModel.AttributeValue].self, from: inputData)
             )
         else {
             return
@@ -257,7 +257,7 @@ struct DynamoDBTablesTests {
 
         guard
             let attributeValues = try assertNoThrow(
-                jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData)
+                jsonDecoder.decode([DynamoDBModel.AttributeValue].self, from: inputData)
             )
         else {
             return
@@ -284,7 +284,7 @@ struct DynamoDBTablesTests {
 
         guard
             let attributeValues = try assertNoThrow(
-                jsonDecoder.decode([DynamoDBClientTypes.AttributeValue].self, from: inputData)
+                jsonDecoder.decode([DynamoDBModel.AttributeValue].self, from: inputData)
             )
         else {
             return

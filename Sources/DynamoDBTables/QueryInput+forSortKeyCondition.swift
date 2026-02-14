@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
 // swiftlint:disable:next unused_import
 import Foundation
 
@@ -41,37 +40,37 @@ extension DynamoDBModel.QueryInput {
     ) throws
         -> DynamoDBModel.QueryInput where AttributesType: PrimaryKeyAttributes
     {
-        let expressionAttributeValues: [String: DynamoDBClientTypes.AttributeValue]
+        let expressionAttributeValues: [String: DynamoDBModel.AttributeValue]
         let expressionAttributeNames: [String: String]
         let keyConditionExpression: String
         if let currentSortKeyCondition = sortKeyCondition {
-            var withSortConditionAttributeValues: [String: DynamoDBClientTypes.AttributeValue] = [
-                ":pk": DynamoDBClientTypes.AttributeValue.s(partitionKey)
+            var withSortConditionAttributeValues: [String: DynamoDBModel.AttributeValue] = [
+                ":pk": DynamoDBModel.AttributeValue.s(partitionKey)
             ]
 
             let sortKeyExpression: String
             switch currentSortKeyCondition {
             case let .equals(value):
-                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
+                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBModel.AttributeValue.s(value)
                 sortKeyExpression = "#sk = :sortkeyval"
             case let .lessThan(value):
-                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
+                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBModel.AttributeValue.s(value)
                 sortKeyExpression = "#sk < :sortkeyval"
             case let .lessThanOrEqual(value):
-                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
+                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBModel.AttributeValue.s(value)
                 sortKeyExpression = "#sk <= :sortkeyval"
             case let .greaterThan(value):
-                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
+                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBModel.AttributeValue.s(value)
                 sortKeyExpression = "#sk > :sortkeyval"
             case let .greaterThanOrEqual(value):
-                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
+                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBModel.AttributeValue.s(value)
                 sortKeyExpression = "#sk >= :sortkeyval"
             case let .between(value1, value2):
-                withSortConditionAttributeValues[":sortkeyval1"] = DynamoDBClientTypes.AttributeValue.s(value1)
-                withSortConditionAttributeValues[":sortkeyval2"] = DynamoDBClientTypes.AttributeValue.s(value2)
+                withSortConditionAttributeValues[":sortkeyval1"] = DynamoDBModel.AttributeValue.s(value1)
+                withSortConditionAttributeValues[":sortkeyval2"] = DynamoDBModel.AttributeValue.s(value2)
                 sortKeyExpression = "#sk BETWEEN :sortkeyval1 AND :sortkeyval2"
             case let .beginsWith(value):
-                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBClientTypes.AttributeValue.s(value)
+                withSortConditionAttributeValues[":sortkeyval"] = DynamoDBModel.AttributeValue.s(value)
                 sortKeyExpression = "begins_with ( #sk, :sortkeyval )"
             }
 
@@ -86,13 +85,13 @@ extension DynamoDBModel.QueryInput {
             keyConditionExpression = "#pk= :pk"
 
             expressionAttributeNames = ["#pk": AttributesType.partitionKeyAttributeName]
-            expressionAttributeValues = [":pk": DynamoDBClientTypes.AttributeValue.s(partitionKey)]
+            expressionAttributeValues = [":pk": DynamoDBModel.AttributeValue.s(partitionKey)]
         }
 
-        let inputExclusiveStartKey: [String: DynamoDBClientTypes.AttributeValue]? =
+        let inputExclusiveStartKey: [String: DynamoDBModel.AttributeValue]? =
             if let exclusiveStartKey = exclusiveStartKey?.data(using: .utf8) {
                 try JSONDecoder().decode(
-                    [String: DynamoDBClientTypes.AttributeValue].self,
+                    [String: DynamoDBModel.AttributeValue].self,
                     from: exclusiveStartKey
                 )
             } else {

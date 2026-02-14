@@ -394,7 +394,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
         // Transaction fails, then individual operations have mixed results
         let deleteError = AWSDynamoDB.ResourceNotFoundException(message: "Item not found")
 
-        let response = DynamoDBClientTypes.BatchStatementResponse(
+        let response = DynamoDBModel.BatchStatementResponse(
             error: .init(code: .resourcenotfound, message: "Item not found")
         )
         let batchOutput = DynamoDBModel.BatchExecuteStatementOutput(responses: [response])

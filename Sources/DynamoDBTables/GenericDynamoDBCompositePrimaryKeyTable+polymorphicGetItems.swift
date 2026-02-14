@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
 import Logging
 
 // BatchGetItem has a maximum of 100 of items per request
@@ -76,7 +75,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
                 output.responses?.flatMap { _, itemList -> [Error] in
                     return itemList.compactMap { values -> Error? in
                         do {
-                            let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
+                            let attributeValue = DynamoDBModel.AttributeValue.m(values)
 
                             let decodedItem: ReturnTypeDecodable<ReturnedType> = try DynamoDBDecoder().decode(
                                 attributeValue

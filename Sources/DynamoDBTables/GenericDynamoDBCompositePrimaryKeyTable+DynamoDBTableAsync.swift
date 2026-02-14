@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
 // swiftlint:disable:next unused_import
 import Foundation
 import Logging
@@ -73,7 +72,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
             do {
                 let decodedItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>? =
-                    try DynamoDBDecoder().decode(DynamoDBClientTypes.AttributeValue.m(item))
+                    try DynamoDBDecoder().decode(DynamoDBModel.AttributeValue.m(item))
                 return decodedItem
             } catch {
                 throw error.asUnrecognizedDynamoDBTableError()
@@ -228,7 +227,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
             do {
                 items = try outputAttributeValues.map { values in
-                    let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
+                    let attributeValue = DynamoDBModel.AttributeValue.m(values)
 
                     let decodedItem: ReturnTypeDecodable<ReturnedType> = try DynamoDBDecoder().decode(attributeValue)
 
@@ -356,7 +355,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
             do {
                 items = try outputAttributeValues.map { values in
-                    let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
+                    let attributeValue = DynamoDBModel.AttributeValue.m(values)
 
                     return try DynamoDBDecoder().decode(attributeValue)
                 }

@@ -24,18 +24,17 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
 // swiftlint:disable:next unused_import
 import Foundation
 
 struct InternalSingleValueDecodingContainer {
     let codingPath: [CodingKey]
     let userInfo: [CodingUserInfoKey: Any]
-    let attributeValue: DynamoDBClientTypes.AttributeValue
+    let attributeValue: DynamoDBModel.AttributeValue
     let attributeNameTransform: ((String) -> String)?
 
     init(
-        attributeValue: DynamoDBClientTypes.AttributeValue,
+        attributeValue: DynamoDBModel.AttributeValue,
         codingPath: [CodingKey],
         userInfo: [CodingUserInfoKey: Any],
         attributeNameTransform: ((String) -> String)?
