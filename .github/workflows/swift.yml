@@ -34,7 +34,7 @@ jobs:
     name: Image ${{ matrix.image }}
     strategy:
       matrix:
-        image: ["swift:6.2.3-jammy", "swift:6.1.3-noble"]
+        image: ["swift:6.2.3-jammy"]
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.image }}

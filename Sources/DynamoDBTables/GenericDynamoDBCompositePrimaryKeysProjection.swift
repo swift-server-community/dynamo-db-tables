@@ -29,10 +29,6 @@ import ClientRuntime
 import Logging
 import SmithyIdentity
 
-public typealias AWSDynamoDBCompositePrimaryKeysProjection = GenericDynamoDBCompositePrimaryKeysProjection<
-    AWSDynamoDB.DynamoDBClient
->
-
 public struct GenericDynamoDBCompositePrimaryKeysProjection<Client: DynamoDBClientProtocol & Sendable>:
     DynamoDBCompositePrimaryKeysProjection, Sendable
 {
