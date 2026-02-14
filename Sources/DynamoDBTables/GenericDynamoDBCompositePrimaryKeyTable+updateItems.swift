@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeyTable+updateItems.swift
+//  GenericDynamoDBCompositePrimaryKeyTable+updateItems.swift
 //  DynamoDBTables
 //
 
@@ -39,7 +39,7 @@ public enum AWSDynamoDBLimits {
 private struct AWSDynamoDBPolymorphicWriteEntryTransform<Client: DynamoDBClientProtocol & Sendable>:
     PolymorphicWriteEntryTransform
 {
-    typealias TableType = GenericAWSDynamoDBCompositePrimaryKeyTable<Client>
+    typealias TableType = GenericDynamoDBCompositePrimaryKeyTable<Client>
 
     let statement: String
 
@@ -54,7 +54,7 @@ private struct AWSDynamoDBPolymorphicWriteEntryTransform<Client: DynamoDBClientP
 private struct AWSDynamoDBPolymorphicTransactionConstraintTransform<Client: DynamoDBClientProtocol & Sendable>:
     PolymorphicTransactionConstraintTransform
 {
-    typealias TableType = GenericAWSDynamoDBCompositePrimaryKeyTable<Client>
+    typealias TableType = GenericDynamoDBCompositePrimaryKeyTable<Client>
 
     let statement: String
 
@@ -69,7 +69,7 @@ private struct AWSDynamoDBPolymorphicTransactionConstraintTransform<Client: Dyna
 }
 
 /// DynamoDBTable conformance updateItems function
-extension GenericAWSDynamoDBCompositePrimaryKeyTable {
+extension GenericDynamoDBCompositePrimaryKeyTable {
     public func validateEntry(entry: WriteEntry<some Any, some Any, some Any>) throws {
         let statement: String = try entryToStatement(entry)
 

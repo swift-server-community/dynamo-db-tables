@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeyTable+bulkUpdateSupport.swift
+//  GenericDynamoDBCompositePrimaryKeyTable+bulkUpdateSupport.swift
 //  DynamoDBTables
 //
 
@@ -61,7 +61,7 @@ func getAttributes(
     return attributes
 }
 
-extension GenericAWSDynamoDBCompositePrimaryKeyTable {
+extension GenericDynamoDBCompositePrimaryKeyTable {
     func getUpdateExpression<AttributesType, ItemType, TimeToLiveAttributesType>(
         tableName: String,
         newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,

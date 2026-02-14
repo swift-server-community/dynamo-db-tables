@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeyTable+polymorphicGetItems.swift
+//  GenericDynamoDBCompositePrimaryKeyTable+polymorphicGetItems.swift
 //  DynamoDBTables
 //
 
@@ -33,7 +33,7 @@ private let maximumKeysPerGetItemBatch = 100
 private let millisecondsToNanoSeconds: UInt64 = 1_000_000
 
 /// DynamoDBTable conformance polymorphicGetItems function
-extension GenericAWSDynamoDBCompositePrimaryKeyTable {
+extension GenericDynamoDBCompositePrimaryKeyTable {
     /**
      Helper type that manages the state of a polymorphicGetItems request.
     

@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeyTable+DynamoDBTableAsync.swift
+//  GenericDynamoDBCompositePrimaryKeyTable+DynamoDBTableAsync.swift
 //  DynamoDBTables
 //
 
@@ -30,7 +30,7 @@ import Foundation
 import Logging
 
 /// DynamoDBTable conformance async functions
-extension GenericAWSDynamoDBCompositePrimaryKeyTable {
+extension GenericDynamoDBCompositePrimaryKeyTable {
     public func insertItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         let putItemInput = try getInputForInsert(item)
 

@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeyTable.swift
+//  GenericDynamoDBCompositePrimaryKeyTable.swift
 //  DynamoDBTables
 //
 
@@ -55,7 +55,7 @@ public struct AWSDynamoDBTableConfiguration: Sendable {
     }
 }
 
-/// A type alias for `GenericAWSDynamoDBCompositePrimaryKeyTable` specialized with the AWS DynamoDB client.
+/// A type alias for `GenericDynamoDBCompositePrimaryKeyTable` specialized with the AWS DynamoDB client.
 ///
 /// This provides a convenient way to use the DynamoDB table implementation with the standard AWS DynamoDB client
 /// without needing to specify the generic parameter explicitly.
@@ -78,11 +78,11 @@ public struct AWSDynamoDBTableConfiguration: Sendable {
 ///     client: awsClient
 /// )
 /// ```
-public typealias AWSDynamoDBCompositePrimaryKeyTable = GenericAWSDynamoDBCompositePrimaryKeyTable<
+public typealias AWSDynamoDBCompositePrimaryKeyTable = GenericDynamoDBCompositePrimaryKeyTable<
     AWSDynamoDB.DynamoDBClient
 >
 
-public struct GenericAWSDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientProtocol & Sendable>:
+public struct GenericDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientProtocol & Sendable>:
     DynamoDBCompositePrimaryKeyTable, Sendable
 {
     let dynamodb: Client
@@ -131,7 +131,7 @@ public struct GenericAWSDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientP
     }
 }
 
-extension GenericAWSDynamoDBCompositePrimaryKeyTable {
+extension GenericDynamoDBCompositePrimaryKeyTable {
     func getInputForInsert<AttributesType>(
         _ item: TypedTTLDatabaseItem<AttributesType, some Any, some Any>
     ) throws

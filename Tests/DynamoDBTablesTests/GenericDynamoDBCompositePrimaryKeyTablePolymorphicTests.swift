@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests.swift
+//  GenericDynamoDBCompositePrimaryKeyTablePolymorphicTests.swift
 //  DynamoDBTablesTests
 //
 
@@ -65,8 +65,8 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
 
     private func createTable(
         with mockClient: MockTestDynamoDBClientProtocol
-    ) -> GenericAWSDynamoDBCompositePrimaryKeyTable<MockTestDynamoDBClientProtocol> {
-        return GenericAWSDynamoDBCompositePrimaryKeyTable(
+    ) -> GenericDynamoDBCompositePrimaryKeyTable<MockTestDynamoDBClientProtocol> {
+        return GenericDynamoDBCompositePrimaryKeyTable(
             tableName: testTableName,
             client: mockClient,
             tableConfiguration: testConfiguration,
