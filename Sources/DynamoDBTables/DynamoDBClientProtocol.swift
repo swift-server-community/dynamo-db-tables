@@ -17,8 +17,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-
 public protocol DynamoDBClientProtocol {
     func putItem(input: DynamoDBModel.PutItemInput) async throws
     func getItem(input: DynamoDBModel.GetItemInput) async throws -> DynamoDBModel.GetItemOutput

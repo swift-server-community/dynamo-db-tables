@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
 import Logging
 
 public struct GenericDynamoDBCompositePrimaryKeysProjection<Client: DynamoDBClientProtocol & Sendable>:
