@@ -1,4 +1,4 @@
-// swift-tools-version:6.0
+// swift-tools-version:6.2
 
 //===----------------------------------------------------------------------===//
 //
@@ -35,7 +35,15 @@ let package = Package(
         .library(
             name: "DynamoDBTables",
             targets: ["DynamoDBTables"]
-        )
+        ),
+        .library(
+            name: "DynamoDBTablesAWS",
+            targets: ["DynamoDBTablesAWS"]
+        ),
+    ],
+    traits: [
+        .default(enabledTraits: ["AWSSDK"]),
+        .trait(name: "AWSSDK"),
     ],
     dependencies: [
         .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "1.0.0"),
@@ -59,6 +67,14 @@ let package = Package(
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Metrics", package: "swift-metrics"),
                 .product(name: "AWSDynamoDB", package: "aws-sdk-swift"),
+            ],
+            swiftSettings: swiftSettings
+        ),
+        .target(
+            name: "DynamoDBTablesAWS",
+            dependencies: [
+                .target(name: "DynamoDBTables"),
+                .product(name: "AWSDynamoDB", package: "aws-sdk-swift", condition: .when(traits: ["AWSSDK"])),
             ],
             swiftSettings: swiftSettings
         ),

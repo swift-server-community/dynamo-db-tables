@@ -3,7 +3,7 @@
 <img src="https://github.com/swift-server-community/dynamo-db-tables/actions/workflows/swift.yml/badge.svg?branch=main" alt="Build - Main Branch">
 </a>
 <a href="http://swift.org">
-<img src="https://img.shields.io/badge/swift-6.2|6.1-orange.svg?style=flat" alt="Swift 6.2 and 6.1 Compatible and Tested">
+<img src="https://img.shields.io/badge/swift-6.2-orange.svg?style=flat" alt="Swift 6.2 Compatible and Tested">
 </a>
 <a href="https://swiftpackageindex.com/swift-server-community/dynamo-db-tables/documentation">
 <img src="https://img.shields.io/badge/docc-documentation-blue.svg?style=flat" alt="Package documentation">
