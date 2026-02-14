@@ -26,17 +26,17 @@ import DynamoDBTables
 extension DynamoDBModel.AttributeValue {
     var toSDK: DynamoDBClientTypes.AttributeValue {
         switch self {
-        case .s(let v): .s(v)
-        case .n(let v): .n(v)
-        case .b(let v): .b(v)
-        case .ss(let v): .ss(v)
-        case .ns(let v): .ns(v)
-        case .bs(let v): .bs(v)
-        case .m(let v): .m(v.mapValues(\.toSDK))
-        case .l(let v): .l(v.map(\.toSDK))
-        case .null(let v): .null(v)
-        case .bool(let v): .bool(v)
-        case .sdkUnknown(let v): .sdkUnknown(v)
+        case .s(let value): .s(value)
+        case .n(let value): .n(value)
+        case .b(let value): .b(value)
+        case .ss(let value): .ss(value)
+        case .ns(let value): .ns(value)
+        case .bs(let value): .bs(value)
+        case .m(let value): .m(value.mapValues(\.toSDK))
+        case .l(let value): .l(value.map(\.toSDK))
+        case .null(let value): .null(value)
+        case .bool(let value): .bool(value)
+        case .sdkUnknown(let value): .sdkUnknown(value)
         }
     }
 }
@@ -44,17 +44,17 @@ extension DynamoDBModel.AttributeValue {
 extension DynamoDBClientTypes.AttributeValue {
     var toDynamoDBModel: DynamoDBModel.AttributeValue {
         switch self {
-        case .s(let v): .s(v)
-        case .n(let v): .n(v)
-        case .b(let v): .b(v)
-        case .ss(let v): .ss(v)
-        case .ns(let v): .ns(v)
-        case .bs(let v): .bs(v)
-        case .m(let v): .m(v.mapValues(\.toDynamoDBModel))
-        case .l(let v): .l(v.map(\.toDynamoDBModel))
-        case .null(let v): .null(v)
-        case .bool(let v): .bool(v)
-        case .sdkUnknown(let v): .sdkUnknown(v)
+        case .s(let value): .s(value)
+        case .n(let value): .n(value)
+        case .b(let value): .b(value)
+        case .ss(let value): .ss(value)
+        case .ns(let value): .ns(value)
+        case .bs(let value): .bs(value)
+        case .m(let value): .m(value.mapValues(\.toDynamoDBModel))
+        case .l(let value): .l(value.map(\.toDynamoDBModel))
+        case .null(let value): .null(value)
+        case .bool(let value): .bool(value)
+        case .sdkUnknown(let value): .sdkUnknown(value)
         }
     }
 }
@@ -150,7 +150,7 @@ extension DynamoDBClientTypes.BatchStatementErrorCodeEnum {
         case .throttlingerror: .throttlingerror
         case .transactionconflict: .transactionconflict
         case .validationerror: .validationerror
-        case .sdkUnknown(let v): .sdkUnknown(v)
+        case .sdkUnknown(let value): .sdkUnknown(value)
         }
     }
 }
