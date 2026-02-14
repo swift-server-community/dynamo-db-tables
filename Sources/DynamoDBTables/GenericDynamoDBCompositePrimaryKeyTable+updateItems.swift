@@ -148,7 +148,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             return DynamoDBClientTypes.ParameterizedStatement(statement: statement)
         }
 
-        let transactionInput = ExecuteTransactionInput(transactStatements: entryStatements + requiredItemsStatements)
+        let transactionInput = DynamoDBModel.ExecuteTransactionInput(transactStatements: entryStatements + requiredItemsStatements)
 
         _ = try await dynamodb.executeTransaction(input: transactionInput)
     }
@@ -156,7 +156,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     private func getExecuteTransactionInput(
         _ entries: [some PolymorphicWriteEntry],
         constraints: [some PolymorphicTransactionConstraintEntry]
-    ) throws -> ExecuteTransactionInput? {
+    ) throws -> DynamoDBModel.ExecuteTransactionInput? {
         // if there are no items, there is nothing to update
         guard entries.count > 0 else {
             return nil
@@ -182,7 +182,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             return DynamoDBClientTypes.ParameterizedStatement(statement: statement)
         }
 
-        return ExecuteTransactionInput(transactStatements: entryStatements + requiredItemsStatements)
+        return DynamoDBModel.ExecuteTransactionInput(transactStatements: entryStatements + requiredItemsStatements)
     }
 
     public func transactWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
@@ -395,7 +395,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     }
 
     private func polymorphicTransactWrite<AttributesType: PrimaryKeyAttributes>(
-        _ transactionInput: ExecuteTransactionInput,
+        _ transactionInput: DynamoDBModel.ExecuteTransactionInput,
         inputKeys: [CompositePrimaryKey<AttributesType>],
         retriesRemaining: Int
     ) async throws {
@@ -457,7 +457,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     }
 
     private func retryPolymorphicTransactWrite(
-        _ transactionInput: ExecuteTransactionInput,
+        _ transactionInput: DynamoDBModel.ExecuteTransactionInput,
         inputKeys: [CompositePrimaryKey<some PrimaryKeyAttributes>],
         retriesRemaining: Int
     ) async throws {
@@ -499,7 +499,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             )
         }
 
-        let executeInput = BatchExecuteStatementInput(statements: statements)
+        let executeInput = DynamoDBModel.BatchExecuteStatementInput(statements: statements)
 
         let response = try await dynamodb.batchExecuteStatement(input: executeInput)
         return response.responses ?? []
@@ -568,7 +568,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             )
         }
 
-        let executeInput = BatchExecuteStatementInput(statements: statements)
+        let executeInput = DynamoDBModel.BatchExecuteStatementInput(statements: statements)
 
         do {
             let response = try await dynamodb.batchExecuteStatement(input: executeInput)

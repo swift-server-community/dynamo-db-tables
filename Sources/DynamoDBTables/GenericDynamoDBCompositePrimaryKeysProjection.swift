@@ -25,9 +25,7 @@
 //
 
 import AWSDynamoDB
-import ClientRuntime
 import Logging
-import SmithyIdentity
 
 public struct GenericDynamoDBCompositePrimaryKeysProjection<Client: DynamoDBClientProtocol & Sendable>:
     DynamoDBCompositePrimaryKeysProjection, Sendable
@@ -36,27 +34,6 @@ public struct GenericDynamoDBCompositePrimaryKeysProjection<Client: DynamoDBClie
     let targetTableName: String
     public let tableConfiguration: AWSDynamoDBTableConfiguration
     let logger: Logging.Logger
-
-    public init(
-        tableName: String,
-        region: Swift.String,
-        awsCredentialIdentityResolver: (any SmithyIdentity.AWSCredentialIdentityResolver)? = nil,
-        httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
-        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
-        logger: Logging.Logger? = nil
-    ) throws where Client == AWSDynamoDB.DynamoDBClient {
-        self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeysProjection")
-        let config = try DynamoDBClient.DynamoDBClientConfig(
-            awsCredentialIdentityResolver: awsCredentialIdentityResolver,
-            region: region,
-            httpClientConfiguration: httpClientConfiguration
-        )
-        self.dynamodb = AWSDynamoDB.DynamoDBClient(config: config)
-        self.tableConfiguration = tableConfiguration
-        self.targetTableName = tableName
-
-        self.logger.trace("AWSDynamoDBCompositePrimaryKeysProjection created with region '\(region)'")
-    }
 
     public init(
         tableName: String,

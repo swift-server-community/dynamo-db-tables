@@ -40,7 +40,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     public func clobberItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         let attributes = try getAttributes(forItem: item)
 
-        let putItemInput = AWSDynamoDB.PutItemInput(
+        let putItemInput = DynamoDBModel.PutItemInput(
             item: attributes,
             tableName: targetTableName
         )
@@ -190,7 +190,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     ) async throws
         -> (items: [ReturnedType], lastEvaluatedKey: String?)
     {
-        let queryInput = try AWSDynamoDB.QueryInput.forSortKeyCondition(
+        let queryInput = try DynamoDBModel.QueryInput.forSortKeyCondition(
             partitionKey: partitionKey,
             targetTableName: targetTableName,
             primaryKeyType: ReturnedType.AttributesType.self,
@@ -245,7 +245,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     }
 
     private func putItem(
-        forInput putItemInput: AWSDynamoDB.PutItemInput,
+        forInput putItemInput: DynamoDBModel.PutItemInput,
         withKey compositePrimaryKey: CompositePrimaryKey<some Any>
     ) async throws {
         let logMessage = "dynamodb.putItem with item: \(putItemInput) and table name \(targetTableName)."
@@ -318,7 +318,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?
         )
     {
-        let queryInput = try AWSDynamoDB.QueryInput.forSortKeyCondition(
+        let queryInput = try DynamoDBModel.QueryInput.forSortKeyCondition(
             partitionKey: partitionKey,
             targetTableName: targetTableName,
             primaryKeyType: AttributesType.self,

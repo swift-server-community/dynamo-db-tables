@@ -81,7 +81,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
             .deleteAtKey(key: testKey2),
         ]
 
-        let expectedOutput = AWSDynamoDB.BatchExecuteStatementOutput()
+        let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput()
         when(expectations.batchExecuteStatement(input: .any), return: expectedOutput)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
@@ -113,7 +113,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
             return .insert(new: item)
         }
 
-        let expectedOutput = AWSDynamoDB.BatchExecuteStatementOutput()
+        let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput()
         when(expectations.batchExecuteStatement(input: .any), times: .unbounded, return: expectedOutput)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
@@ -183,12 +183,9 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
         let writeEntries = getWriteEntriesWithSomeLargeSortKeys()
 
         // First call to transaction fails
-        let putOutput = AWSDynamoDB.PutItemOutput()
-        let deleteOutput = AWSDynamoDB.DeleteItemOutput()
-
-        when(expectations.batchExecuteStatement(input: .any), times: .unbounded, return: BatchExecuteStatementOutput())
-        when(expectations.putItem(input: .any), times: .unbounded, return: putOutput)
-        when(expectations.deleteItem(input: .any), times: .unbounded, return: deleteOutput)
+        when(expectations.batchExecuteStatement(input: .any), times: .unbounded, return: DynamoDBModel.BatchExecuteStatementOutput())
+        when(expectations.putItem(input: .any), times: .unbounded, complete: .withSuccess)
+        when(expectations.deleteItem(input: .any), times: .unbounded, complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
         let table = createTable(with: mockClient)
@@ -229,7 +226,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
             .insert(new: testItemA)
         ]
 
-        let expectedOutput = AWSDynamoDB.BatchExecuteStatementOutput()
+        let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput()
         when(expectations.batchExecuteStatement(input: .any), return: expectedOutput)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
@@ -257,7 +254,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
             .testTypeB(.insert(new: testItemB)),
         ]
 
-        let expectedOutput = AWSDynamoDB.BatchExecuteStatementOutput()
+        let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput()
         when(expectations.batchExecuteStatement(input: .any), return: expectedOutput)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
@@ -311,7 +308,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
             .deleteItem(existing: testItemA),
         ]
 
-        let expectedOutput = AWSDynamoDB.BatchExecuteStatementOutput()
+        let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput()
         when(expectations.batchExecuteStatement(input: .any), return: expectedOutput)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
@@ -391,16 +388,15 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
         let writeEntries = getWriteEntriesWithSomeLargeSortKeys()
 
         // Transaction fails, then individual operations have mixed results
-        let putOutput = AWSDynamoDB.PutItemOutput()
         let deleteError = AWSDynamoDB.ResourceNotFoundException(message: "Item not found")
 
         let response = DynamoDBClientTypes.BatchStatementResponse(
             error: .init(code: .resourcenotfound, message: "Item not found")
         )
-        let batchOutput = BatchExecuteStatementOutput(responses: [response])
+        let batchOutput = DynamoDBModel.BatchExecuteStatementOutput(responses: [response])
 
         when(expectations.batchExecuteStatement(input: .any), times: .unbounded, return: batchOutput)
-        when(expectations.putItem(input: .any), times: .unbounded, return: putOutput)
+        when(expectations.putItem(input: .any), times: .unbounded, complete: .withSuccess)
         when(expectations.deleteItem(input: .any), times: .unbounded, throw: deleteError)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)

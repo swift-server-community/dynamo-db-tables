@@ -77,7 +77,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
         let itemBAttributes = try getAttributes(forItem: testItemB)
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes, itemBAttributes]
         )
 
@@ -99,8 +99,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         #expect(result[1].rowValue.firstly == "test3")
         verify(mockClient).executeStatement(
             input: .matching { input in
-                input.statement?.contains("partition1") == true && input.statement?.contains("partition2") == true
-                    && input.statement?.contains("firstly = 'test1'") == true
+                input.statement.contains("partition1") == true && input.statement.contains("partition2") == true
+                    && input.statement.contains("firstly = 'test1'") == true
             }
         )
     }
@@ -115,7 +115,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         let nextToken = "nextToken123"
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes],
             nextToken: "nextToken456"
         )
@@ -154,7 +154,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
         let itemBAttributes = try getAttributes(forItem: testItemB)
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes, itemBAttributes]
         )
 
@@ -174,8 +174,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         #expect(result.count == 2)
         verify(mockClient).executeStatement(
             input: .matching { input in
-                input.statement?.contains("partition1") == true && input.statement?.contains("partition2") == true
-                    && input.statement?.contains("partition3") == true
+                input.statement.contains("partition1") == true && input.statement.contains("partition2") == true
+                    && input.statement.contains("partition3") == true
             }
         )
     }
@@ -189,7 +189,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         let additionalWhereClause: String? = nil
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes]
         )
 
@@ -209,7 +209,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         #expect(result.count == 1)
         verify(mockClient).executeStatement(
             input: .matching { input in
-                input.statement?.contains("firstly, compositePrimaryKey") == true
+                input.statement.contains("firstly, compositePrimaryKey") == true
             }
         )
     }
@@ -223,7 +223,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         let additionalWhereClause = "firstly = 'test1' AND secondly BEGINS_WITH 'test'"
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes]
         )
 
@@ -243,7 +243,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         #expect(result.count == 1)
         verify(mockClient).executeStatement(
             input: .matching { input in
-                input.statement?.contains("firstly = 'test1' AND secondly BEGINS_WITH 'test'") == true
+                input.statement.contains("firstly = 'test1' AND secondly BEGINS_WITH 'test'") == true
             }
         )
     }
@@ -256,7 +256,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         let attributesFilter: [String]? = nil
         let additionalWhereClause: String? = nil
 
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(items: [])
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(items: [])
 
         when(expectations.executeStatement(input: .any), return: expectedOutput)
 
@@ -274,7 +274,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         #expect(result.isEmpty)
         verify(mockClient).executeStatement(
             input: .matching { input in
-                input.statement?.contains("nonexistent") == true
+                input.statement.contains("nonexistent") == true
             }
         )
     }
@@ -289,14 +289,14 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
 
         // First page with nextToken
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let firstPageOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let firstPageOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes],
             nextToken: "token123"
         )
 
         // Second page without nextToken (end of results)
         let itemBAttributes = try getAttributes(forItem: testItemB)
-        let secondPageOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let secondPageOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemBAttributes]
         )
 
@@ -340,7 +340,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         let nextToken = "initialToken"
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes]
             // No nextToken means this is the last page
         )
@@ -378,7 +378,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         let additionalWhereClause: String? = nil
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes]
         )
 
@@ -398,7 +398,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         #expect(result.count == 1)
         verify(mockClient).executeStatement(
             input: .matching { input in
-                input.statement?.contains("partition1") == true && input.consistentRead == true
+                input.statement.contains("partition1") == true && input.consistentRead == true
             }
         )
     }
@@ -412,7 +412,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
         let attributesFilter: [String]? = nil
         let additionalWhereClause: String? = nil
 
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(items: [])
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(items: [])
         when(expectations.executeStatement(input: .any), return: expectedOutput)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)

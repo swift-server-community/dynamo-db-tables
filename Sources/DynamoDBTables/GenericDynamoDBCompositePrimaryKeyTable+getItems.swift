@@ -56,11 +56,11 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         let logger: Logging.Logger
 
         var retriesRemaining: Int
-        var input: BatchGetItemInput
+        var input: DynamoDBModel.BatchGetItemInput
         var outputItems: OutputType = [:]
 
         init(
-            initialInput: BatchGetItemInput,
+            initialInput: DynamoDBModel.BatchGetItemInput,
             dynamodb: DynamoClient,
             retryConfiguration: RetryConfiguration,
             logger: Logging.Logger
@@ -99,7 +99,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             }
 
             if let requestItems = output.unprocessedKeys, !requestItems.isEmpty {
-                self.input = BatchGetItemInput(requestItems: requestItems)
+                self.input = DynamoDBModel.BatchGetItemInput(requestItems: requestItems)
 
                 return try await self.getMoreResults()
             }

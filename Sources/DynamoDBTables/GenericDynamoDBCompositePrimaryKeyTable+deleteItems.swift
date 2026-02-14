@@ -51,7 +51,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             )
         }
 
-        let executeInput = BatchExecuteStatementInput(statements: statements)
+        let executeInput = DynamoDBModel.BatchExecuteStatementInput(statements: statements)
 
         let response = try await self.dynamodb.batchExecuteStatement(input: executeInput)
         return response.responses ?? []
@@ -79,7 +79,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             )
         }
 
-        let executeInput = BatchExecuteStatementInput(statements: statements)
+        let executeInput = DynamoDBModel.BatchExecuteStatementInput(statements: statements)
 
         let response = try await self.dynamodb.batchExecuteStatement(input: executeInput)
         return response.responses ?? []

@@ -104,7 +104,7 @@ extension GenericDynamoDBCompositePrimaryKeysProjection {
     ) async throws
         -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
     {
-        let queryInput = try AWSDynamoDB.QueryInput.forSortKeyCondition(
+        let queryInput = try DynamoDBModel.QueryInput.forSortKeyCondition(
             partitionKey: partitionKey,
             targetTableName: targetTableName,
             primaryKeyType: AttributesType.self,

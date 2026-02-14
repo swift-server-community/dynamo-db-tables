@@ -24,11 +24,9 @@
 //  DynamoDBTables
 //
 
-@preconcurrency import AWSDynamoDB
-import ClientRuntime
+import AWSDynamoDB
 import Logging
 import Metrics
-import SmithyIdentity
 
 public struct AWSDynamoDBTableMetrics: Sendable {
     // metric to record if the `TransactWrite` API is retried
@@ -66,29 +64,6 @@ public struct GenericDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientProt
 
     public init(
         tableName: String,
-        region: Swift.String,
-        awsCredentialIdentityResolver: (any SmithyIdentity.AWSCredentialIdentityResolver)? = nil,
-        httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
-        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
-        tableMetrics: AWSDynamoDBTableMetrics = .init(),
-        logger: Logging.Logger? = nil
-    ) throws where Client == AWSDynamoDB.DynamoDBClient {
-        self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeyTable")
-        let config = try DynamoDBClient.DynamoDBClientConfig(
-            awsCredentialIdentityResolver: awsCredentialIdentityResolver,
-            region: region,
-            httpClientConfiguration: httpClientConfiguration
-        )
-        self.dynamodb = AWSDynamoDB.DynamoDBClient(config: config)
-        self.targetTableName = tableName
-        self.tableConfiguration = tableConfiguration
-        self.tableMetrics = tableMetrics
-
-        self.logger.trace("AWSDynamoDBCompositePrimaryKeyTable created with region '\(region)'")
-    }
-
-    public init(
-        tableName: String,
         client: Client,
         tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
         tableMetrics: AWSDynamoDBTableMetrics = .init(),
@@ -108,7 +83,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     func getInputForInsert<AttributesType>(
         _ item: TypedTTLDatabaseItem<AttributesType, some Any, some Any>
     ) throws
-        -> AWSDynamoDB.PutItemInput
+        -> DynamoDBModel.PutItemInput
     {
         let attributes = try getAttributes(forItem: item)
 
@@ -117,7 +92,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         ]
         let conditionExpression = "attribute_not_exists (#pk) AND attribute_not_exists (#sk)"
 
-        return AWSDynamoDB.PutItemInput(
+        return DynamoDBModel.PutItemInput(
             conditionExpression: conditionExpression,
             expressionAttributeNames: expressionAttributeNames,
             item: attributes,
@@ -128,7 +103,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     func getInputForUpdateItem<AttributesType, ItemType, TimeToLiveAttributesType>(
         newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
-    ) throws -> AWSDynamoDB.PutItemInput {
+    ) throws -> DynamoDBModel.PutItemInput {
         let attributes = try getAttributes(forItem: newItem)
 
         let expressionAttributeNames = [
@@ -143,7 +118,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
         let conditionExpression = "#rowversion = :versionnumber AND #createdate = :creationdate"
 
-        return AWSDynamoDB.PutItemInput(
+        return DynamoDBModel.PutItemInput(
             conditionExpression: conditionExpression,
             expressionAttributeNames: expressionAttributeNames,
             expressionAttributeValues: expressionAttributeValues,
@@ -152,11 +127,11 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         )
     }
 
-    func getInputForGetItem(forKey key: CompositePrimaryKey<some Any>) throws -> AWSDynamoDB.GetItemInput {
+    func getInputForGetItem(forKey key: CompositePrimaryKey<some Any>) throws -> DynamoDBModel.GetItemInput {
         let attributeValue = try DynamoDBEncoder().encode(key)
 
         if case let .m(keyAttributes) = attributeValue {
-            return AWSDynamoDB.GetItemInput(
+            return DynamoDBModel.GetItemInput(
                 consistentRead: self.tableConfiguration.consistentRead,
                 key: keyAttributes,
                 tableName: self.targetTableName
@@ -169,7 +144,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     func getInputForBatchGetItem(
         forKeys keys: [CompositePrimaryKey<some Any>]
     ) throws
-        -> AWSDynamoDB.BatchGetItemInput
+        -> DynamoDBModel.BatchGetItemInput
     {
         let keys = try keys.map { key -> [String: DynamoDBClientTypes.AttributeValue] in
             let attributeValue = try DynamoDBEncoder().encode(key)
@@ -186,14 +161,14 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             keys: keys
         )
 
-        return AWSDynamoDB.BatchGetItemInput(requestItems: [self.targetTableName: keysAndAttributes])
+        return DynamoDBModel.BatchGetItemInput(requestItems: [self.targetTableName: keysAndAttributes])
     }
 
-    func getInputForDeleteItem(forKey key: CompositePrimaryKey<some Any>) throws -> AWSDynamoDB.DeleteItemInput {
+    func getInputForDeleteItem(forKey key: CompositePrimaryKey<some Any>) throws -> DynamoDBModel.DeleteItemInput {
         let attributeValue = try DynamoDBEncoder().encode(key)
 
         if case let .m(keyAttributes) = attributeValue {
-            return AWSDynamoDB.DeleteItemInput(
+            return DynamoDBModel.DeleteItemInput(
                 key: keyAttributes,
                 tableName: self.targetTableName
             )
@@ -204,7 +179,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
     func getInputForDeleteItem<AttributesType, ItemType, TimeToLiveAttributesType>(
         existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
-    ) throws -> AWSDynamoDB.DeleteItemInput {
+    ) throws -> DynamoDBModel.DeleteItemInput {
         let attributeValue = try DynamoDBEncoder().encode(existingItem.compositePrimaryKey)
 
         guard case let .m(keyAttributes) = attributeValue else {
@@ -223,7 +198,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
         let conditionExpression = "#rowversion = :versionnumber AND #createdate = :creationdate"
 
-        return AWSDynamoDB.DeleteItemInput(
+        return DynamoDBModel.DeleteItemInput(
             conditionExpression: conditionExpression,
             expressionAttributeNames: expressionAttributeNames,
             expressionAttributeValues: expressionAttributeValues,

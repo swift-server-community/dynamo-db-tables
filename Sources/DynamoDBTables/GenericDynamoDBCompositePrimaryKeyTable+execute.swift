@@ -89,7 +89,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             partitionKeyAttributeName: ReturnedType.AttributesType.partitionKeyAttributeName,
             additionalWhereClause: additionalWhereClause
         )
-        let executeInput = ExecuteStatementInput(
+        let executeInput = DynamoDBModel.ExecuteStatementInput(
             consistentRead: self.tableConfiguration.consistentRead,
             nextToken: nextToken,
             statement: statement
@@ -175,7 +175,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             partitionKeyAttributeName: AttributesType.partitionKeyAttributeName,
             additionalWhereClause: additionalWhereClause
         )
-        let executeInput = ExecuteStatementInput(
+        let executeInput = DynamoDBModel.ExecuteStatementInput(
             consistentRead: self.tableConfiguration.consistentRead,
             nextToken: nextToken,
             statement: statement

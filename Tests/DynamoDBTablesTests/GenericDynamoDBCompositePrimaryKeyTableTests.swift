@@ -67,7 +67,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
     private func createExpectedPutItemInput(
         for item: StandardTypedDatabaseItem<TestTypeA>,
         isInsert: Bool = false
-    ) throws -> AWSDynamoDB.PutItemInput {
+    ) throws -> DynamoDBModel.PutItemInput {
         let attributes = try getAttributes(forItem: item)
 
         if isInsert {
@@ -77,14 +77,14 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
             ]
             let conditionExpression = "attribute_not_exists (#pk) AND attribute_not_exists (#sk)"
 
-            return AWSDynamoDB.PutItemInput(
+            return DynamoDBModel.PutItemInput(
                 conditionExpression: conditionExpression,
                 expressionAttributeNames: expressionAttributeNames,
                 item: attributes,
                 tableName: testTableName
             )
         } else {
-            return AWSDynamoDB.PutItemInput(
+            return DynamoDBModel.PutItemInput(
                 item: attributes,
                 tableName: testTableName
             )
@@ -98,9 +98,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let expectedInput = try createExpectedPutItemInput(for: testItemA, isInsert: true)
-        let expectedOutput = AWSDynamoDB.PutItemOutput()
-
-        when(expectations.putItem(input: .any), return: expectedOutput)
+        when(expectations.putItem(input: .any), complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
         let table = createTable(with: mockClient)
@@ -112,8 +110,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         verify(mockClient).putItem(
             input: .matching { input in
                 input.tableName == testTableName && input.conditionExpression?.contains("attribute_not_exists") == true
-                    && input.item?["PK"]?.asString == testItemA.compositePrimaryKey.partitionKey
-                    && input.item?["SK"]?.asString == testItemA.compositePrimaryKey.sortKey
+                    && input.item["PK"]?.asString == testItemA.compositePrimaryKey.partitionKey
+                    && input.item["SK"]?.asString == testItemA.compositePrimaryKey.sortKey
             }
         )
     }
@@ -153,9 +151,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
     func clobberItemSuccess() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let expectedOutput = AWSDynamoDB.PutItemOutput()
-
-        when(expectations.putItem(input: .any), return: expectedOutput)
+        when(expectations.putItem(input: .any), complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
         let table = createTable(with: mockClient)
@@ -167,8 +163,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         verify(mockClient).putItem(
             input: .matching { input in
                 input.tableName == testTableName && input.conditionExpression == nil
-                    && input.item?["PK"]?.asString == testItemA.compositePrimaryKey.partitionKey
-                    && input.item?["SK"]?.asString == testItemA.compositePrimaryKey.sortKey
+                    && input.item["PK"]?.asString == testItemA.compositePrimaryKey.partitionKey
+                    && input.item["SK"]?.asString == testItemA.compositePrimaryKey.sortKey
             }
         )
     }
@@ -178,7 +174,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let itemAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.GetItemOutput(item: itemAttributes)
+        let expectedOutput = DynamoDBModel.GetItemOutput(item: itemAttributes)
 
         when(expectations.getItem(input: .any), return: expectedOutput)
 
@@ -195,8 +191,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         #expect(result?.rowValue.secondly == testItemA.rowValue.secondly)
         verify(mockClient).getItem(
             input: .matching { input in
-                input.tableName == testTableName && input.key?["PK"]?.asString == testKey1.partitionKey
-                    && input.key?["SK"]?.asString == testKey1.sortKey && input.consistentRead == true
+                input.tableName == testTableName && input.key["PK"]?.asString == testKey1.partitionKey
+                    && input.key["SK"]?.asString == testKey1.sortKey && input.consistentRead == true
             }
         )
     }
@@ -205,7 +201,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
     func getItemNotFound() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let expectedOutput = AWSDynamoDB.GetItemOutput(item: nil)
+        let expectedOutput = DynamoDBModel.GetItemOutput(item: nil)
 
         when(expectations.getItem(input: .any), return: expectedOutput)
 
@@ -219,8 +215,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         #expect(result == nil)
         verify(mockClient).getItem(
             input: .matching { input in
-                input.tableName == testTableName && input.key?["PK"]?.asString == testKey1.partitionKey
-                    && input.key?["SK"]?.asString == testKey1.sortKey
+                input.tableName == testTableName && input.key["PK"]?.asString == testKey1.partitionKey
+                    && input.key["SK"]?.asString == testKey1.sortKey
             }
         )
     }
@@ -229,9 +225,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
     func deleteItemByKeySuccess() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let expectedOutput = AWSDynamoDB.DeleteItemOutput()
-
-        when(expectations.deleteItem(input: .any), return: expectedOutput)
+        when(expectations.deleteItem(input: .any), complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
         let table = createTable(with: mockClient)
@@ -242,8 +236,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         // Verify
         verify(mockClient).deleteItem(
             input: .matching { input in
-                input.tableName == testTableName && input.key?["PK"]?.asString == testKey1.partitionKey
-                    && input.key?["SK"]?.asString == testKey1.sortKey
+                input.tableName == testTableName && input.key["PK"]?.asString == testKey1.partitionKey
+                    && input.key["SK"]?.asString == testKey1.sortKey
             }
         )
     }
@@ -261,9 +255,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
             timeToLive: existingItem.timeToLive
         )
 
-        let expectedOutput = AWSDynamoDB.PutItemOutput()
-
-        when(expectations.putItem(input: .any), return: expectedOutput)
+        when(expectations.putItem(input: .any), complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
         let table = createTable(with: mockClient)
@@ -276,8 +268,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
             input: .matching { input in
                 input.tableName == testTableName && input.conditionExpression?.contains("rowversion") == true
                     && input.conditionExpression?.contains("createdate") == true
-                    && input.item?["PK"]?.asString == existingItem.compositePrimaryKey.partitionKey
-                    && input.item?["SK"]?.asString == existingItem.compositePrimaryKey.sortKey
+                    && input.item["PK"]?.asString == existingItem.compositePrimaryKey.partitionKey
+                    && input.item["SK"]?.asString == existingItem.compositePrimaryKey.sortKey
             }
         )
     }
@@ -331,8 +323,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         let sortKeyCondition = AttributeCondition.beginsWith("sort")
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let expectedOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes]
         )
 
@@ -364,7 +355,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let keys = [testKey1]
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.BatchGetItemOutput(
+        let expectedOutput = DynamoDBModel.BatchGetItemOutput(
             responses: [testTableName: [itemAAttributes]]
         )
 
@@ -396,14 +387,14 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         let keys = [testKey1]
 
         // First response with unprocessed keys
-        let firstOutput = AWSDynamoDB.BatchGetItemOutput(
+        let firstOutput = DynamoDBModel.BatchGetItemOutput(
             responses: [:],
             unprocessedKeys: [testTableName: DynamoDBClientTypes.KeysAndAttributes(keys: [])]
         )
 
         // Second response with successful result
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let secondOutput = AWSDynamoDB.BatchGetItemOutput(
+        let secondOutput = DynamoDBModel.BatchGetItemOutput(
             responses: [testTableName: [itemAAttributes]]
         )
 
@@ -440,7 +431,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let keys = [testKey1]
-        let expectedOutput = AWSDynamoDB.BatchExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: [DynamoDBClientTypes.BatchStatementResponse()]
         )
 
@@ -469,7 +460,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         let additionalWhereClause = "firstly = 'test1'"
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes]
         )
 
@@ -490,8 +481,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         #expect(result[0].rowValue.firstly == testItemA.rowValue.firstly)
         verify(mockClient).executeStatement(
             input: .matching { input in
-                input.statement?.contains("SELECT") == true && input.statement?.contains("firstly, secondly") == true
-                    && input.statement?.contains("firstly = 'test1'") == true && input.consistentRead == true
+                input.statement.contains("SELECT") == true && input.statement.contains("firstly, secondly") == true
+                    && input.statement.contains("firstly = 'test1'") == true && input.consistentRead == true
             }
         )
     }
@@ -501,7 +492,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let inconsistentConfig = AWSDynamoDBTableConfiguration(consistentRead: false)
-        let expectedOutput = AWSDynamoDB.GetItemOutput(item: nil)
+        let expectedOutput = DynamoDBModel.GetItemOutput(item: nil)
 
         when(expectations.getItem(input: .any), return: expectedOutput)
 

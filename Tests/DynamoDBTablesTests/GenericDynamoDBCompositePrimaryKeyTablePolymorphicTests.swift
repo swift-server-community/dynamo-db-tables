@@ -85,7 +85,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
         let itemBAttributes = try getAttributes(forItem: testItemB)
-        let expectedOutput = AWSDynamoDB.BatchGetItemOutput(
+        let expectedOutput = DynamoDBModel.BatchGetItemOutput(
             responses: [testTableName: [itemAAttributes, itemBAttributes]]
         )
 
@@ -148,14 +148,14 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
 
         // First response with unprocessed keys
         let itemBAttributes = try getAttributes(forItem: testItemB)
-        let firstOutput = AWSDynamoDB.BatchGetItemOutput(
+        let firstOutput = DynamoDBModel.BatchGetItemOutput(
             responses: [testTableName: [itemBAttributes]],
             unprocessedKeys: [testTableName: DynamoDBClientTypes.KeysAndAttributes(keys: [])]
         )
 
         // Second response with successful result
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let secondOutput = AWSDynamoDB.BatchGetItemOutput(
+        let secondOutput = DynamoDBModel.BatchGetItemOutput(
             responses: [testTableName: [itemAAttributes]]
         )
 
@@ -202,8 +202,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         let sortKeyCondition = AttributeCondition.beginsWith("sort")
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let expectedOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes]
         )
 
@@ -252,8 +251,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
             StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBClientTypes.AttributeValue.s(partitionKey),
             StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBClientTypes.AttributeValue.s("lastKey"),
         ]
-        let expectedOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let expectedOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes],
             lastEvaluatedKey: lastEvaluatedKey
         )
@@ -292,8 +290,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         let exclusiveStartKey = try getExclusiveStartKey(partitionKey: partitionKey, sortKey: "firstKey")
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let expectedOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes]
         )
 
@@ -327,8 +324,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         let partitionKey = "partition1"
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let expectedOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes]
         )
 
@@ -359,7 +355,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         let additionalWhereClause = "firstly = 'test1'"
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes]
         )
 
@@ -379,8 +375,8 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         #expect(result.count == 1)
         verify(mockClient).executeStatement(
             input: .matching { input in
-                input.statement?.contains("SELECT") == true && input.statement?.contains("firstly, secondly") == true
-                    && input.statement?.contains("firstly = 'test1'") == true && input.consistentRead == true
+                input.statement.contains("SELECT") == true && input.statement.contains("firstly, secondly") == true
+                    && input.statement.contains("firstly = 'test1'") == true && input.consistentRead == true
             }
         )
     }
@@ -395,7 +391,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         let nextToken = "nextToken123"
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes],
             nextToken: "nextToken456"
         )
@@ -418,7 +414,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         #expect(result.lastEvaluatedKey == "nextToken456")
         verify(mockClient).executeStatement(
             input: .matching { input in
-                input.nextToken == nextToken && input.statement?.contains("SELECT") == true
+                input.nextToken == nextToken && input.statement.contains("SELECT") == true
             }
         )
     }
@@ -433,7 +429,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
         let itemBAttributes = try getAttributes(forItem: testItemB)
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(
             items: [itemAAttributes, itemBAttributes]
         )
 
@@ -453,9 +449,9 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         #expect(result.count == 2)
         verify(mockClient).executeStatement(
             input: .matching { input in
-                input.statement?.contains("SELECT") == true && input.statement?.contains("partition1") == true
-                    && input.statement?.contains("partition2") == true
-                    && input.statement?.contains("partition3") == true
+                input.statement.contains("SELECT") == true && input.statement.contains("partition1") == true
+                    && input.statement.contains("partition2") == true
+                    && input.statement.contains("partition3") == true
             }
         )
     }
@@ -468,7 +464,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         let attributesFilter: [String]? = nil
         let additionalWhereClause: String? = nil
 
-        let expectedOutput = AWSDynamoDB.ExecuteStatementOutput(items: [])
+        let expectedOutput = DynamoDBModel.ExecuteStatementOutput(items: [])
 
         when(expectations.executeStatement(input: .any), return: expectedOutput)
 
@@ -486,7 +482,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         #expect(result.isEmpty)
         verify(mockClient).executeStatement(
             input: .matching { input in
-                input.statement?.contains("SELECT") == true && input.statement?.contains("nonexistent") == true
+                input.statement.contains("SELECT") == true && input.statement.contains("nonexistent") == true
             }
         )
     }

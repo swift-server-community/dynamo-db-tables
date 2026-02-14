@@ -87,8 +87,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
             .deleteAtKey(key: testKey2),
         ]
 
-        let expectedOutput = AWSDynamoDB.ExecuteTransactionOutput()
-        when(expectations.executeTransaction(input: .any), return: expectedOutput)
+        when(expectations.executeTransaction(input: .any), complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
         let table = createTable(with: mockClient)
@@ -115,8 +114,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
             .required(existing: testItemA)
         ]
 
-        let expectedOutput = AWSDynamoDB.ExecuteTransactionOutput()
-        when(expectations.executeTransaction(input: .any), return: expectedOutput)
+        when(expectations.executeTransaction(input: .any), complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
         let table = createTable(with: mockClient)
@@ -208,8 +206,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
             .testTypeB(.insert(new: testItemB)),
         ]
 
-        let expectedOutput = AWSDynamoDB.ExecuteTransactionOutput()
-        when(expectations.executeTransaction(input: .any), return: expectedOutput)
+        when(expectations.executeTransaction(input: .any), complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
         let table = createTable(with: mockClient)
@@ -236,8 +233,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
             .testTypeA(.required(existing: testItemA))
         ]
 
-        let expectedOutput = AWSDynamoDB.ExecuteTransactionOutput()
-        when(expectations.executeTransaction(input: .any), return: expectedOutput)
+        when(expectations.executeTransaction(input: .any), complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
         let table = createTable(with: mockClient)
@@ -319,7 +315,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let batchGetOutput = AWSDynamoDB.BatchGetItemOutput(
+        let batchGetOutput = DynamoDBModel.BatchGetItemOutput(
             responses: [testTableName: [itemAAttributes]]
         )
         when(expectations.batchGetItem(input: .any), return: batchGetOutput)
@@ -373,7 +369,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let batchGetOutput = AWSDynamoDB.BatchGetItemOutput(
+        let batchGetOutput = DynamoDBModel.BatchGetItemOutput(
             responses: [testTableName: [itemAAttributes]]
         )
         when(expectations.batchGetItem(input: .any), times: .unbounded, return: batchGetOutput)
@@ -427,7 +423,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let batchGetOutput = AWSDynamoDB.BatchGetItemOutput(
+        let batchGetOutput = DynamoDBModel.BatchGetItemOutput(
             responses: [testTableName: [itemAAttributes]]
         )
         when(expectations.batchGetItem(input: .any), times: .unbounded, return: batchGetOutput)

@@ -71,9 +71,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
     func deleteExistingItemWithVersionCheckSuccess() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let expectedOutput = AWSDynamoDB.DeleteItemOutput()
 
-        when(expectations.deleteItem(input: .any), return: expectedOutput)
+        when(expectations.deleteItem(input: .any), complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
         let table = createTable(with: mockClient)
@@ -85,8 +84,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         verify(mockClient).deleteItem(
             input: .matching { input in
                 input.tableName == testTableName
-                    && input.key?["PK"]?.asString == testItemA.compositePrimaryKey.partitionKey
-                    && input.key?["SK"]?.asString == testItemA.compositePrimaryKey.sortKey
+                    && input.key["PK"]?.asString == testItemA.compositePrimaryKey.partitionKey
+                    && input.key["SK"]?.asString == testItemA.compositePrimaryKey.sortKey
             }
         )
     }
@@ -128,9 +127,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
     func deleteExistingItemIncludesCorrectConditionExpression() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let expectedOutput = AWSDynamoDB.DeleteItemOutput()
 
-        when(expectations.deleteItem(input: .any), return: expectedOutput)
+        when(expectations.deleteItem(input: .any), complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
         let table = createTable(with: mockClient)
@@ -179,7 +177,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let existingItems = [testItemA, testItemB]
-        let expectedOutput = AWSDynamoDB.BatchExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: [
                 DynamoDBClientTypes.BatchStatementResponse(),
                 DynamoDBClientTypes.BatchStatementResponse(),
@@ -223,7 +221,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let existingItems = [testItemA]
-        let expectedOutput = AWSDynamoDB.BatchExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: [DynamoDBClientTypes.BatchStatementResponse()]
         )
 
@@ -248,7 +246,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let existingItems = [testItemA, testItemB]
-        let expectedOutput = AWSDynamoDB.BatchExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: [
                 DynamoDBClientTypes.BatchStatementResponse(
                     error: DynamoDBClientTypes.BatchStatementError(
@@ -296,10 +294,10 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
             )
         }
 
-        let firstBatchOutput = AWSDynamoDB.BatchExecuteStatementOutput(
+        let firstBatchOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: Array(repeating: DynamoDBClientTypes.BatchStatementResponse(), count: 25)
         )
-        let secondBatchOutput = AWSDynamoDB.BatchExecuteStatementOutput(
+        let secondBatchOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: Array(repeating: DynamoDBClientTypes.BatchStatementResponse(), count: 5)
         )
 
@@ -330,7 +328,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let existingItems = [testItemA, testItemB]
-        let expectedOutput = AWSDynamoDB.BatchExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: [
                 DynamoDBClientTypes.BatchStatementResponse(
                     error: DynamoDBClientTypes.BatchStatementError(
@@ -370,7 +368,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let inconsistentConfig = AWSDynamoDBTableConfiguration(consistentRead: false)
         let existingItems = [testItemA]
-        let expectedOutput = AWSDynamoDB.BatchExecuteStatementOutput(
+        let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: [DynamoDBClientTypes.BatchStatementResponse()]
         )
 
