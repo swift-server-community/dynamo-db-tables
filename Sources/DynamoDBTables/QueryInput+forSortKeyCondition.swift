@@ -28,7 +28,7 @@ import AWSDynamoDB
 // swiftlint:disable:next unused_import
 import Foundation
 
-extension QueryInput {
+extension DynamoDBModel.QueryInput {
     static func forSortKeyCondition<AttributesType>(
         partitionKey: String,
         targetTableName: String,
@@ -39,7 +39,7 @@ extension QueryInput {
         exclusiveStartKey: String?,
         consistentRead: Bool?
     ) throws
-        -> AWSDynamoDB.QueryInput where AttributesType: PrimaryKeyAttributes
+        -> DynamoDBModel.QueryInput where AttributesType: PrimaryKeyAttributes
     {
         let expressionAttributeValues: [String: DynamoDBClientTypes.AttributeValue]
         let expressionAttributeNames: [String: String]
@@ -99,7 +99,7 @@ extension QueryInput {
                 nil
             }
 
-        return AWSDynamoDB.QueryInput(
+        return DynamoDBModel.QueryInput(
             consistentRead: consistentRead,
             exclusiveStartKey: inputExclusiveStartKey,
             expressionAttributeNames: expressionAttributeNames,

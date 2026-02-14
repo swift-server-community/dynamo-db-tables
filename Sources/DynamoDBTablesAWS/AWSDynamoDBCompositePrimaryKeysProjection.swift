@@ -14,7 +14,10 @@
 
 #if AWSSDK
 import AWSDynamoDB
+import ClientRuntime
 import DynamoDBTables
+import Logging
+import SmithyIdentity
 
 /// A type alias for `GenericDynamoDBCompositePrimaryKeysProjection` specialized with the AWS DynamoDB client.
 ///
@@ -42,4 +45,26 @@ import DynamoDBTables
 public typealias AWSDynamoDBCompositePrimaryKeysProjection = GenericDynamoDBCompositePrimaryKeysProjection<
     AWSDynamoDB.DynamoDBClient
 >
+
+extension GenericDynamoDBCompositePrimaryKeysProjection where Client == AWSDynamoDB.DynamoDBClient {
+    public init(
+        tableName: String,
+        region: Swift.String,
+        awsCredentialIdentityResolver: (any SmithyIdentity.AWSCredentialIdentityResolver)? = nil,
+        httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
+        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
+        logger: Logging.Logger? = nil
+    ) throws {
+        let config = try DynamoDBClient.DynamoDBClientConfig(
+            awsCredentialIdentityResolver: awsCredentialIdentityResolver,
+            region: region,
+            httpClientConfiguration: httpClientConfiguration
+        )
+        self.init(
+            tableName: tableName,
+            client: AWSDynamoDB.DynamoDBClient(config: config),
+            tableConfiguration: tableConfiguration
+        )
+    }
+}
 #endif

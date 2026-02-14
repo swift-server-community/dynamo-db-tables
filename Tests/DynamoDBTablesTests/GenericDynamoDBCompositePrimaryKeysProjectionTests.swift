@@ -74,8 +74,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
             sortKey: "sort1"
         )
         let keyAttributes = try getAttributesForKey(key: key)
-        let expectedOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let expectedOutput = DynamoDBModel.QueryOutput(
             items: [keyAttributes]
         )
 
@@ -107,7 +106,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
     func queryWithNoSortKeyCondition() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let expectedOutput = AWSDynamoDB.QueryOutput(count: 0, items: [])
+        let expectedOutput = DynamoDBModel.QueryOutput(items: [])
 
         when(expectations.query(input: .any), return: expectedOutput)
 
@@ -133,7 +132,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
     func queryReturnsEmptyResults() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let expectedOutput = AWSDynamoDB.QueryOutput(count: 0, items: [])
+        let expectedOutput = DynamoDBModel.QueryOutput(items: [])
 
         when(expectations.query(input: .any), return: expectedOutput)
 
@@ -171,13 +170,11 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
             "SK": .s("sort1"),
         ]
 
-        let firstOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let firstOutput = DynamoDBModel.QueryOutput(
             items: [key1Attributes],
             lastEvaluatedKey: lastEvaluatedKey
         )
-        let secondOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let secondOutput = DynamoDBModel.QueryOutput(
             items: [key2Attributes]
         )
 
@@ -227,8 +224,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
             "SK": .s("sort1"),
         ]
 
-        let expectedOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let expectedOutput = DynamoDBModel.QueryOutput(
             items: [keyAttributes],
             lastEvaluatedKey: lastEvaluatedKey
         )
@@ -257,7 +253,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
     func paginatedQueryWithScanIndexForwardFalse() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let expectedOutput = AWSDynamoDB.QueryOutput(count: 0, items: [])
+        let expectedOutput = DynamoDBModel.QueryOutput(items: [])
 
         when(expectations.query(input: .any), return: expectedOutput)
 
@@ -287,7 +283,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let inconsistentConfig = AWSDynamoDBTableConfiguration(consistentRead: false)
-        let expectedOutput = AWSDynamoDB.QueryOutput(count: 0, items: [])
+        let expectedOutput = DynamoDBModel.QueryOutput(items: [])
 
         when(expectations.query(input: .any), return: expectedOutput)
 
@@ -312,7 +308,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
     func queryWithNilItemsReturnsEmptyArray() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let expectedOutput = AWSDynamoDB.QueryOutput(items: nil)
+        let expectedOutput = DynamoDBModel.QueryOutput(items: nil)
 
         when(expectations.query(input: .any), return: expectedOutput)
 

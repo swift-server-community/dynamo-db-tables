@@ -26,27 +26,27 @@ import Smockable
 /// ``DynamoDBClientProtocol`` so the `@Smock` macro can generate a mock.
 @Smock(
     additionalEquatableTypes: [
-        PutItemInput.self,
-        GetItemInput.self,
-        DeleteItemInput.self,
-        QueryInput.self,
-        BatchGetItemInput.self,
-        BatchExecuteStatementInput.self,
-        ExecuteStatementInput.self,
-        ExecuteTransactionInput.self,
+        DynamoDBModel.PutItemInput.self,
+        DynamoDBModel.GetItemInput.self,
+        DynamoDBModel.DeleteItemInput.self,
+        DynamoDBModel.QueryInput.self,
+        DynamoDBModel.BatchGetItemInput.self,
+        DynamoDBModel.BatchExecuteStatementInput.self,
+        DynamoDBModel.ExecuteStatementInput.self,
+        DynamoDBModel.ExecuteTransactionInput.self,
     ]
 )
 protocol TestDynamoDBClientProtocol: DynamoDBClientProtocol {
-    func putItem(input: PutItemInput) async throws -> PutItemOutput
-    func getItem(input: GetItemInput) async throws -> GetItemOutput
-    func deleteItem(input: DeleteItemInput) async throws -> DeleteItemOutput
-    func query(input: QueryInput) async throws -> QueryOutput
-    func batchGetItem(input: BatchGetItemInput) async throws -> BatchGetItemOutput
+    func putItem(input: DynamoDBModel.PutItemInput) async throws
+    func getItem(input: DynamoDBModel.GetItemInput) async throws -> DynamoDBModel.GetItemOutput
+    func deleteItem(input: DynamoDBModel.DeleteItemInput) async throws
+    func query(input: DynamoDBModel.QueryInput) async throws -> DynamoDBModel.QueryOutput
+    func batchGetItem(input: DynamoDBModel.BatchGetItemInput) async throws -> DynamoDBModel.BatchGetItemOutput
     func batchExecuteStatement(
-        input: BatchExecuteStatementInput
-    ) async throws -> BatchExecuteStatementOutput
-    func executeStatement(input: ExecuteStatementInput) async throws -> ExecuteStatementOutput
-    func executeTransaction(
-        input: ExecuteTransactionInput
-    ) async throws -> ExecuteTransactionOutput
+        input: DynamoDBModel.BatchExecuteStatementInput
+    ) async throws -> DynamoDBModel.BatchExecuteStatementOutput
+    func executeStatement(
+        input: DynamoDBModel.ExecuteStatementInput
+    ) async throws -> DynamoDBModel.ExecuteStatementOutput
+    func executeTransaction(input: DynamoDBModel.ExecuteTransactionInput) async throws
 }

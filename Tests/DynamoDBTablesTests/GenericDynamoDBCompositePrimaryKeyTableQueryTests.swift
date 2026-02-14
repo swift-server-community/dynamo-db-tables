@@ -76,8 +76,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableQueryTests {
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
         let itemBAttributes = try getAttributes(forItem: testItemB)
-        let expectedOutput = AWSDynamoDB.QueryOutput(
-            count: 2,
+        let expectedOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes, itemBAttributes]
         )
 
@@ -129,8 +128,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableQueryTests {
             StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBClientTypes.AttributeValue.s("partition1"),
             StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBClientTypes.AttributeValue.s("sort1"),
         ]
-        let expectedOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let expectedOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes],
             lastEvaluatedKey: lastEvaluatedKey
         )
@@ -177,7 +175,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableQueryTests {
             var expectations = MockTestDynamoDBClientProtocol.Expectations()
             let partitionKey = "partition1"
 
-            let expectedOutput = AWSDynamoDB.QueryOutput(count: 0, items: [])
+            let expectedOutput = DynamoDBModel.QueryOutput(items: [])
             when(expectations.query(input: .any), return: expectedOutput)
 
             let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
@@ -206,8 +204,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableQueryTests {
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
         let itemBAttributes = try getAttributes(forItem: testItemB)
-        let expectedOutput = AWSDynamoDB.QueryOutput(
-            count: 2,
+        let expectedOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes, itemBAttributes]
         )
 
@@ -238,7 +235,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableQueryTests {
         let partitionKey = "nonexistent"
         let sortKeyCondition = AttributeCondition.equals("sort1")
 
-        let expectedOutput = AWSDynamoDB.QueryOutput(count: 0, items: [])
+        let expectedOutput = DynamoDBModel.QueryOutput(items: [])
 
         when(expectations.query(input: .any), return: expectedOutput)
 
@@ -273,16 +270,14 @@ struct AWSDynamoDBCompositePrimaryKeyTableQueryTests {
             StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBClientTypes.AttributeValue.s("partition1"),
             StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBClientTypes.AttributeValue.s("sort1"),
         ]
-        let firstPageOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let firstPageOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes],
             lastEvaluatedKey: lastEvaluatedKey
         )
 
         // Second page
         let itemBAttributes = try getAttributes(forItem: testItemB)
-        let secondPageOutput = AWSDynamoDB.QueryOutput(
-            count: 1,
+        let secondPageOutput = DynamoDBModel.QueryOutput(
             items: [itemBAttributes]
         )
 
@@ -330,8 +325,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableQueryTests {
         // Items returned in reverse order
         let itemBAttributes = try getAttributes(forItem: testItemB)
         let itemAAttributes = try getAttributes(forItem: testItemA)
-        let expectedOutput = AWSDynamoDB.QueryOutput(
-            count: 2,
+        let expectedOutput = DynamoDBModel.QueryOutput(
             items: [itemBAttributes, itemAAttributes]  // Reversed order
         )
 
