@@ -31,20 +31,20 @@ package struct GenericDynamoDBCompositePrimaryKeysProjection<Client: DynamoDBCli
 {
     let dynamodb: Client
     let targetTableName: String
-    package let tableConfiguration: AWSDynamoDBTableConfiguration
+    package let tableConfiguration: DynamoDBTableConfiguration
     let logger: Logging.Logger
 
     package init(
         tableName: String,
         client: Client,
-        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
+        tableConfiguration: DynamoDBTableConfiguration = .init(),
         logger: Logging.Logger? = nil
     ) {
-        self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeysProjection")
+        self.logger = logger ?? Logging.Logger(label: "GenericDynamoDBCompositePrimaryKeysProjection")
         self.dynamodb = client
         self.tableConfiguration = tableConfiguration
         self.targetTableName = tableName
 
-        self.logger.trace("AWSDynamoDBCompositePrimaryKeysProjection created with existing client")
+        self.logger.trace("GenericDynamoDBCompositePrimaryKeysProjection created with existing client")
     }
 }

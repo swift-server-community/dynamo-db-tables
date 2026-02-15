@@ -30,7 +30,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
 
     private let testTableName = "TestTable"
     private let testLogger = Logger(label: "TestLogger")
-    private let testConfiguration = AWSDynamoDBTableConfiguration(
+    private let testConfiguration = DynamoDBTableConfiguration(
         consistentRead: true,
         escapeSingleQuoteInPartiQL: false,
         retry: .default
@@ -40,7 +40,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
 
     private func createProjection(
         with mockClient: MockTestDynamoDBClientProtocol,
-        tableConfiguration: AWSDynamoDBTableConfiguration? = nil
+        tableConfiguration: DynamoDBTableConfiguration? = nil
     ) -> GenericDynamoDBCompositePrimaryKeysProjection<MockTestDynamoDBClientProtocol> {
         GenericDynamoDBCompositePrimaryKeysProjection(
             tableName: testTableName,
@@ -281,7 +281,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
     func queryRespectsConsistentReadConfiguration() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let inconsistentConfig = AWSDynamoDBTableConfiguration(consistentRead: false)
+        let inconsistentConfig = DynamoDBTableConfiguration(consistentRead: false)
         let expectedOutput = DynamoDBModel.QueryOutput(items: [])
 
         when(expectations.query(input: .any), return: expectedOutput)

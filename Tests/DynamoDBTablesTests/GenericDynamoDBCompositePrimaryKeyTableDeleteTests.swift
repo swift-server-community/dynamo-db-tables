@@ -31,12 +31,12 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
 
     private let testTableName = "TestTable"
     private let testLogger = Logger(label: "TestLogger")
-    private let testConfiguration = AWSDynamoDBTableConfiguration(
+    private let testConfiguration = DynamoDBTableConfiguration(
         consistentRead: true,
         escapeSingleQuoteInPartiQL: false,
         retry: .default
     )
-    private let testMetrics = AWSDynamoDBTableMetrics()
+    private let testMetrics = DynamoDBTableMetrics()
 
     // MARK: - Test Data
 
@@ -365,7 +365,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
     func deleteExistingItemsBatchRespectsConsistentReadConfiguration() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let inconsistentConfig = AWSDynamoDBTableConfiguration(consistentRead: false)
+        let inconsistentConfig = DynamoDBTableConfiguration(consistentRead: false)
         let existingItems = [testItemA]
         let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
             responses: [DynamoDBModel.BatchStatementResponse()]
