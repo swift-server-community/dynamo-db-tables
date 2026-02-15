@@ -26,24 +26,6 @@
 
 import Logging
 
-extension DynamoDBClientTypes.AttributeValue {
-    var toDynamoDBModel: DynamoDBModel.AttributeValue {
-        switch self {
-        case .s(let value): .s(value)
-        case .n(let value): .n(value)
-        case .b(let value): .b(value)
-        case .ss(let value): .ss(value)
-        case .ns(let value): .ns(value)
-        case .bs(let value): .bs(value)
-        case .m(let value): .m(value.mapValues(\.toDynamoDBModel))
-        case .l(let value): .l(value.map(\.toDynamoDBModel))
-        case .null(let value): .null(value)
-        case .bool(let value): .bool(value)
-        case .sdkUnknown(let value): .sdkUnknown(value)
-        }
-    }
-}
-
 private let millisecondsToNanoSeconds: UInt64 = 1_000_000
 
 public enum AWSDynamoDBLimits {
