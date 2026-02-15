@@ -9,7 +9,7 @@
 //
 // Changes specified by
 // https://github.com/swift-server-community/dynamo-db-tables/compare/9ab0e7a..main
-// Copyright (c) 2024 the DynamoDBTables authors
+// Copyright (c) 2026 the DynamoDBTables authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -22,7 +22,7 @@
 import Foundation
 
 //
-//  SmokeDynamoDBTestInput.swift
+//  DynamoDBTablesTestInput.swift
 //  DynamoDBTablesTests
 //
 @testable import DynamoDBTables

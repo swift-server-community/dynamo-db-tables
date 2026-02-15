@@ -2,7 +2,7 @@
 //
 // This source file is part of the DynamoDBTables open source project
 //
-// Copyright (c) 2024 the DynamoDBTables authors
+// Copyright (c) 2026 the DynamoDBTables authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -11,6 +11,11 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+
+//
+//  AWSDynamoDBCompositePrimaryKeyTable.swift
+//  DynamoDBTablesAWS
+//
 
 #if AWSSDK
 import AWSDynamoDB
