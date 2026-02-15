@@ -24,6 +24,7 @@
 //  DynamoDBTables
 //
 
+import Configuration
 import Logging
 import Metrics
 
@@ -49,6 +50,14 @@ public struct DynamoDBTableConfiguration: Sendable {
         self.consistentRead = consistentRead
         self.escapeSingleQuoteInPartiQL = escapeSingleQuoteInPartiQL
         self.retry = retry
+    }
+
+    public init(from config: ConfigReader) {
+        self.init(
+            consistentRead: config.bool(forKey: "consistentRead", default: true),
+            escapeSingleQuoteInPartiQL: config.bool(forKey: "escapeSingleQuoteInPartiQL", default: false),
+            retry: RetryConfiguration(from: config.scoped(to: "retry"))
+        )
     }
 }
 
