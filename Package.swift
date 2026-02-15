@@ -40,13 +40,19 @@ let package = Package(
             name: "DynamoDBTablesAWS",
             targets: ["DynamoDBTablesAWS"]
         ),
+        .library(
+            name: "DynamoDBTablesSoto",
+            targets: ["DynamoDBTablesSoto"]
+        ),
     ],
     traits: [
         .default(enabledTraits: ["AWSSDK"]),
         .trait(name: "AWSSDK"),
+        .trait(name: "SOTOSDK"),
     ],
     dependencies: [
         .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "1.0.0"),
+        .package(url: "https://github.com/soto-project/soto.git", from: "7.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"603.0.0"),
@@ -74,6 +80,14 @@ let package = Package(
             dependencies: [
                 .target(name: "DynamoDBTables"),
                 .product(name: "AWSDynamoDB", package: "aws-sdk-swift", condition: .when(traits: ["AWSSDK"])),
+            ],
+            swiftSettings: swiftSettings
+        ),
+        .target(
+            name: "DynamoDBTablesSoto",
+            dependencies: [
+                .target(name: "DynamoDBTables"),
+                .product(name: "SotoDynamoDB", package: "soto", condition: .when(traits: ["SOTOSDK"])),
             ],
             swiftSettings: swiftSettings
         ),

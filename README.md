@@ -14,7 +14,7 @@
 
 # DynamoDBTables
 
-A type-safe, Sendable-first DynamoDB layer for Swift with optimistic concurrency. DynamoDBTables makes it easy to use DynamoDB from Swift-based applications, with a particular focus on usage with polymorphic database tables — tables that don't have a single schema for all rows.
+A type-safe, Sendable-first DynamoDB layer for Swift with optimistic concurrency. DynamoDBTables makes it easy to use DynamoDB from Swift-based applications, with a particular focus on usage with polymorphic database tables — tables that don't have a single schema for all rows. It integrates with both [aws-sdk-swift](https://github.com/awslabs/aws-sdk-swift) and [Soto](https://github.com/soto-project/soto).
 
 DynamoDBTables is a fork of [smoke-dynamodb](https://github.com/amzn/smoke-dynamodb) and acknowledges the authors of that original package.
 
@@ -35,7 +35,9 @@ Full documentation is available on the [Swift Package Index](https://swiftpackag
 
 ## Installation
 
-Add DynamoDBTables to your `Package.swift`:
+Add DynamoDBTables to your `Package.swift`. Choose the SDK integration that matches your project:
+
+### With [aws-sdk-swift](https://github.com/awslabs/aws-sdk-swift) (default)
 
 ```swift
 dependencies: [
@@ -45,7 +47,22 @@ dependencies: [
 .target(
     name: "MyApp",
     dependencies: [
-        .product(name: "DynamoDBTables", package: "dynamo-db-tables")
+        .product(name: "DynamoDBTablesAWS", package: "dynamo-db-tables")
+    ]
+)
+```
+
+### With [Soto](https://github.com/soto-project/soto)
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/swift-server-community/dynamo-db-tables", traits: ["SOTOSDK"], from: "0.1.0")
+]
+
+.target(
+    name: "MyApp",
+    dependencies: [
+        .product(name: "DynamoDBTablesSoto", package: "dynamo-db-tables")
     ]
 )
 ```

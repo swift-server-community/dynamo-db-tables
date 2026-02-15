@@ -46,6 +46,22 @@ jobs:
         run: swift build -c release -Xswiftc -strict-concurrency=complete
       - name: Run tests
         run: swift test
+  BuildAndTestSoto:
+    name: Soto ${{ matrix.image }}
+    strategy:
+      matrix:
+        image: ["swift:6.2.3-noble", "swift:6.2.3-jammy"]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - name: Install libssl-dev
+        run: apt-get update && apt-get install -y libssl-dev
+      - uses: actions/checkout@v6
+      - name: Build
+        run: swift build -c release --traits SOTOSDK -Xswiftc -strict-concurrency=complete
+      - name: Run tests
+        run: swift test --traits SOTOSDK
   SwiftLint:
     name: SwiftLint version 3.2.1
     runs-on: ubuntu-latest
