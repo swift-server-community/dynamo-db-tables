@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
 import Foundation
 
 class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
@@ -47,70 +46,70 @@ class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
     }
 
     func encodeNil() throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.null(true))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.null(true))
     }
 
     func encode(_ value: Bool) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.bool(value))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.bool(value))
     }
 
     func encode(_ value: Int) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: Int8) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: Int16) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: Int32) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: Int64) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: UInt) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: UInt8) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: UInt16) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: UInt32) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: UInt64) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: Float) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: Double) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: String) throws {
-        self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.s(value))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.s(value))
     }
 
     func encode(_ value: some Encodable) throws {
         if let date = value as? Foundation.Date {
             let dateAsString = date.iso8601
 
-            self.containerValue = .singleValue(DynamoDBClientTypes.AttributeValue.s(dateAsString))
+            self.containerValue = .singleValue(DynamoDBModel.AttributeValue.s(dateAsString))
             return
         }
 
@@ -160,7 +159,7 @@ class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
 }
 
 extension InternalSingleValueEncodingContainer: AttributeValueConvertable {
-    var attributeValue: DynamoDBClientTypes.AttributeValue {
+    var attributeValue: DynamoDBModel.AttributeValue {
         guard let containerValue else {
             fatalError("Attempted to access uninitialized container.")
         }
@@ -171,11 +170,11 @@ extension InternalSingleValueEncodingContainer: AttributeValueConvertable {
         case let .unkeyedContainer(values):
             let mappedValues = values.map { value in value.attributeValue }
 
-            return DynamoDBClientTypes.AttributeValue.l(mappedValues)
+            return DynamoDBModel.AttributeValue.l(mappedValues)
         case let .keyedContainer(values):
             let mappedValues = values.mapValues { value in value.attributeValue }
 
-            return DynamoDBClientTypes.AttributeValue.m(mappedValues)
+            return DynamoDBModel.AttributeValue.m(mappedValues)
         }
     }
 }

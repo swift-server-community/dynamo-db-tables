@@ -53,7 +53,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
 
     private func getAttributesForKey(
         key: CompositePrimaryKey<StandardPrimaryKeyAttributes>
-    ) throws -> [String: DynamoDBClientTypes.AttributeValue] {
+    ) throws -> [String: DynamoDBModel.AttributeValue] {
         let attributeValue = try DynamoDBEncoder().encode(key)
 
         if case let .m(keyAttributes) = attributeValue {
@@ -165,7 +165,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
         let key1Attributes = try getAttributesForKey(key: key1)
         let key2Attributes = try getAttributesForKey(key: key2)
 
-        let lastEvaluatedKey: [String: DynamoDBClientTypes.AttributeValue] = [
+        let lastEvaluatedKey: [String: DynamoDBModel.AttributeValue] = [
             "PK": .s("partition1"),
             "SK": .s("sort1"),
         ]
@@ -219,7 +219,7 @@ struct GenericDynamoDBCompositePrimaryKeysProjectionTests {
         )
         let keyAttributes = try getAttributesForKey(key: key)
 
-        let lastEvaluatedKey: [String: DynamoDBClientTypes.AttributeValue] = [
+        let lastEvaluatedKey: [String: DynamoDBModel.AttributeValue] = [
             "PK": .s("partition1"),
             "SK": .s("sort1"),
         ]

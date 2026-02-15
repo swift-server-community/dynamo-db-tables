@@ -24,8 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-
 // BatchExecuteStatement has a maximum of 25 statements
 private let maximumUpdatesPerExecuteStatement = 25
 
@@ -33,19 +31,19 @@ private let maximumUpdatesPerExecuteStatement = 25
 extension GenericDynamoDBCompositePrimaryKeyTable {
     private func deleteChunkedItems(
         _ keys: [CompositePrimaryKey<some Any>]
-    ) async throws -> [DynamoDBClientTypes.BatchStatementResponse] {
+    ) async throws -> [DynamoDBModel.BatchStatementResponse] {
         // if there are no keys, there is nothing to update
         guard keys.count > 0 else {
             return []
         }
 
-        let statements = try keys.map { existingKey -> DynamoDBClientTypes.BatchStatementRequest in
+        let statements = try keys.map { existingKey -> DynamoDBModel.BatchStatementRequest in
             let statement = try getDeleteExpression(
                 tableName: self.targetTableName,
                 existingKey: existingKey
             )
 
-            return DynamoDBClientTypes.BatchStatementRequest(
+            return DynamoDBModel.BatchStatementRequest(
                 consistentRead: self.tableConfiguration.consistentRead,
                 statement: statement
             )
@@ -60,20 +58,20 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     private func deleteChunkedItems(
         _ existingItems: [TypedTTLDatabaseItem<some Any, some Any, some Any>]
     ) async throws
-        -> [DynamoDBClientTypes.BatchStatementResponse]
+        -> [DynamoDBModel.BatchStatementResponse]
     {
         // if there are no items, there is nothing to update
         guard existingItems.count > 0 else {
             return []
         }
 
-        let statements = try existingItems.map { existingItem -> DynamoDBClientTypes.BatchStatementRequest in
+        let statements = try existingItems.map { existingItem -> DynamoDBModel.BatchStatementRequest in
             let statement = try getDeleteExpression(
                 tableName: self.targetTableName,
                 existingItem: existingItem
             )
 
-            return DynamoDBClientTypes.BatchStatementRequest(
+            return DynamoDBModel.BatchStatementRequest(
                 consistentRead: self.tableConfiguration.consistentRead,
                 statement: statement
             )

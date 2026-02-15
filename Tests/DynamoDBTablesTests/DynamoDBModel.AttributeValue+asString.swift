@@ -13,13 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  DynamoDBClientTypes.AttributeValue+asString.swift
+//  DynamoDBModel.AttributeValue+asString.swift
 //  DynamoDBTablesTests
 //
 
-import AWSDynamoDB
+@testable import DynamoDBTables
 
-extension DynamoDBClientTypes.AttributeValue {
+extension DynamoDBModel.AttributeValue {
     var asString: String? {
         if case .s(let string) = self {
             return string

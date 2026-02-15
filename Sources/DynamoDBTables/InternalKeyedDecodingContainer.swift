@@ -24,8 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-
 struct InternalKeyedDecodingContainer<K: CodingKey>: KeyedDecodingContainerProtocol {
     typealias Key = K
 
@@ -118,7 +116,7 @@ struct InternalKeyedDecodingContainer<K: CodingKey>: KeyedDecodingContainerProto
         try self.createNestedContainer(for: key).unkeyedContainer()
     }
 
-    private func getValues() -> [String: DynamoDBClientTypes.AttributeValue] {
+    private func getValues() -> [String: DynamoDBModel.AttributeValue] {
         guard case let .m(values) = decodingContainer.attributeValue else {
             fatalError("Expected keyed container and there wasn't one.")
         }

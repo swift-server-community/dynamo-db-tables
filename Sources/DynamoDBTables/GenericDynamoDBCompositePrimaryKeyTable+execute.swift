@@ -24,8 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-
 // ExecuteStatement has a maximum of 50 of decomposed read operations per request
 private let maximumKeysPerExecuteStatement = 50
 
@@ -104,7 +102,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
             do {
                 items = try outputAttributeValues.map { values in
-                    let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
+                    let attributeValue = DynamoDBModel.AttributeValue.m(values)
 
                     let decodedItem: ReturnTypeDecodable<ReturnedType> = try DynamoDBDecoder().decode(attributeValue)
 
@@ -190,7 +188,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
             do {
                 items = try outputAttributeValues.map { values in
-                    let attributeValue = DynamoDBClientTypes.AttributeValue.m(values)
+                    let attributeValue = DynamoDBModel.AttributeValue.m(values)
 
                     return try DynamoDBDecoder().decode(attributeValue)
                 }
@@ -299,7 +297,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     }
 }
 
-extension DynamoDBClientTypes.BatchStatementError {
+extension DynamoDBModel.BatchStatementError {
     func asDynamoDBTableError(partitionKey: String, sortKey: String, entryCount: Int) -> DynamoDBTableError {
         guard let code = self.code else {
             return DynamoDBTableError.unknown(

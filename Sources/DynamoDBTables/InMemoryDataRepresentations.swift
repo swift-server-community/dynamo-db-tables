@@ -19,7 +19,6 @@
 
 // MARK: - InMemory Data Representations
 
-@preconcurrency import AWSDynamoDB
 // swiftlint:disable:next unused_import
 import Foundation
 
@@ -29,9 +28,9 @@ import Foundation
  */
 
 /// Representation of a `DatabaseItem` when stored in `InMemoryDynamoDBCompositePrimaryKeyTableStore`.
-/// This type stores the serialised `DynamoDBClientTypes.AttributeValue` map
+/// This type stores the serialised `DynamoDBModel.AttributeValue` map
 public struct InMemoryDatabaseItem: Sendable {
-    public var item: [Swift.String: DynamoDBClientTypes.AttributeValue]
+    public var item: [Swift.String: DynamoDBModel.AttributeValue]
     var metadata: DatabaseItemMetadata
 
     var createDate: Date {
@@ -43,13 +42,13 @@ public struct InMemoryDatabaseItem: Sendable {
     }
 
     /**
-     De-serialises the `DynamoDBClientTypes.AttributeValue` map into an appropriate `TypedTTLDatabaseItem`.
+     De-serialises the `DynamoDBModel.AttributeValue` map into an appropriate `TypedTTLDatabaseItem`.
      */
     public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>() throws
         -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
     {
         do {
-            return try DynamoDBDecoder().decode(DynamoDBClientTypes.AttributeValue.m(self.item))
+            return try DynamoDBDecoder().decode(DynamoDBModel.AttributeValue.m(self.item))
         } catch {
             throw error.asUnrecognizedDynamoDBTableError()
         }

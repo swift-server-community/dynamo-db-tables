@@ -104,7 +104,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         #expect(result[testKey2] != nil)
         verify(mockClient).batchGetItem(
             input: .matching { input in
-                input.requestItems?[testTableName]?.keys?.count == 2
+                input.requestItems?[testTableName]?.keys.count == 2
                     && input.requestItems?[testTableName]?.consistentRead == true
             }
         )
@@ -128,7 +128,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
 
     private func getAttributesForKey(
         key: CompositePrimaryKey<StandardPrimaryKeyAttributes>
-    ) throws -> [String: DynamoDBClientTypes.AttributeValue] {
+    ) throws -> [String: DynamoDBModel.AttributeValue] {
         let attributeValue = try DynamoDBEncoder().encode(key)
 
         if case let .m(keyAttributes) = attributeValue {
@@ -150,7 +150,7 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         let itemBAttributes = try getAttributes(forItem: testItemB)
         let firstOutput = DynamoDBModel.BatchGetItemOutput(
             responses: [testTableName: [itemBAttributes]],
-            unprocessedKeys: [testTableName: DynamoDBClientTypes.KeysAndAttributes(keys: [])]
+            unprocessedKeys: [testTableName: DynamoDBModel.KeysAndAttributes(keys: [])]
         )
 
         // Second response with successful result
@@ -181,12 +181,12 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
         InOrder(strict: false, mockClient) { inOrder in
             inOrder.verify(mockClient).batchGetItem(
                 input: .matching { input in
-                    input.requestItems?[testTableName]?.keys?.count == 2
+                    input.requestItems?[testTableName]?.keys.count == 2
                 }
             )
             inOrder.verify(mockClient).batchGetItem(
                 input: .matching { input in
-                    input.requestItems?[testTableName]?.keys?.isEmpty == true
+                    input.requestItems?[testTableName]?.keys.isEmpty == true
                 }
             )
         }
@@ -229,8 +229,8 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
 
     private func getExclusiveStartKey(partitionKey: String, sortKey: String) throws -> String {
         let lastEvaluatedKey = [
-            StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBClientTypes.AttributeValue.s(partitionKey),
-            StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBClientTypes.AttributeValue.s(sortKey),
+            StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBModel.AttributeValue.s(partitionKey),
+            StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBModel.AttributeValue.s(sortKey),
         ]
 
         let data = try JSONEncoder().encode(lastEvaluatedKey)
@@ -248,8 +248,8 @@ struct AWSDynamoDBCompositePrimaryKeyTablePolymorphicTests {
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
         let lastEvaluatedKey = [
-            StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBClientTypes.AttributeValue.s(partitionKey),
-            StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBClientTypes.AttributeValue.s("lastKey"),
+            StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBModel.AttributeValue.s(partitionKey),
+            StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBModel.AttributeValue.s("lastKey"),
         ]
         let expectedOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes],

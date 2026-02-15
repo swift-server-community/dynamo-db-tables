@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
 import Foundation
 
 enum AttributeDifference: Equatable {
@@ -47,11 +46,11 @@ enum AttributeDifference: Equatable {
 func getAttributes(
     forItem item: TypedTTLDatabaseItem<some Any, some Any, some Any>
 ) throws
-    -> [String: DynamoDBClientTypes.AttributeValue]
+    -> [String: DynamoDBModel.AttributeValue]
 {
     let attributeValue = try DynamoDBEncoder().encode(item)
 
-    let attributes: [String: DynamoDBClientTypes.AttributeValue]
+    let attributes: [String: DynamoDBModel.AttributeValue]
     if case let .m(itemAttributes) = attributeValue {
         attributes = itemAttributes
     } else {
@@ -151,8 +150,8 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
     private func diffAttribute(
         path: String,
-        newAttribute: DynamoDBClientTypes.AttributeValue,
-        existingAttribute: DynamoDBClientTypes.AttributeValue
+        newAttribute: DynamoDBModel.AttributeValue,
+        existingAttribute: DynamoDBModel.AttributeValue
     ) throws -> [AttributeDifference] {
         switch (newAttribute, existingAttribute) {
         case (.b, .b):
@@ -201,8 +200,8 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
     private func diffListAttribute(
         path: String,
-        newAttribute: [DynamoDBClientTypes.AttributeValue],
-        existingAttribute: [DynamoDBClientTypes.AttributeValue]
+        newAttribute: [DynamoDBModel.AttributeValue],
+        existingAttribute: [DynamoDBModel.AttributeValue]
     ) throws -> [AttributeDifference] {
         let maxIndex = max(newAttribute.count, existingAttribute.count)
 
@@ -228,11 +227,10 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
     private func diffMapAttribute(
         path: String?,
-        newAttribute: [String: DynamoDBClientTypes.AttributeValue],
-        existingAttribute: [String: DynamoDBClientTypes.AttributeValue]
+        newAttribute: [String: DynamoDBModel.AttributeValue],
+        existingAttribute: [String: DynamoDBModel.AttributeValue]
     ) throws -> [AttributeDifference] {
-        var combinedMap:
-            [String: (new: DynamoDBClientTypes.AttributeValue?, existing: DynamoDBClientTypes.AttributeValue?)] = [:]
+        var combinedMap: [String: (new: DynamoDBModel.AttributeValue?, existing: DynamoDBModel.AttributeValue?)] = [:]
 
         for (key, attribute) in newAttribute {
             var existingEntry = combinedMap[key] ?? (nil, nil)
@@ -272,7 +270,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
     private func updateAttribute(
         newPath: String,
-        attribute: DynamoDBClientTypes.AttributeValue
+        attribute: DynamoDBModel.AttributeValue
     ) throws -> [AttributeDifference] {
         if let newValue = try getFlattenedAttribute(attribute: attribute) {
             [.update(path: newPath, value: newValue)]
@@ -281,7 +279,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    func getFlattenedAttribute(attribute: DynamoDBClientTypes.AttributeValue) throws -> String? {
+    func getFlattenedAttribute(attribute: DynamoDBModel.AttributeValue) throws -> String? {
         switch attribute {
         case .b:
             throw DynamoDBTableError.unableToUpdateError(reason: "Unable to handle Binary types.")
@@ -308,7 +306,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    private func getFlattenedListAttribute(attribute: [DynamoDBClientTypes.AttributeValue]) throws -> String {
+    private func getFlattenedListAttribute(attribute: [DynamoDBModel.AttributeValue]) throws -> String {
         let elements: [String] = try attribute.compactMap { nestedAttribute in
             try self.getFlattenedAttribute(attribute: nestedAttribute)
         }
@@ -317,7 +315,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         return "[\(joinedElements)]"
     }
 
-    private func getFlattenedMapAttribute(attribute: [String: DynamoDBClientTypes.AttributeValue]) throws -> String {
+    private func getFlattenedMapAttribute(attribute: [String: DynamoDBModel.AttributeValue]) throws -> String {
         let elements: [String] = try attribute.compactMap { key, nestedAttribute in
             guard let flattenedNestedAttribute = try getFlattenedAttribute(attribute: nestedAttribute) else {
                 return nil

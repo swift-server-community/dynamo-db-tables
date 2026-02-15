@@ -105,8 +105,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableQueryTests {
 
     private func getExclusiveStartKey(partitionKey: String, sortKey: String) throws -> String {
         let lastEvaluatedKey = [
-            StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBClientTypes.AttributeValue.s(partitionKey),
-            StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBClientTypes.AttributeValue.s(sortKey),
+            StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBModel.AttributeValue.s(partitionKey),
+            StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBModel.AttributeValue.s(sortKey),
         ]
 
         let data = try JSONEncoder().encode(lastEvaluatedKey)
@@ -125,8 +125,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableQueryTests {
 
         let itemAAttributes = try getAttributes(forItem: testItemA)
         let lastEvaluatedKey = [
-            StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBClientTypes.AttributeValue.s("partition1"),
-            StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBClientTypes.AttributeValue.s("sort1"),
+            StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBModel.AttributeValue.s("partition1"),
+            StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBModel.AttributeValue.s("sort1"),
         ]
         let expectedOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes],
@@ -267,8 +267,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableQueryTests {
         // First page
         let itemAAttributes = try getAttributes(forItem: testItemA)
         let lastEvaluatedKey = [
-            StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBClientTypes.AttributeValue.s("partition1"),
-            StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBClientTypes.AttributeValue.s("sort1"),
+            StandardPrimaryKeyAttributes.partitionKeyAttributeName: DynamoDBModel.AttributeValue.s("partition1"),
+            StandardPrimaryKeyAttributes.sortKeyAttributeName: DynamoDBModel.AttributeValue.s("sort1"),
         ]
         let firstPageOutput = DynamoDBModel.QueryOutput(
             items: [itemAAttributes],

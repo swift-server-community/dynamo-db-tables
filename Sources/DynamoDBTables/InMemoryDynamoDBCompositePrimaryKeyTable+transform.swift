@@ -14,8 +14,6 @@
 //  DynamoDBTables
 //
 
-@preconcurrency import AWSDynamoDB
-
 // MARK: - Transforms
 
 struct InMemoryPolymorphicWriteEntryTransform: PolymorphicWriteEntryTransform, Sendable {
@@ -519,7 +517,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
     func convertToQueryableType<ReturnedType: PolymorphicOperationReturnType>(
         input: InMemoryDatabaseItem
     ) throws -> ReturnedType {
-        let attributeValue = DynamoDBClientTypes.AttributeValue.m(input.item)
+        let attributeValue = DynamoDBModel.AttributeValue.m(input.item)
 
         let decodedItem: ReturnTypeDecodable<ReturnedType> = try DynamoDBDecoder().decode(attributeValue)
 

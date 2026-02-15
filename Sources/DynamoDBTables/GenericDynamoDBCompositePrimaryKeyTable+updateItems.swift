@@ -27,6 +27,24 @@
 import AWSDynamoDB
 import Logging
 
+extension DynamoDBClientTypes.AttributeValue {
+    var toDynamoDBModel: DynamoDBModel.AttributeValue {
+        switch self {
+        case .s(let value): .s(value)
+        case .n(let value): .n(value)
+        case .b(let value): .b(value)
+        case .ss(let value): .ss(value)
+        case .ns(let value): .ns(value)
+        case .bs(let value): .bs(value)
+        case .m(let value): .m(value.mapValues(\.toDynamoDBModel))
+        case .l(let value): .l(value.map(\.toDynamoDBModel))
+        case .null(let value): .null(value)
+        case .bool(let value): .bool(value)
+        case .sdkUnknown(let value): .sdkUnknown(value)
+        }
+    }
+}
+
 private let millisecondsToNanoSeconds: UInt64 = 1_000_000
 
 public enum AWSDynamoDBLimits {
@@ -136,16 +154,16 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             return
         }
 
-        let entryStatements = try entries.map { entry -> DynamoDBClientTypes.ParameterizedStatement in
+        let entryStatements = try entries.map { entry -> DynamoDBModel.ParameterizedStatement in
             let statement = try self.entryToStatement(entry)
 
-            return DynamoDBClientTypes.ParameterizedStatement(statement: statement)
+            return DynamoDBModel.ParameterizedStatement(statement: statement)
         }
 
-        let requiredItemsStatements = try constraints.map { entry -> DynamoDBClientTypes.ParameterizedStatement in
+        let requiredItemsStatements = try constraints.map { entry -> DynamoDBModel.ParameterizedStatement in
             let statement = try self.entryToStatement(entry)
 
-            return DynamoDBClientTypes.ParameterizedStatement(statement: statement)
+            return DynamoDBModel.ParameterizedStatement(statement: statement)
         }
 
         let transactionInput = DynamoDBModel.ExecuteTransactionInput(
@@ -168,20 +186,20 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             AWSDynamoDBPolymorphicWriteEntryTransform<Client>,
             AWSDynamoDBPolymorphicTransactionConstraintTransform<Client>
         >(table: self)
-        let entryStatements = try entries.map { entry -> DynamoDBClientTypes.ParameterizedStatement in
+        let entryStatements = try entries.map { entry -> DynamoDBModel.ParameterizedStatement in
             let transform: AWSDynamoDBPolymorphicWriteEntryTransform<Client> = try entry.handle(context: context)
             let statement = transform.statement
 
-            return DynamoDBClientTypes.ParameterizedStatement(statement: statement)
+            return DynamoDBModel.ParameterizedStatement(statement: statement)
         }
 
-        let requiredItemsStatements = try constraints.map { entry -> DynamoDBClientTypes.ParameterizedStatement in
+        let requiredItemsStatements = try constraints.map { entry -> DynamoDBModel.ParameterizedStatement in
             let transform: AWSDynamoDBPolymorphicTransactionConstraintTransform<Client> = try entry.handle(
                 context: context
             )
             let statement = transform.statement
 
-            return DynamoDBClientTypes.ParameterizedStatement(statement: statement)
+            return DynamoDBModel.ParameterizedStatement(statement: statement)
         }
 
         return DynamoDBModel.ExecuteTransactionInput(transactStatements: entryStatements + requiredItemsStatements)
@@ -246,7 +264,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     }
 
     private func getErrorReasons<AttributesType>(
-        cancellationReasons: [DynamoDBClientTypes.CancellationReason],
+        cancellationReasons: [DynamoDBModel.CancellationReason],
         keys: [CompositePrimaryKey<AttributesType>],
         entryCount: Int
     ) throws -> (reasons: [DynamoDBTableError], isTransactionConflict: Bool) {
@@ -339,8 +357,16 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             let keys: [CompositePrimaryKey<AttributesType>] =
                 entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
 
+            let modelReasons = cancellationReasons.map { reason in
+                DynamoDBModel.CancellationReason(
+                    code: reason.code,
+                    item: reason.item?.mapValues(\.toDynamoDBModel),
+                    message: reason.message
+                )
+            }
+
             let (reasons, isTransactionConflict) = try getErrorReasons(
-                cancellationReasons: cancellationReasons,
+                cancellationReasons: modelReasons,
                 keys: keys,
                 entryCount: entryCount
             )
@@ -418,8 +444,16 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
                 throw DynamoDBTableError.transactionCanceled(reasons: [])
             }
 
+            let modelReasons = cancellationReasons.map { reason in
+                DynamoDBModel.CancellationReason(
+                    code: reason.code,
+                    item: reason.item?.mapValues(\.toDynamoDBModel),
+                    message: reason.message
+                )
+            }
+
             let (reasons, isTransactionConflict) = try getErrorReasons(
-                cancellationReasons: cancellationReasons,
+                cancellationReasons: modelReasons,
                 keys: inputKeys,
                 entryCount: inputKeys.count
             )
@@ -481,7 +515,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
     private func writeChunkedItems(
         _ entries: [some PolymorphicWriteEntry]
-    ) async throws -> [DynamoDBClientTypes.BatchStatementResponse] {
+    ) async throws -> [DynamoDBModel.BatchStatementResponse] {
         // if there are no items, there is nothing to update
         guard entries.count > 0 else {
             return []
@@ -491,11 +525,11 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             AWSDynamoDBPolymorphicWriteEntryTransform<Client>,
             AWSDynamoDBPolymorphicTransactionConstraintTransform<Client>
         >(table: self)
-        let statements = try entries.map { entry -> DynamoDBClientTypes.BatchStatementRequest in
+        let statements = try entries.map { entry -> DynamoDBModel.BatchStatementRequest in
             let transform: AWSDynamoDBPolymorphicWriteEntryTransform<Client> = try entry.handle(context: context)
             let statement = transform.statement
 
-            return DynamoDBClientTypes.BatchStatementRequest(
+            return DynamoDBModel.BatchStatementRequest(
                 consistentRead: self.tableConfiguration.consistentRead,
                 statement: statement
             )
@@ -532,13 +566,13 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
 
     private func writeChunkedItems(
         _ entries: [WriteEntry<some Any, some Any, some Any>]
-    ) async throws -> [DynamoDBClientTypes.BatchStatementResponse] {
+    ) async throws -> [DynamoDBModel.BatchStatementResponse] {
         // if there are no items, there is nothing to update
         guard entries.count > 0 else {
             return []
         }
 
-        let statements = try entries.map { entry -> DynamoDBClientTypes.BatchStatementRequest in
+        let statements = try entries.map { entry -> DynamoDBModel.BatchStatementRequest in
             let statement: String =
                 switch entry {
                 case let .update(new: new, existing: existing):
@@ -564,7 +598,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
                     )
                 }
 
-            return DynamoDBClientTypes.BatchStatementRequest(
+            return DynamoDBModel.BatchStatementRequest(
                 consistentRead: self.tableConfiguration.consistentRead,
                 statement: statement
             )

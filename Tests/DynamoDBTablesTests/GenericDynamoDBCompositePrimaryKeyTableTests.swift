@@ -374,7 +374,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         #expect(result[testKey1]?.rowValue.firstly == testItemA.rowValue.firstly)
         verify(mockClient).batchGetItem(
             input: .matching { input in
-                input.requestItems?[testTableName]?.keys?.count == 1
+                input.requestItems?[testTableName]?.keys.count == 1
                     && input.requestItems?[testTableName]?.consistentRead == true
             }
         )
@@ -389,7 +389,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         // First response with unprocessed keys
         let firstOutput = DynamoDBModel.BatchGetItemOutput(
             responses: [:],
-            unprocessedKeys: [testTableName: DynamoDBClientTypes.KeysAndAttributes(keys: [])]
+            unprocessedKeys: [testTableName: DynamoDBModel.KeysAndAttributes(keys: [])]
         )
 
         // Second response with successful result
@@ -415,7 +415,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         InOrder(strict: false, mockClient) { inOrder in
             inOrder.verify(mockClient).batchGetItem(
                 input: .matching { input in
-                    input.requestItems?[testTableName]?.keys?.count == 1
+                    input.requestItems?[testTableName]?.keys.count == 1
                 }
             )
             inOrder.verify(mockClient).batchGetItem(
@@ -432,7 +432,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
         let keys = [testKey1]
         let expectedOutput = DynamoDBModel.BatchExecuteStatementOutput(
-            responses: [DynamoDBClientTypes.BatchStatementResponse()]
+            responses: [DynamoDBModel.BatchStatementResponse()]
         )
 
         when(expectations.batchExecuteStatement(input: .any), return: expectedOutput)
