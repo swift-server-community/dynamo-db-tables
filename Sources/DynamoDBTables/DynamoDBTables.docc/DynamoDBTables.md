@@ -4,7 +4,7 @@ A type-safe, Sendable-first DynamoDB layer for Swift with optimistic concurrency
 
 ## Overview
 
-DynamoDBTables is a Swift library for working with Amazon DynamoDB. It sits on top of the AWS SDK and provides a type-safe, `Sendable`-first API for storing, retrieving, and querying items — including tables where different rows have different schemas.
+DynamoDBTables is a Swift library for working with Amazon DynamoDB. It provides a type-safe, `Sendable`-first API for storing, retrieving, and querying items — including tables where different rows have different schemas. It integrates with [aws-sdk-swift](https://github.com/awslabs/aws-sdk-swift) by default and [Soto](https://github.com/soto-project/soto) by an opt-in package trait.
 
 The raw AWS SDK for DynamoDB operates on untyped attribute-value dictionaries — every read requires manual deserialization, every write requires constructing low-level attribute maps, and there's no compile-time guarantee that the data you read matches the schema you expect. DynamoDBTables replaces all of that with a strongly typed Swift layer where your `Codable` models are serialized and deserialized automatically, and the compiler catches schema mismatches before your code ever runs.
 

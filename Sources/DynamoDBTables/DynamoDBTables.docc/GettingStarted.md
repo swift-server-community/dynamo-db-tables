@@ -8,21 +8,34 @@ This guide walks you through adding DynamoDBTables as a dependency, defining a `
 
 ## Add the Dependency
 
-Add DynamoDBTables to your `Package.swift`:
+Add DynamoDBTables to your `Package.swift`. Choose the SDK integration that matches your project:
+
+### With [aws-sdk-swift](https://github.com/awslabs/aws-sdk-swift) (default)
 
 ```swift
 dependencies: [
     .package(url: "https://github.com/swift-server-community/dynamo-db-tables", from: "0.1.0")
 ]
-```
 
-Then add the product to your target:
-
-```swift
 .target(
     name: "MyApp",
     dependencies: [
-        .product(name: "DynamoDBTables", package: "dynamo-db-tables")
+        .product(name: "DynamoDBTablesAWS", package: "dynamo-db-tables")
+    ]
+)
+```
+
+### With [Soto](https://github.com/soto-project/soto)
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/swift-server-community/dynamo-db-tables", traits: ["SOTOSDK"], from: "0.1.0")
+]
+
+.target(
+    name: "MyApp",
+    dependencies: [
+        .product(name: "DynamoDBTablesSoto", package: "dynamo-db-tables")
     ]
 )
 ```
@@ -38,6 +51,32 @@ struct Customer: Codable, Sendable {
     let name: String
     let email: String
 }
+```
+
+## Create a Table
+
+### With aws-sdk-swift
+
+```swift
+import DynamoDBTablesAWS
+
+let table = try AWSDynamoDBCompositePrimaryKeyTable(
+    tableName: "MyTable",
+    region: "us-east-1"
+)
+```
+
+### With Soto
+
+```swift
+import DynamoDBTablesSoto
+
+let client = AWSClient()
+let table = SotoDynamoDBCompositePrimaryKeyTable(
+    tableName: "MyTable",
+    client: client,
+    region: .useast1
+)
 ```
 
 ## Insert and Retrieve

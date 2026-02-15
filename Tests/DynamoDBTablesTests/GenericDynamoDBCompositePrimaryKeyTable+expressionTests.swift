@@ -62,7 +62,13 @@ struct AWSDynamoDBCompositePrimaryKeyTableExpressionTests {
             sortKey: "sortKey"
         )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
-        let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
+        let databaseItemB = TypedTTLDatabaseItem(
+            compositePrimaryKey: compositeKey,
+            createDate: databaseItemA.createDate,
+            rowStatus: databaseItemA.rowStatus,
+            rowValue: payloadB,
+            timeToLive: databaseItemA.timeToLive
+        )
 
         let table = try getTable()
 
@@ -103,7 +109,13 @@ struct AWSDynamoDBCompositePrimaryKeyTableExpressionTests {
             sortKey: "so'rt''Key"
         )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
-        let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
+        let databaseItemB = TypedTTLDatabaseItem(
+            compositePrimaryKey: compositeKey,
+            createDate: databaseItemA.createDate,
+            rowStatus: databaseItemA.rowStatus,
+            rowValue: payloadB,
+            timeToLive: databaseItemA.timeToLive
+        )
 
         let table = try getTable(escapeSingleQuoteInPartiQL: true)
 
@@ -139,7 +151,13 @@ struct AWSDynamoDBCompositePrimaryKeyTableExpressionTests {
             sortKey: "sortKey"
         )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
-        let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
+        let databaseItemB = TypedTTLDatabaseItem(
+            compositePrimaryKey: compositeKey,
+            createDate: databaseItemA.createDate,
+            rowStatus: databaseItemA.rowStatus,
+            rowValue: payloadB,
+            timeToLive: databaseItemA.timeToLive
+        )
 
         let table = try getTable()
 
@@ -173,7 +191,13 @@ struct AWSDynamoDBCompositePrimaryKeyTableExpressionTests {
             sortKey: "sortKey"
         )
         let databaseItemA = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadA)
-        let databaseItemB = StandardTypedDatabaseItem.newItem(withKey: compositeKey, andValue: payloadB)
+        let databaseItemB = TypedTTLDatabaseItem(
+            compositePrimaryKey: compositeKey,
+            createDate: databaseItemA.createDate,
+            rowStatus: databaseItemA.rowStatus,
+            rowValue: payloadB,
+            timeToLive: databaseItemA.timeToLive
+        )
 
         let table = try getTable()
 
