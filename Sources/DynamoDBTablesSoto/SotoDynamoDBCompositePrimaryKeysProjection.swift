@@ -18,7 +18,7 @@ import Logging
 import SotoDynamoDB
 
 /// A `DynamoDBCompositePrimaryKeysProjection` implementation backed by the DynamoDB
-/// service provided by soto.
+/// service provided by Soto.
 ///
 /// ```swift
 /// let client = AWSClient()

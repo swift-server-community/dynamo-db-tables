@@ -14,7 +14,7 @@
 
 # DynamoDBTables
 
-A type-safe, Sendable-first DynamoDB layer for Swift with optimistic concurrency. DynamoDBTables makes it easy to use DynamoDB from Swift-based applications, with a particular focus on usage with polymorphic database tables — tables that don't have a single schema for all rows. It integrates with both [aws-sdk-swift](https://github.com/awslabs/aws-sdk-swift) and [Soto](https://github.com/soto-project/soto).
+A type-safe, Sendable-first DynamoDB layer for Swift with optimistic concurrency. DynamoDBTables makes it easy to use DynamoDB from Swift-based applications, with a particular focus on usage with polymorphic database tables — tables that don't have a single schema for all rows. It integrates with [aws-sdk-swift](https://github.com/awslabs/aws-sdk-swift) by default and [Soto](https://github.com/soto-project/soto) by an opt-in package trait.
 
 DynamoDBTables is a fork of [smoke-dynamodb](https://github.com/amzn/smoke-dynamodb) and acknowledges the authors of that original package.
 

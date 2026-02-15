@@ -46,11 +46,34 @@ jobs:
         run: swift build -c release -Xswiftc -strict-concurrency=complete
       - name: Run tests
         run: swift test
+  BuildTestAndAnalyzeSoto:
+    name: Soto ${{ matrix.image }}
+    strategy:
+      matrix:
+        image: ["swift:6.2.3-noble"]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y libssl-dev curl unzip
+      - uses: actions/checkout@v6
+      - name: Build
+        run: swift build -c release --traits SOTOSDK -Xswiftc -strict-concurrency=complete
+      - name: Run tests
+        run: swift test --traits SOTOSDK -v 2>&1 | tee build.log
+      - name: Install SwiftLint
+        run: |
+          curl -sL https://github.com/realm/SwiftLint/releases/download/0.63.2/swiftlint_linux_amd64.zip -o swiftlint.zip
+          unzip -o swiftlint.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/swiftlint
+      - name: SwiftLint unused imports
+        run: swiftlint analyze --strict --quiet --compiler-log-path build.log
   BuildAndTestSoto:
     name: Soto ${{ matrix.image }}
     strategy:
       matrix:
-        image: ["swift:6.2.3-noble", "swift:6.2.3-jammy"]
+        image: ["swift:6.2.3-jammy"]
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.image }}
