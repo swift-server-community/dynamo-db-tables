@@ -19,7 +19,7 @@ import DynamoDBTables
 import Logging
 import SmithyIdentity
 
-/// A `DynamoDBCompositePrimaryKeysProjection` implementation backed by the AWS DynamoDB 
+/// A `DynamoDBCompositePrimaryKeysProjection` implementation backed by the AWS DynamoDB
 /// service provided by aws-sdk-swift.
 ///
 /// ```swift
