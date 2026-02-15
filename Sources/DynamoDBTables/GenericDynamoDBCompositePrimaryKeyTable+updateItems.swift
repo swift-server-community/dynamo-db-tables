@@ -28,11 +28,11 @@ import Logging
 
 private let millisecondsToNanoSeconds: UInt64 = 1_000_000
 
-public enum AWSDynamoDBLimits {
+package enum AWSDynamoDBLimits {
     // BatchExecuteStatement has a maximum of 25 statements
-    public static let maximumUpdatesPerExecuteStatement = 25
-    public static let maximumUpdatesPerTransactionStatement = 100
-    public static let maxStatementLength = 8192
+    package static let maximumUpdatesPerExecuteStatement = 25
+    package static let maximumUpdatesPerTransactionStatement = 100
+    package static let maxStatementLength = 8192
 }
 
 private struct AWSDynamoDBPolymorphicWriteEntryTransform<Client: DynamoDBClientProtocol & Sendable>:
@@ -69,7 +69,7 @@ private struct AWSDynamoDBPolymorphicTransactionConstraintTransform<Client: Dyna
 
 /// DynamoDBTable conformance updateItems function
 extension GenericDynamoDBCompositePrimaryKeyTable {
-    public func validateEntry(entry: WriteEntry<some Any, some Any, some Any>) throws {
+    package func validateEntry(entry: WriteEntry<some Any, some Any, some Any>) throws {
         let statement: String = try entryToStatement(entry)
 
         if statement.count > AWSDynamoDBLimits.maxStatementLength {
@@ -184,7 +184,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         return DynamoDBModel.ExecuteTransactionInput(transactStatements: entryStatements + requiredItemsStatements)
     }
 
-    public func transactWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
+    package func transactWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
         try await self.transactWrite(
             entries,
             constraints: [],
@@ -192,7 +192,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         )
     }
 
-    public func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
+    package func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
         _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
         constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
     ) async throws {
@@ -203,7 +203,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         )
     }
 
-    public func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry>(
+    package func polymorphicTransactWrite<WriteEntryType: PolymorphicWriteEntry>(
         _ entries: [WriteEntryType]
     ) async throws {
         let noConstraints: [EmptyPolymorphicTransactionConstraintEntry<WriteEntryType.AttributesType>] = []
@@ -221,7 +221,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         )
     }
 
-    public func polymorphicTransactWrite<
+    package func polymorphicTransactWrite<
         WriteEntryType: PolymorphicWriteEntry,
         TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry
     >(
@@ -510,7 +510,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         return response.responses ?? []
     }
 
-    public func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+    package func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedEntries = entries.chunked(by: AWSDynamoDBLimits.maximumUpdatesPerExecuteStatement)
@@ -583,7 +583,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func bulkWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
+    package func bulkWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedEntries = entries.chunked(by: AWSDynamoDBLimits.maximumUpdatesPerExecuteStatement)
@@ -616,7 +616,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         case failure(DynamoDBTableError)
     }
 
-    public func bulkWriteWithFallback<AttributesType, ItemType: Sendable, TimeToLiveAttributesType>(
+    package func bulkWriteWithFallback<AttributesType, ItemType: Sendable, TimeToLiveAttributesType>(
         _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
     ) async throws {
         // fall back to single operation if the write entry exceeds the statement length limitation

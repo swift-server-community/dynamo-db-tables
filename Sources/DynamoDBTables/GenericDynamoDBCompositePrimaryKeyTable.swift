@@ -52,16 +52,16 @@ public struct AWSDynamoDBTableConfiguration: Sendable {
     }
 }
 
-public struct GenericDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientProtocol & Sendable>:
+package struct GenericDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientProtocol & Sendable>:
     DynamoDBCompositePrimaryKeyTable, Sendable
 {
     let dynamodb: Client
     let targetTableName: String
-    public let tableConfiguration: AWSDynamoDBTableConfiguration
-    public let tableMetrics: AWSDynamoDBTableMetrics
+    package let tableConfiguration: AWSDynamoDBTableConfiguration
+    package let tableMetrics: AWSDynamoDBTableMetrics
     let logger: Logging.Logger
 
-    public init(
+    package init(
         tableName: String,
         client: Client,
         tableConfiguration: AWSDynamoDBTableConfiguration = .init(),

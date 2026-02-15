@@ -200,14 +200,14 @@ public enum DynamoDBModel {
         // swiftlint:enable cyclomatic_complexity function_body_length identifier_name
     }
 
-    public struct KeysAndAttributes: Sendable, Equatable {
-        public let keys: [[String: AttributeValue]]
-        public let consistentRead: Bool?
-        public let attributesToGet: [String]?
-        public let projectionExpression: String?
-        public let expressionAttributeNames: [String: String]?
+    package struct KeysAndAttributes: Sendable, Equatable {
+        package let keys: [[String: AttributeValue]]
+        package let consistentRead: Bool?
+        package let attributesToGet: [String]?
+        package let projectionExpression: String?
+        package let expressionAttributeNames: [String: String]?
 
-        public init(
+        package init(
             attributesToGet: [String]? = nil,
             consistentRead: Bool? = nil,
             expressionAttributeNames: [String: String]? = nil,
@@ -222,12 +222,12 @@ public enum DynamoDBModel {
         }
     }
 
-    public struct BatchStatementRequest: Sendable, Equatable {
-        public let statement: String?
-        public let consistentRead: Bool?
-        public let parameters: [AttributeValue]?
+    package struct BatchStatementRequest: Sendable, Equatable {
+        package let statement: String?
+        package let consistentRead: Bool?
+        package let parameters: [AttributeValue]?
 
-        public init(
+        package init(
             consistentRead: Bool? = nil,
             parameters: [AttributeValue]? = nil,
             statement: String? = nil
@@ -238,12 +238,12 @@ public enum DynamoDBModel {
         }
     }
 
-    public struct BatchStatementResponse: Sendable {
-        public let error: BatchStatementError?
-        public let item: [String: AttributeValue]?
-        public let tableName: String?
+    package struct BatchStatementResponse: Sendable {
+        package let error: BatchStatementError?
+        package let item: [String: AttributeValue]?
+        package let tableName: String?
 
-        public init(
+        package init(
             error: BatchStatementError? = nil,
             item: [String: AttributeValue]? = nil,
             tableName: String? = nil
@@ -254,11 +254,11 @@ public enum DynamoDBModel {
         }
     }
 
-    public struct BatchStatementError: Sendable {
-        public let code: BatchStatementErrorCode?
-        public let message: String?
+    package struct BatchStatementError: Sendable {
+        package let code: BatchStatementErrorCode?
+        package let message: String?
 
-        public init(
+        package init(
             code: BatchStatementErrorCode? = nil,
             message: String? = nil
         ) {
@@ -267,7 +267,7 @@ public enum DynamoDBModel {
         }
     }
 
-    public enum BatchStatementErrorCode: Sendable, Equatable {
+    package enum BatchStatementErrorCode: Sendable, Equatable {
         case accessdenied
         case conditionalcheckfailed
         case duplicateitem
@@ -282,11 +282,11 @@ public enum DynamoDBModel {
         case sdkUnknown(String)
     }
 
-    public struct ParameterizedStatement: Sendable, Equatable {
-        public let statement: String?
-        public let parameters: [AttributeValue]?
+    package struct ParameterizedStatement: Sendable, Equatable {
+        package let statement: String?
+        package let parameters: [AttributeValue]?
 
-        public init(
+        package init(
             parameters: [AttributeValue]? = nil,
             statement: String? = nil
         ) {
@@ -295,12 +295,12 @@ public enum DynamoDBModel {
         }
     }
 
-    public struct CancellationReason: Sendable {
-        public let code: String?
-        public let item: [String: AttributeValue]?
-        public let message: String?
+    package struct CancellationReason: Sendable {
+        package let code: String?
+        package let item: [String: AttributeValue]?
+        package let message: String?
 
-        public init(
+        package init(
             code: String? = nil,
             item: [String: AttributeValue]? = nil,
             message: String? = nil
@@ -313,14 +313,14 @@ public enum DynamoDBModel {
 
     // MARK: - Input Types
 
-    public struct PutItemInput: Sendable, Equatable {
-        public let conditionExpression: String?
-        public let expressionAttributeNames: [String: String]?
-        public let expressionAttributeValues: [String: AttributeValue]?
-        public let item: [String: AttributeValue]
-        public let tableName: String
+    package struct PutItemInput: Sendable, Equatable {
+        package let conditionExpression: String?
+        package let expressionAttributeNames: [String: String]?
+        package let expressionAttributeValues: [String: AttributeValue]?
+        package let item: [String: AttributeValue]
+        package let tableName: String
 
-        public init(
+        package init(
             conditionExpression: String? = nil,
             expressionAttributeNames: [String: String]? = nil,
             expressionAttributeValues: [String: AttributeValue]? = nil,
@@ -335,12 +335,12 @@ public enum DynamoDBModel {
         }
     }
 
-    public struct GetItemInput: Sendable, Equatable {
-        public let consistentRead: Bool?
-        public let key: [String: AttributeValue]
-        public let tableName: String
+    package struct GetItemInput: Sendable, Equatable {
+        package let consistentRead: Bool?
+        package let key: [String: AttributeValue]
+        package let tableName: String
 
-        public init(
+        package init(
             consistentRead: Bool? = nil,
             key: [String: AttributeValue],
             tableName: String
@@ -351,14 +351,14 @@ public enum DynamoDBModel {
         }
     }
 
-    public struct DeleteItemInput: Sendable, Equatable {
-        public let conditionExpression: String?
-        public let expressionAttributeNames: [String: String]?
-        public let expressionAttributeValues: [String: AttributeValue]?
-        public let key: [String: AttributeValue]
-        public let tableName: String
+    package struct DeleteItemInput: Sendable, Equatable {
+        package let conditionExpression: String?
+        package let expressionAttributeNames: [String: String]?
+        package let expressionAttributeValues: [String: AttributeValue]?
+        package let key: [String: AttributeValue]
+        package let tableName: String
 
-        public init(
+        package init(
             conditionExpression: String? = nil,
             expressionAttributeNames: [String: String]? = nil,
             expressionAttributeValues: [String: AttributeValue]? = nil,
@@ -373,18 +373,18 @@ public enum DynamoDBModel {
         }
     }
 
-    public struct QueryInput: Sendable, Equatable {
-        public let consistentRead: Bool?
-        public let exclusiveStartKey: [String: AttributeValue]?
-        public let expressionAttributeNames: [String: String]?
-        public let expressionAttributeValues: [String: AttributeValue]?
-        public let indexName: String?
-        public let keyConditionExpression: String?
-        public let limit: Int?
-        public let scanIndexForward: Bool?
-        public let tableName: String
+    package struct QueryInput: Sendable, Equatable {
+        package let consistentRead: Bool?
+        package let exclusiveStartKey: [String: AttributeValue]?
+        package let expressionAttributeNames: [String: String]?
+        package let expressionAttributeValues: [String: AttributeValue]?
+        package let indexName: String?
+        package let keyConditionExpression: String?
+        package let limit: Int?
+        package let scanIndexForward: Bool?
+        package let tableName: String
 
-        public init(
+        package init(
             consistentRead: Bool? = nil,
             exclusiveStartKey: [String: AttributeValue]? = nil,
             expressionAttributeNames: [String: String]? = nil,
@@ -407,32 +407,32 @@ public enum DynamoDBModel {
         }
     }
 
-    public struct BatchGetItemInput: Sendable, Equatable {
-        public let requestItems: [String: KeysAndAttributes]?
+    package struct BatchGetItemInput: Sendable, Equatable {
+        package let requestItems: [String: KeysAndAttributes]?
 
-        public init(
+        package init(
             requestItems: [String: KeysAndAttributes]? = nil
         ) {
             self.requestItems = requestItems
         }
     }
 
-    public struct BatchExecuteStatementInput: Sendable, Equatable {
-        public let statements: [BatchStatementRequest]?
+    package struct BatchExecuteStatementInput: Sendable, Equatable {
+        package let statements: [BatchStatementRequest]?
 
-        public init(
+        package init(
             statements: [BatchStatementRequest]? = nil
         ) {
             self.statements = statements
         }
     }
 
-    public struct ExecuteStatementInput: Sendable, Equatable {
-        public let consistentRead: Bool?
-        public let nextToken: String?
-        public let statement: String
+    package struct ExecuteStatementInput: Sendable, Equatable {
+        package let consistentRead: Bool?
+        package let nextToken: String?
+        package let statement: String
 
-        public init(
+        package init(
             consistentRead: Bool? = nil,
             nextToken: String? = nil,
             statement: String
@@ -443,10 +443,10 @@ public enum DynamoDBModel {
         }
     }
 
-    public struct ExecuteTransactionInput: Sendable, Equatable {
-        public let transactStatements: [ParameterizedStatement]?
+    package struct ExecuteTransactionInput: Sendable, Equatable {
+        package let transactStatements: [ParameterizedStatement]?
 
-        public init(
+        package init(
             transactStatements: [ParameterizedStatement]? = nil
         ) {
             self.transactStatements = transactStatements
@@ -455,21 +455,21 @@ public enum DynamoDBModel {
 
     // MARK: - Output Types
 
-    public struct GetItemOutput: Sendable {
-        public let item: [String: AttributeValue]?
+    package struct GetItemOutput: Sendable {
+        package let item: [String: AttributeValue]?
 
-        public init(
+        package init(
             item: [String: AttributeValue]? = nil
         ) {
             self.item = item
         }
     }
 
-    public struct QueryOutput: Sendable {
-        public let items: [[String: AttributeValue]]?
-        public let lastEvaluatedKey: [String: AttributeValue]?
+    package struct QueryOutput: Sendable {
+        package let items: [[String: AttributeValue]]?
+        package let lastEvaluatedKey: [String: AttributeValue]?
 
-        public init(
+        package init(
             items: [[String: AttributeValue]]? = nil,
             lastEvaluatedKey: [String: AttributeValue]? = nil
         ) {
@@ -478,11 +478,11 @@ public enum DynamoDBModel {
         }
     }
 
-    public struct BatchGetItemOutput: Sendable {
-        public let responses: [String: [[String: AttributeValue]]]?
-        public let unprocessedKeys: [String: KeysAndAttributes]?
+    package struct BatchGetItemOutput: Sendable {
+        package let responses: [String: [[String: AttributeValue]]]?
+        package let unprocessedKeys: [String: KeysAndAttributes]?
 
-        public init(
+        package init(
             responses: [String: [[String: AttributeValue]]]? = nil,
             unprocessedKeys: [String: KeysAndAttributes]? = nil
         ) {
@@ -491,21 +491,21 @@ public enum DynamoDBModel {
         }
     }
 
-    public struct BatchExecuteStatementOutput: Sendable {
-        public let responses: [BatchStatementResponse]?
+    package struct BatchExecuteStatementOutput: Sendable {
+        package let responses: [BatchStatementResponse]?
 
-        public init(
+        package init(
             responses: [BatchStatementResponse]? = nil
         ) {
             self.responses = responses
         }
     }
 
-    public struct ExecuteStatementOutput: Sendable {
-        public let items: [[String: AttributeValue]]?
-        public let nextToken: String?
+    package struct ExecuteStatementOutput: Sendable {
+        package let items: [[String: AttributeValue]]?
+        package let nextToken: String?
 
-        public init(
+        package init(
             items: [[String: AttributeValue]]? = nil,
             nextToken: String? = nil
         ) {
@@ -516,20 +516,20 @@ public enum DynamoDBModel {
 }
 // swiftlint:enable type_body_length
 
-public struct Key: CodingKey {
-    public let stringValue: String
-    public init(stringValue: String) {
+package struct Key: CodingKey {
+    package let stringValue: String
+    package init(stringValue: String) {
         self.stringValue = stringValue
         self.intValue = nil
     }
 
-    public init(_ stringValue: String) {
+    package init(_ stringValue: String) {
         self.stringValue = stringValue
         self.intValue = nil
     }
 
-    public let intValue: Int?
-    public init?(intValue _: Int) {
+    package let intValue: Int?
+    package init?(intValue _: Int) {
         nil
     }
 }

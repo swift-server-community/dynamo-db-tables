@@ -30,7 +30,7 @@ import Logging
 
 /// DynamoDBKeysProjection conformance async functions
 extension GenericDynamoDBCompositePrimaryKeysProjection {
-    public func query<AttributesType>(
+    package func query<AttributesType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?
     ) async throws
@@ -77,7 +77,7 @@ extension GenericDynamoDBCompositePrimaryKeysProjection {
         }
     }
 
-    public func query<AttributesType>(
+    package func query<AttributesType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?,
         limit: Int?,
@@ -94,7 +94,7 @@ extension GenericDynamoDBCompositePrimaryKeysProjection {
         )
     }
 
-    public func query<AttributesType>(
+    package func query<AttributesType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?,
         limit: Int?,

@@ -83,7 +83,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         return response.responses ?? []
     }
 
-    public func deleteItems(forKeys keys: [CompositePrimaryKey<some Any>]) async throws {
+    package func deleteItems(forKeys keys: [CompositePrimaryKey<some Any>]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedKeys = keys.chunked(by: maximumUpdatesPerExecuteStatement)
@@ -106,7 +106,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func deleteItems(existingItems: [TypedTTLDatabaseItem<some Any, some Any, some Any>]) async throws {
+    package func deleteItems(existingItems: [TypedTTLDatabaseItem<some Any, some Any, some Any>]) async throws {
         // BatchExecuteStatement has a maximum of 25 statements
         // This function handles pagination internally.
         let chunkedItems = existingItems.chunked(by: maximumUpdatesPerExecuteStatement)

@@ -26,15 +26,15 @@
 
 import Logging
 
-public struct GenericDynamoDBCompositePrimaryKeysProjection<Client: DynamoDBClientProtocol & Sendable>:
+package struct GenericDynamoDBCompositePrimaryKeysProjection<Client: DynamoDBClientProtocol & Sendable>:
     DynamoDBCompositePrimaryKeysProjection, Sendable
 {
     let dynamodb: Client
     let targetTableName: String
-    public let tableConfiguration: AWSDynamoDBTableConfiguration
+    package let tableConfiguration: AWSDynamoDBTableConfiguration
     let logger: Logging.Logger
 
-    public init(
+    package init(
         tableName: String,
         client: Client,
         tableConfiguration: AWSDynamoDBTableConfiguration = .init(),

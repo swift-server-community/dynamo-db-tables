@@ -132,7 +132,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
+    package func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
         forKeys keys: [CompositePrimaryKey<AttributesType>]
     ) async throws
         -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<

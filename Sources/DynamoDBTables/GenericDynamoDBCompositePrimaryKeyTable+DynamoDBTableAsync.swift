@@ -30,13 +30,13 @@ import Logging
 
 /// DynamoDBTable conformance async functions
 extension GenericDynamoDBCompositePrimaryKeyTable {
-    public func insertItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
+    package func insertItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         let putItemInput = try getInputForInsert(item)
 
         try await putItem(forInput: putItemInput, withKey: item.compositePrimaryKey)
     }
 
-    public func clobberItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
+    package func clobberItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         let attributes = try getAttributes(forItem: item)
 
         let putItemInput = DynamoDBModel.PutItemInput(
@@ -47,7 +47,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         try await self.putItem(forInput: putItemInput, withKey: item.compositePrimaryKey)
     }
 
-    public func updateItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+    package func updateItem<AttributesType, ItemType, TimeToLiveAttributesType>(
         newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
     ) async throws {
@@ -56,7 +56,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         try await putItem(forInput: putItemInput, withKey: newItem.compositePrimaryKey)
     }
 
-    public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+    package func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(
         forKey key: CompositePrimaryKey<AttributesType>
     ) async throws
         -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
@@ -84,7 +84,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func deleteItem(forKey key: CompositePrimaryKey<some Any>) async throws {
+    package func deleteItem(forKey key: CompositePrimaryKey<some Any>) async throws {
         let deleteItemInput = try getInputForDeleteItem(forKey: key)
 
         self.logger.trace("dynamodb.deleteItem with key: \(key) and table name \(targetTableName)")
@@ -99,7 +99,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func deleteItem(existingItem: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
+    package func deleteItem(existingItem: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
         let deleteItemInput = try getInputForDeleteItem(existingItem: existingItem)
 
         let logMessage =
@@ -118,7 +118,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+    package func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?
     ) async throws
@@ -163,7 +163,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+    package func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?,
         limit: Int?,
@@ -180,7 +180,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         )
     }
 
-    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+    package func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?,
         limit: Int?,
@@ -260,7 +260,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(
+    package func query<AttributesType, ItemType, TimeToLiveAttributesType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?
     ) async throws
@@ -306,7 +306,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(
+    package func query<AttributesType, ItemType, TimeToLiveAttributesType>(
         forPartitionKey partitionKey: String,
         sortKeyCondition: AttributeCondition?,
         limit: Int?,
