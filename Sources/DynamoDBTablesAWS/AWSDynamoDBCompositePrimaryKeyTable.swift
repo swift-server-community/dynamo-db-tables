@@ -19,14 +19,15 @@ import DynamoDBTables
 import Logging
 import SmithyIdentity
 
-/// A type alias for `GenericDynamoDBCompositePrimaryKeyTable` specialized with the AWS DynamoDB client.
+/// A concrete wrapper around `GenericDynamoDBCompositePrimaryKeyTable<DynamoDBClient>` that conforms to
+/// `DynamoDBCompositePrimaryKeyTable`.
 ///
 /// This provides a convenient way to use the DynamoDB table implementation with the standard AWS DynamoDB client
-/// without needing to specify the generic parameter explicitly.
+/// without needing to interact with the generic type directly.
 ///
 /// ## Usage
 ///
-/// Use this type alias when working with the real AWS DynamoDB service:
+/// Use this type when working with the real AWS DynamoDB service:
 ///
 /// ```swift
 /// // Create a table using region-based initialization
@@ -42,11 +43,12 @@ import SmithyIdentity
 ///     client: awsClient
 /// )
 /// ```
-public typealias AWSDynamoDBCompositePrimaryKeyTable = GenericDynamoDBCompositePrimaryKeyTable<
-    AWSDynamoDB.DynamoDBClient
->
+public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable, Sendable {
+    private let wrapped: GenericDynamoDBCompositePrimaryKeyTable<AWSDynamoDB.DynamoDBClient>
 
-extension GenericDynamoDBCompositePrimaryKeyTable where Client == AWSDynamoDB.DynamoDBClient {
+    public var tableConfiguration: AWSDynamoDBTableConfiguration { self.wrapped.tableConfiguration }
+    public var tableMetrics: AWSDynamoDBTableMetrics { self.wrapped.tableMetrics }
+
     public init(
         tableName: String,
         region: Swift.String,
@@ -67,6 +69,251 @@ extension GenericDynamoDBCompositePrimaryKeyTable where Client == AWSDynamoDB.Dy
             tableConfiguration: tableConfiguration,
             tableMetrics: tableMetrics,
             logger: logger
+        )
+    }
+
+    public init(
+        tableName: String,
+        client: AWSDynamoDB.DynamoDBClient,
+        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
+        tableMetrics: AWSDynamoDBTableMetrics = .init(),
+        logger: Logging.Logger? = nil
+    ) {
+        self.wrapped = GenericDynamoDBCompositePrimaryKeyTable(
+            tableName: tableName,
+            client: client,
+            tableConfiguration: tableConfiguration,
+            tableMetrics: tableMetrics,
+            logger: logger
+        )
+    }
+
+    // MARK: - DynamoDBCompositePrimaryKeyTable forwarding
+
+    public func insertItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
+        try await self.wrapped.insertItem(item)
+    }
+
+    public func clobberItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
+        try await self.wrapped.clobberItem(item)
+    }
+
+    public func updateItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+        newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
+        existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+    ) async throws {
+        try await self.wrapped.updateItem(newItem: newItem, existingItem: existingItem)
+    }
+
+    public func transactWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
+        try await self.wrapped.transactWrite(entries)
+    }
+
+    public func polymorphicTransactWrite(
+        _ entries: [some PolymorphicWriteEntry]
+    ) async throws {
+        try await self.wrapped.polymorphicTransactWrite(entries)
+    }
+
+    public func transactWrite<AttributesType, ItemType, TimeToLiveAttributesType>(
+        _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
+        constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
+    ) async throws {
+        try await self.wrapped.transactWrite(entries, constraints: constraints)
+    }
+
+    public func polymorphicTransactWrite<
+        WriteEntryType: PolymorphicWriteEntry,
+        TransactionConstraintEntryType: PolymorphicTransactionConstraintEntry
+    >(
+        _ entries: [WriteEntryType],
+        constraints: [TransactionConstraintEntryType]
+    ) async throws
+    where WriteEntryType.AttributesType == TransactionConstraintEntryType.AttributesType {
+        try await self.wrapped.polymorphicTransactWrite(entries, constraints: constraints)
+    }
+
+    public func bulkWrite(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
+        try await self.wrapped.bulkWrite(entries)
+    }
+
+    public func bulkWriteWithFallback(_ entries: [WriteEntry<some Any, some Any, some Any>]) async throws {
+        try await self.wrapped.bulkWriteWithFallback(entries)
+    }
+
+    public func polymorphicBulkWrite(_ entries: [some PolymorphicWriteEntry]) async throws {
+        try await self.wrapped.polymorphicBulkWrite(entries)
+    }
+
+    public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forKey key: CompositePrimaryKey<AttributesType>
+    ) async throws
+        -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
+    {
+        try await self.wrapped.getItem(forKey: key)
+    }
+
+    public func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
+        forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]
+    ) async throws
+        -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]
+    {
+        try await self.wrapped.polymorphicGetItems(forKeys: keys)
+    }
+
+    public func deleteItem(forKey key: CompositePrimaryKey<some Any>) async throws {
+        try await self.wrapped.deleteItem(forKey: key)
+    }
+
+    public func deleteItem(existingItem: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
+        try await self.wrapped.deleteItem(existingItem: existingItem)
+    }
+
+    public func deleteItems(forKeys keys: [CompositePrimaryKey<some Any>]) async throws {
+        try await self.wrapped.deleteItems(forKeys: keys)
+    }
+
+    public func deleteItems(existingItems: [TypedTTLDatabaseItem<some Any, some Any, some Any>]) async throws {
+        try await self.wrapped.deleteItems(existingItems: existingItems)
+    }
+
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?
+    ) async throws
+        -> [ReturnedType]
+    {
+        try await self.wrapped.polymorphicQuery(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition)
+    }
+
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        exclusiveStartKey: String?
+    ) async throws
+        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+    {
+        try await self.wrapped.polymorphicQuery(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition,
+            limit: limit,
+            exclusiveStartKey: exclusiveStartKey
+        )
+    }
+
+    public func polymorphicQuery<ReturnedType: PolymorphicOperationReturnType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        scanIndexForward: Bool,
+        exclusiveStartKey: String?
+    ) async throws
+        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+    {
+        try await self.wrapped.polymorphicQuery(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition,
+            limit: limit,
+            scanIndexForward: scanIndexForward,
+            exclusiveStartKey: exclusiveStartKey
+        )
+    }
+
+    public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
+        partitionKeys: [String],
+        attributesFilter: [String]?,
+        additionalWhereClause: String?
+    ) async throws -> [ReturnedType] {
+        try await self.wrapped.polymorphicExecute(
+            partitionKeys: partitionKeys,
+            attributesFilter: attributesFilter,
+            additionalWhereClause: additionalWhereClause
+        )
+    }
+
+    public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
+        partitionKeys: [String],
+        attributesFilter: [String]?,
+        additionalWhereClause: String?,
+        nextToken: String?
+    ) async throws
+        -> (items: [ReturnedType], lastEvaluatedKey: String?)
+    {
+        try await self.wrapped.polymorphicExecute(
+            partitionKeys: partitionKeys,
+            attributesFilter: attributesFilter,
+            additionalWhereClause: additionalWhereClause,
+            nextToken: nextToken
+        )
+    }
+
+    public func getItems<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forKeys keys: [CompositePrimaryKey<AttributesType>]
+    ) async throws
+        -> [CompositePrimaryKey<AttributesType>: TypedTTLDatabaseItem<
+            AttributesType, ItemType, TimeToLiveAttributesType
+        >]
+    {
+        try await self.wrapped.getItems(forKeys: keys)
+    }
+
+    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?
+    ) async throws
+        -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>]
+    {
+        try await self.wrapped.query(forPartitionKey: partitionKey, sortKeyCondition: sortKeyCondition)
+    }
+
+    public func query<AttributesType, ItemType, TimeToLiveAttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        scanIndexForward: Bool,
+        exclusiveStartKey: String?
+    ) async throws
+        -> (
+            items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?
+        )
+    {
+        try await self.wrapped.query(
+            forPartitionKey: partitionKey,
+            sortKeyCondition: sortKeyCondition,
+            limit: limit,
+            scanIndexForward: scanIndexForward,
+            exclusiveStartKey: exclusiveStartKey
+        )
+    }
+
+    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
+        partitionKeys: [String],
+        attributesFilter: [String]?,
+        additionalWhereClause: String?
+    ) async throws -> [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] {
+        try await self.wrapped.execute(
+            partitionKeys: partitionKeys,
+            attributesFilter: attributesFilter,
+            additionalWhereClause: additionalWhereClause
+        )
+    }
+
+    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
+        partitionKeys: [String],
+        attributesFilter: [String]?,
+        additionalWhereClause: String?,
+        nextToken: String?
+    ) async throws
+        -> (
+            items: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>], lastEvaluatedKey: String?
+        )
+    {
+        try await self.wrapped.execute(
+            partitionKeys: partitionKeys,
+            attributesFilter: attributesFilter,
+            additionalWhereClause: additionalWhereClause,
+            nextToken: nextToken
         )
     }
 }

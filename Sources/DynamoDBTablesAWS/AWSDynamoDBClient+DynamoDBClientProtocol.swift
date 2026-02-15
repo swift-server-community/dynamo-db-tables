@@ -209,7 +209,7 @@ private func mapError(_ error: any Error) -> DynamoDBClientError {
 // MARK: - DynamoDBClientProtocol Conformance
 
 extension DynamoDBClient: DynamoDBClientProtocol {
-    public func putItem(input: DynamoDBModel.PutItemInput) async throws(DynamoDBClientError) {
+    package func putItem(input: DynamoDBModel.PutItemInput) async throws(DynamoDBClientError) {
         let sdkInput = AWSDynamoDB.PutItemInput(
             conditionExpression: input.conditionExpression,
             expressionAttributeNames: input.expressionAttributeNames,
@@ -224,7 +224,7 @@ extension DynamoDBClient: DynamoDBClientProtocol {
         }
     }
 
-    public func getItem(
+    package func getItem(
         input: DynamoDBModel.GetItemInput
     ) async throws(DynamoDBClientError) -> DynamoDBModel.GetItemOutput {
         let sdkInput = AWSDynamoDB.GetItemInput(
@@ -240,7 +240,7 @@ extension DynamoDBClient: DynamoDBClientProtocol {
         }
     }
 
-    public func deleteItem(input: DynamoDBModel.DeleteItemInput) async throws(DynamoDBClientError) {
+    package func deleteItem(input: DynamoDBModel.DeleteItemInput) async throws(DynamoDBClientError) {
         let sdkInput = AWSDynamoDB.DeleteItemInput(
             conditionExpression: input.conditionExpression,
             expressionAttributeNames: input.expressionAttributeNames,
@@ -255,7 +255,7 @@ extension DynamoDBClient: DynamoDBClientProtocol {
         }
     }
 
-    public func query(
+    package func query(
         input: DynamoDBModel.QueryInput
     ) async throws(DynamoDBClientError) -> DynamoDBModel.QueryOutput {
         let sdkInput = AWSDynamoDB.QueryInput(
@@ -280,7 +280,7 @@ extension DynamoDBClient: DynamoDBClientProtocol {
         }
     }
 
-    public func batchGetItem(
+    package func batchGetItem(
         input: DynamoDBModel.BatchGetItemInput
     ) async throws(DynamoDBClientError) -> DynamoDBModel.BatchGetItemOutput {
         let sdkInput = AWSDynamoDB.BatchGetItemInput(
@@ -297,7 +297,7 @@ extension DynamoDBClient: DynamoDBClientProtocol {
         }
     }
 
-    public func batchExecuteStatement(
+    package func batchExecuteStatement(
         input: DynamoDBModel.BatchExecuteStatementInput
     ) async throws(DynamoDBClientError) -> DynamoDBModel.BatchExecuteStatementOutput {
         let sdkInput = AWSDynamoDB.BatchExecuteStatementInput(
@@ -313,7 +313,7 @@ extension DynamoDBClient: DynamoDBClientProtocol {
         }
     }
 
-    public func executeStatement(
+    package func executeStatement(
         input: DynamoDBModel.ExecuteStatementInput
     ) async throws(DynamoDBClientError) -> DynamoDBModel.ExecuteStatementOutput {
         let sdkInput = AWSDynamoDB.ExecuteStatementInput(
@@ -332,7 +332,7 @@ extension DynamoDBClient: DynamoDBClientProtocol {
         }
     }
 
-    public func executeTransaction(input: DynamoDBModel.ExecuteTransactionInput) async throws(DynamoDBClientError) {
+    package func executeTransaction(input: DynamoDBModel.ExecuteTransactionInput) async throws(DynamoDBClientError) {
         let sdkInput = AWSDynamoDB.ExecuteTransactionInput(
             transactStatements: input.transactStatements?.map(\.toSDK)
         )

@@ -17,7 +17,7 @@
 //  DynamoDBTables
 //
 
-public enum DynamoDBClientError: Error, Sendable {
+package enum DynamoDBClientError: Error, Sendable {
     case conditionalCheckFailed(message: String?)
     case duplicateItem(message: String?)
     case internalServerError(message: String?)

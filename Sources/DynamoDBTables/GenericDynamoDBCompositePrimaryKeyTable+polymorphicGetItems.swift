@@ -130,7 +130,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
+    package func polymorphicGetItems<ReturnedType: PolymorphicOperationReturnType & BatchCapableReturnType>(
         forKeys keys: [CompositePrimaryKey<ReturnedType.AttributesType>]
     ) async throws
         -> [CompositePrimaryKey<ReturnedType.AttributesType>: ReturnedType]

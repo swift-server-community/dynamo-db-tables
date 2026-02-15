@@ -56,7 +56,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             """
     }
 
-    public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
+    package func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?,
@@ -118,7 +118,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
+    package func polymorphicExecute<ReturnedType: PolymorphicOperationReturnType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?
@@ -140,7 +140,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         return itemLists.flatMap(\.self)
     }
 
-    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
+    package func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?,
@@ -202,7 +202,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    public func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
+    package func execute<AttributesType, ItemType, TimeToLiveAttributesType>(
         partitionKeys: [String],
         attributesFilter: [String]?,
         additionalWhereClause: String?
