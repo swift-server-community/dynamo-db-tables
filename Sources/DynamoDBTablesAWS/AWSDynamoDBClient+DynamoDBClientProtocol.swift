@@ -178,10 +178,38 @@ extension DynamoDBClientTypes.CancellationReason {
     }
 }
 
+// MARK: - SDK Error Mapping
+
+private func mapError(_ error: any Error) -> DynamoDBClientError {
+    switch error {
+    case let exception as ConditionalCheckFailedException:
+        return .conditionalCheckFailed(message: exception.properties.message)
+    case let exception as DuplicateItemException:
+        return .duplicateItem(message: exception.properties.message)
+    case let exception as InternalServerError:
+        return .internalServerError(message: exception.properties.message)
+    case let exception as ProvisionedThroughputExceededException:
+        return .provisionedThroughputExceeded(message: exception.properties.message)
+    case let exception as RequestLimitExceeded:
+        return .requestLimitExceeded(message: exception.properties.message)
+    case let exception as ResourceNotFoundException:
+        return .resourceNotFound(message: exception.properties.message)
+    case let exception as ThrottlingException:
+        return .throttling(message: exception.properties.message)
+    case let exception as TransactionConflictException:
+        return .transactionConflict(message: exception.properties.message)
+    case let exception as TransactionCanceledException:
+        let reasons = (exception.properties.cancellationReasons ?? []).map(\.toDynamoDBModel)
+        return .transactionCanceled(reasons: reasons, message: exception.properties.message)
+    default:
+        return .unknown(message: "\(error)")
+    }
+}
+
 // MARK: - DynamoDBClientProtocol Conformance
 
 extension DynamoDBClient: DynamoDBClientProtocol {
-    public func putItem(input: DynamoDBModel.PutItemInput) async throws {
+    public func putItem(input: DynamoDBModel.PutItemInput) async throws(DynamoDBClientError) {
         let sdkInput = AWSDynamoDB.PutItemInput(
             conditionExpression: input.conditionExpression,
             expressionAttributeNames: input.expressionAttributeNames,
@@ -189,20 +217,30 @@ extension DynamoDBClient: DynamoDBClientProtocol {
             item: input.item.toSDK,
             tableName: input.tableName
         )
-        _ = try await self.putItem(input: sdkInput)
+        do {
+            _ = try await self.putItem(input: sdkInput)
+        } catch {
+            throw mapError(error)
+        }
     }
 
-    public func getItem(input: DynamoDBModel.GetItemInput) async throws -> DynamoDBModel.GetItemOutput {
+    public func getItem(
+        input: DynamoDBModel.GetItemInput
+    ) async throws(DynamoDBClientError) -> DynamoDBModel.GetItemOutput {
         let sdkInput = AWSDynamoDB.GetItemInput(
             consistentRead: input.consistentRead,
             key: input.key.toSDK,
             tableName: input.tableName
         )
-        let sdkOutput = try await self.getItem(input: sdkInput)
-        return DynamoDBModel.GetItemOutput(item: sdkOutput.item?.toDynamoDBModel)
+        do {
+            let sdkOutput = try await self.getItem(input: sdkInput)
+            return DynamoDBModel.GetItemOutput(item: sdkOutput.item?.toDynamoDBModel)
+        } catch {
+            throw mapError(error)
+        }
     }
 
-    public func deleteItem(input: DynamoDBModel.DeleteItemInput) async throws {
+    public func deleteItem(input: DynamoDBModel.DeleteItemInput) async throws(DynamoDBClientError) {
         let sdkInput = AWSDynamoDB.DeleteItemInput(
             conditionExpression: input.conditionExpression,
             expressionAttributeNames: input.expressionAttributeNames,
@@ -210,10 +248,16 @@ extension DynamoDBClient: DynamoDBClientProtocol {
             key: input.key.toSDK,
             tableName: input.tableName
         )
-        _ = try await self.deleteItem(input: sdkInput)
+        do {
+            _ = try await self.deleteItem(input: sdkInput)
+        } catch {
+            throw mapError(error)
+        }
     }
 
-    public func query(input: DynamoDBModel.QueryInput) async throws -> DynamoDBModel.QueryOutput {
+    public func query(
+        input: DynamoDBModel.QueryInput
+    ) async throws(DynamoDBClientError) -> DynamoDBModel.QueryOutput {
         let sdkInput = AWSDynamoDB.QueryInput(
             consistentRead: input.consistentRead,
             exclusiveStartKey: input.exclusiveStartKey?.toSDK,
@@ -225,56 +269,78 @@ extension DynamoDBClient: DynamoDBClientProtocol {
             scanIndexForward: input.scanIndexForward,
             tableName: input.tableName
         )
-        let sdkOutput = try await self.query(input: sdkInput)
-        return DynamoDBModel.QueryOutput(
-            items: sdkOutput.items?.map(\.toDynamoDBModel),
-            lastEvaluatedKey: sdkOutput.lastEvaluatedKey?.toDynamoDBModel
-        )
+        do {
+            let sdkOutput = try await self.query(input: sdkInput)
+            return DynamoDBModel.QueryOutput(
+                items: sdkOutput.items?.map(\.toDynamoDBModel),
+                lastEvaluatedKey: sdkOutput.lastEvaluatedKey?.toDynamoDBModel
+            )
+        } catch {
+            throw mapError(error)
+        }
     }
 
-    public func batchGetItem(input: DynamoDBModel.BatchGetItemInput) async throws -> DynamoDBModel.BatchGetItemOutput {
+    public func batchGetItem(
+        input: DynamoDBModel.BatchGetItemInput
+    ) async throws(DynamoDBClientError) -> DynamoDBModel.BatchGetItemOutput {
         let sdkInput = AWSDynamoDB.BatchGetItemInput(
             requestItems: input.requestItems?.mapValues(\.toSDK)
         )
-        let sdkOutput = try await self.batchGetItem(input: sdkInput)
-        return DynamoDBModel.BatchGetItemOutput(
-            responses: sdkOutput.responses?.mapValues { items in items.map(\.toDynamoDBModel) },
-            unprocessedKeys: sdkOutput.unprocessedKeys?.mapValues(\.toDynamoDBModel)
-        )
+        do {
+            let sdkOutput = try await self.batchGetItem(input: sdkInput)
+            return DynamoDBModel.BatchGetItemOutput(
+                responses: sdkOutput.responses?.mapValues { items in items.map(\.toDynamoDBModel) },
+                unprocessedKeys: sdkOutput.unprocessedKeys?.mapValues(\.toDynamoDBModel)
+            )
+        } catch {
+            throw mapError(error)
+        }
     }
 
     public func batchExecuteStatement(
         input: DynamoDBModel.BatchExecuteStatementInput
-    ) async throws -> DynamoDBModel.BatchExecuteStatementOutput {
+    ) async throws(DynamoDBClientError) -> DynamoDBModel.BatchExecuteStatementOutput {
         let sdkInput = AWSDynamoDB.BatchExecuteStatementInput(
             statements: input.statements?.map(\.toSDK)
         )
-        let sdkOutput = try await self.batchExecuteStatement(input: sdkInput)
-        return DynamoDBModel.BatchExecuteStatementOutput(
-            responses: sdkOutput.responses?.map(\.toDynamoDBModel)
-        )
+        do {
+            let sdkOutput = try await self.batchExecuteStatement(input: sdkInput)
+            return DynamoDBModel.BatchExecuteStatementOutput(
+                responses: sdkOutput.responses?.map(\.toDynamoDBModel)
+            )
+        } catch {
+            throw mapError(error)
+        }
     }
 
     public func executeStatement(
         input: DynamoDBModel.ExecuteStatementInput
-    ) async throws -> DynamoDBModel.ExecuteStatementOutput {
+    ) async throws(DynamoDBClientError) -> DynamoDBModel.ExecuteStatementOutput {
         let sdkInput = AWSDynamoDB.ExecuteStatementInput(
             consistentRead: input.consistentRead,
             nextToken: input.nextToken,
             statement: input.statement
         )
-        let sdkOutput = try await self.executeStatement(input: sdkInput)
-        return DynamoDBModel.ExecuteStatementOutput(
-            items: sdkOutput.items?.map(\.toDynamoDBModel),
-            nextToken: sdkOutput.nextToken
-        )
+        do {
+            let sdkOutput = try await self.executeStatement(input: sdkInput)
+            return DynamoDBModel.ExecuteStatementOutput(
+                items: sdkOutput.items?.map(\.toDynamoDBModel),
+                nextToken: sdkOutput.nextToken
+            )
+        } catch {
+            throw mapError(error)
+        }
     }
 
-    public func executeTransaction(input: DynamoDBModel.ExecuteTransactionInput) async throws {
+    public func executeTransaction(input: DynamoDBModel.ExecuteTransactionInput) async throws(DynamoDBClientError) {
         let sdkInput = AWSDynamoDB.ExecuteTransactionInput(
             transactStatements: input.transactStatements?.map(\.toSDK)
         )
-        _ = try await self.executeTransaction(input: sdkInput)
+        do {
+            _ = try await self.executeTransaction(input: sdkInput)
+        } catch {
+            throw mapError(error)
+        }
     }
 }
 #endif

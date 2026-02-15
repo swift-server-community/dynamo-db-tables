@@ -24,8 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
-
 /// Enumeration of the errors that can be thrown by a DynamoDBTable.
 public enum DynamoDBTableError: Error {
     case accessDenied(message: String?)
@@ -63,48 +61,6 @@ extension Swift.Error {
         let errorType = String(describing: type(of: self))
         let errorDescription = String(describing: self)
         return .unrecognizedError(errorType, errorDescription)
-    }
-}
-
-extension Swift.Error {
-    func asDynamoDBTableError(partitionKey: String, sortKey: String) -> DynamoDBTableError {
-        return switch self {
-        case let exception as ConditionalCheckFailedException:
-            DynamoDBTableError.conditionalCheckFailed(
-                partitionKey: partitionKey,
-                sortKey: sortKey,
-                message: exception.properties.message
-            )
-        case let exception as DuplicateItemException:
-            DynamoDBTableError.duplicateItem(
-                partitionKey: partitionKey,
-                sortKey: sortKey,
-                message: exception.properties.message
-            )
-        case let exception as InternalServerError:
-            DynamoDBTableError.internalServerError(message: exception.properties.message)
-        case let exception as ProvisionedThroughputExceededException:
-            DynamoDBTableError.provisionedThroughputExceeded(message: exception.properties.message)
-        case let exception as RequestLimitExceeded:
-            DynamoDBTableError.requestLimitExceeded(message: exception.properties.message)
-        case let exception as ResourceNotFoundException:
-            DynamoDBTableError.resourceNotFound(
-                partitionKey: partitionKey,
-                sortKey: sortKey,
-                message: exception.properties.message
-            )
-        case let exception as ThrottlingException:
-            DynamoDBTableError.throttling(message: exception.properties.message)
-        case let exception as TransactionConflictException:
-            DynamoDBTableError.transactionConflict(message: exception.properties.message)
-        default:
-            DynamoDBTableError.unknown(
-                code: nil,
-                partitionKey: partitionKey,
-                sortKey: sortKey,
-                message: nil
-            )
-        }
     }
 }
 

@@ -17,7 +17,6 @@
 //  DynamoDBTablesTests
 //
 
-import AWSDynamoDB
 import Foundation
 import Logging
 import Smockable
@@ -94,7 +93,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
     func deleteExistingItemWithVersionCheckFailsOnCondition() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let conditionalCheckError = AWSDynamoDB.ConditionalCheckFailedException(
+        let conditionalCheckError = DynamoDBClientError.conditionalCheckFailed(
             message: "Version mismatch - item was modified"
         )
 
@@ -149,7 +148,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableDeleteTests {
     func deleteExistingItemHandlesResourceNotFoundGracefully() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let resourceNotFoundError = AWSDynamoDB.ResourceNotFoundException(
+        let resourceNotFoundError = DynamoDBClientError.resourceNotFound(
             message: "Item does not exist"
         )
 

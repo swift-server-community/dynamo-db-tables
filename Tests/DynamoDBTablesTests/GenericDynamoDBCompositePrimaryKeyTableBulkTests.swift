@@ -17,7 +17,6 @@
 //  DynamoDBTablesTests
 //
 
-import AWSDynamoDB
 import Foundation
 import Logging
 import Smockable
@@ -336,7 +335,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
         let writeEntries = getWriteEntriesWithSomeLargeSortKeys()
 
         // Transaction fails, then individual operations have mixed results
-        let error = AWSDynamoDB.ResourceNotFoundException(message: "Item not found")
+        let error = DynamoDBClientError.resourceNotFound(message: "Item not found")
 
         when(expectations.batchExecuteStatement(input: .any), times: .unbounded, return: .init())
         when(expectations.putItem(input: .any), times: .unbounded, throw: error)
@@ -392,7 +391,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
         let writeEntries = getWriteEntriesWithSomeLargeSortKeys()
 
         // Transaction fails, then individual operations have mixed results
-        let deleteError = AWSDynamoDB.ResourceNotFoundException(message: "Item not found")
+        let deleteError = DynamoDBClientError.resourceNotFound(message: "Item not found")
 
         let response = DynamoDBModel.BatchStatementResponse(
             error: .init(code: .resourcenotfound, message: "Item not found")
