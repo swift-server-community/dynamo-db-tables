@@ -45,7 +45,7 @@ public struct InMemoryDatabaseItem: Sendable {
      De-serialises the `DynamoDBModel.AttributeValue` map into an appropriate `TypedTTLDatabaseItem`.
      */
     public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>() throws
-        -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>?
+        -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
     {
         do {
             return try DynamoDBDecoder().decode(DynamoDBModel.AttributeValue.m(self.item))
