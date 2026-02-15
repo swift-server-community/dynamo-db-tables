@@ -24,6 +24,7 @@ DynamoDBTables is a fork of [smoke-dynamodb](https://github.com/amzn/smoke-dynam
 ### Essentials
 
 - <doc:GettingStarted>
+- <doc:Configuration>
 - <doc:CRUDOperations>
 
 ### Data Modeling

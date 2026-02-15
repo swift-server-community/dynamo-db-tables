@@ -24,6 +24,7 @@
 //  DynamoDBTables
 //
 
+import Configuration
 // swiftlint:disable:next unused_import
 import Foundation
 
@@ -65,6 +66,23 @@ public struct RetryConfiguration: Sendable {
         self.maxRetryInterval = maxRetryInterval
         self.exponentialBackoff = exponentialBackoff
         self.jitter = jitter
+    }
+
+    public init(from config: ConfigReader) {
+        self.init(
+            numRetries: config.int(forKey: "numRetries", default: RetryConfiguration.default.numRetries),
+            baseRetryInterval: RetryInterval(
+                config.int(forKey: "baseRetryInterval", default: Int(RetryConfiguration.default.baseRetryInterval))
+            ),
+            maxRetryInterval: RetryInterval(
+                config.int(forKey: "maxRetryInterval", default: Int(RetryConfiguration.default.maxRetryInterval))
+            ),
+            exponentialBackoff: config.double(
+                forKey: "exponentialBackoff",
+                default: RetryConfiguration.default.exponentialBackoff
+            ),
+            jitter: config.bool(forKey: "jitter", default: RetryConfiguration.default.jitter)
+        )
     }
 
     public func getRetryInterval(retriesRemaining: Int) -> RetryInterval {

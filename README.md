@@ -91,6 +91,18 @@ if let retrieved: StandardTypedDatabaseItem<Customer> = try await table.getItem(
 }
 ```
 
+## What Gets Stored
+
+The `insertItem` call above produces the following row in DynamoDB:
+
+| PK | SK | CreateDate | RowType | RowVersion | LastUpdatedDate | Name | Email |
+|----|-----|------------|---------|------------|-----------------|------|-------|
+| customer-123 | profile | 2025-01-15T10:30:00Z | Customer | 1 | 2025-01-15T10:30:00Z | Alice | alice@example.com |
+
+- **PK** and **SK** are the partition and sort key attributes, derived from the `StandardCompositePrimaryKey` you provided.
+- **CreateDate**, **RowType**, **RowVersion**, and **LastUpdatedDate** are managed automatically by the library. `RowType` records which Swift type was stored so it can be decoded back correctly, and `RowVersion` enables optimistic concurrency — it starts at 1 and increments on each update.
+- **Name** and **Email** are your payload fields from the `Customer` struct, serialized by the library's `Codable` encoding (attribute names are automatically capitalized).
+
 ## License
 
 This library is licensed under the Apache 2.0 License.
