@@ -95,13 +95,6 @@ if let retrieved: StandardTypedDatabaseItem<Customer> = try await table.getItem(
 
 The `insertItem` call above produces the following row in DynamoDB:
 
-```swift
-struct Customer: Codable, Sendable {
-    let name: String
-    let email: String
-}
-```
-
 | PK | SK | CreateDate | RowType | RowVersion | LastUpdatedDate | Name | Email |
 |----|-----|------------|---------|------------|-----------------|------|-------|
 | customer-123 | profile | 2025-01-15T10:30:00Z | Customer | 1 | 2025-01-15T10:30:00Z | Alice | alice@example.com |
