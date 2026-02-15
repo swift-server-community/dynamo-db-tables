@@ -58,6 +58,9 @@ public typealias DynamoDBTableErrorResult<SuccessPayload> = Result<SuccessPayloa
 
 extension Swift.Error {
     public func asUnrecognizedDynamoDBTableError() -> DynamoDBTableError {
+        if let tableError = self as? DynamoDBTableError {
+            return tableError
+        }
         let errorType = String(describing: type(of: self))
         let errorDescription = String(describing: self)
         return .unrecognizedError(errorType, errorDescription)
