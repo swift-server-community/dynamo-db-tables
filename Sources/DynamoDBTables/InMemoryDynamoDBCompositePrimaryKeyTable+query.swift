@@ -257,21 +257,9 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
                     }
                 }
 
-                if let typedValue: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> =
+                let typedValue: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> =
                     try value.getItem()
-                {
-                    items.append(typedValue)
-                } else {
-                    let description =
-                        "Expected type \(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self), "
-                        + " was \(type(of: value))."
-                    let context = DecodingError.Context(codingPath: [], debugDescription: description)
-
-                    throw DecodingError.typeMismatch(
-                        TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self,
-                        context
-                    )
-                }
+                items.append(typedValue)
             }
         }
 

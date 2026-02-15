@@ -66,23 +66,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
 
         let returnedItems: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try items.map {
             item in
-            guard
-                let typedItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> =
-                    try item.getItem()
-            else {
-                let foundType = type(of: item)
-                let description =
-                    "Expected to decode \(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self). Instead found \(foundType)."
-                let context = DecodingError.Context(codingPath: [], debugDescription: description)
-                let error = DecodingError.typeMismatch(
-                    TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self,
-                    context
-                )
-
-                throw error
-            }
-
-            return typedItem
+            try item.getItem()
         }
 
         return returnedItems
@@ -105,23 +89,7 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
 
         let returnedItems: [TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>] = try items.map {
             item in
-            guard
-                let typedItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType> =
-                    try item.getItem()
-            else {
-                let foundType = type(of: item)
-                let description =
-                    "Expected to decode \(TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self). Instead found \(foundType)."
-                let context = DecodingError.Context(codingPath: [], debugDescription: description)
-                let error = DecodingError.typeMismatch(
-                    TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.self,
-                    context
-                )
-
-                throw error
-            }
-
-            return typedItem
+            try item.getItem()
         }
 
         return (returnedItems, nil)
