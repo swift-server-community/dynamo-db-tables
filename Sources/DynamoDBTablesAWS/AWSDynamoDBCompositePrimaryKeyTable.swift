@@ -38,16 +38,16 @@ public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTa
     // can use package access level while this type remains public.
     private let wrapped: GenericDynamoDBCompositePrimaryKeyTable<AWSDynamoDB.DynamoDBClient>
 
-    public var tableConfiguration: AWSDynamoDBTableConfiguration { self.wrapped.tableConfiguration }
-    public var tableMetrics: AWSDynamoDBTableMetrics { self.wrapped.tableMetrics }
+    public var tableConfiguration: DynamoDBTableConfiguration { self.wrapped.tableConfiguration }
+    public var tableMetrics: DynamoDBTableMetrics { self.wrapped.tableMetrics }
 
     public init(
         tableName: String,
         region: Swift.String,
         awsCredentialIdentityResolver: (any SmithyIdentity.AWSCredentialIdentityResolver)? = nil,
         httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
-        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
-        tableMetrics: AWSDynamoDBTableMetrics = .init(),
+        tableConfiguration: DynamoDBTableConfiguration = .init(),
+        tableMetrics: DynamoDBTableMetrics = .init(),
         logger: Logging.Logger? = nil
     ) throws {
         let config = try DynamoDBClient.DynamoDBClientConfig(
@@ -67,8 +67,8 @@ public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTa
     public init(
         tableName: String,
         client: AWSDynamoDB.DynamoDBClient,
-        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
-        tableMetrics: AWSDynamoDBTableMetrics = .init(),
+        tableConfiguration: DynamoDBTableConfiguration = .init(),
+        tableMetrics: DynamoDBTableMetrics = .init(),
         logger: Logging.Logger? = nil
     ) {
         self.wrapped = GenericDynamoDBCompositePrimaryKeyTable(

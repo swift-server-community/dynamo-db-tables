@@ -38,14 +38,14 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
     // can use package access level while this type remains public.
     private let wrapped: GenericDynamoDBCompositePrimaryKeysProjection<AWSDynamoDB.DynamoDBClient>
 
-    public var tableConfiguration: AWSDynamoDBTableConfiguration { self.wrapped.tableConfiguration }
+    public var tableConfiguration: DynamoDBTableConfiguration { self.wrapped.tableConfiguration }
 
     public init(
         tableName: String,
         region: Swift.String,
         awsCredentialIdentityResolver: (any SmithyIdentity.AWSCredentialIdentityResolver)? = nil,
         httpClientConfiguration: ClientRuntime.HttpClientConfiguration? = nil,
-        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
+        tableConfiguration: DynamoDBTableConfiguration = .init(),
         logger: Logging.Logger? = nil
     ) throws {
         let config = try DynamoDBClient.DynamoDBClientConfig(
@@ -64,7 +64,7 @@ public struct AWSDynamoDBCompositePrimaryKeysProjection: DynamoDBCompositePrimar
     public init(
         tableName: String,
         client: AWSDynamoDB.DynamoDBClient,
-        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
+        tableConfiguration: DynamoDBTableConfiguration = .init(),
         logger: Logging.Logger? = nil
     ) {
         self.wrapped = GenericDynamoDBCompositePrimaryKeysProjection(

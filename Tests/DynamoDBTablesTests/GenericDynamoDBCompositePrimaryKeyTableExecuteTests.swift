@@ -31,12 +31,12 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
 
     private let testTableName = "TestTable"
     private let testLogger = Logger(label: "TestLogger")
-    private let testConfiguration = AWSDynamoDBTableConfiguration(
+    private let testConfiguration = DynamoDBTableConfiguration(
         consistentRead: true,
         escapeSingleQuoteInPartiQL: false,
         retry: .default
     )
-    private let testMetrics = AWSDynamoDBTableMetrics()
+    private let testMetrics = DynamoDBTableMetrics()
 
     // MARK: - Test Data
 
@@ -406,7 +406,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableExecuteTests {
     func monomorphicExecuteRespectsConsistentReadConfiguration() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let inconsistentConfig = AWSDynamoDBTableConfiguration(consistentRead: false)
+        let inconsistentConfig = DynamoDBTableConfiguration(consistentRead: false)
         let partitionKeys = ["partition1"]
         let attributesFilter: [String]? = nil
         let additionalWhereClause: String? = nil

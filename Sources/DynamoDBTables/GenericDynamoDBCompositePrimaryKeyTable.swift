@@ -27,7 +27,7 @@
 import Logging
 import Metrics
 
-public struct AWSDynamoDBTableMetrics: Sendable {
+public struct DynamoDBTableMetrics: Sendable {
     // metric to record if the `TransactWrite` API is retried
     let transactWriteRetryCountRecorder: Metrics.Recorder?
 
@@ -36,7 +36,7 @@ public struct AWSDynamoDBTableMetrics: Sendable {
     }
 }
 
-public struct AWSDynamoDBTableConfiguration: Sendable {
+public struct DynamoDBTableConfiguration: Sendable {
     public let consistentRead: Bool
     public let escapeSingleQuoteInPartiQL: Bool
     public let retry: RetryConfiguration
@@ -57,24 +57,24 @@ package struct GenericDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientPro
 {
     let dynamodb: Client
     let targetTableName: String
-    package let tableConfiguration: AWSDynamoDBTableConfiguration
-    package let tableMetrics: AWSDynamoDBTableMetrics
+    package let tableConfiguration: DynamoDBTableConfiguration
+    package let tableMetrics: DynamoDBTableMetrics
     let logger: Logging.Logger
 
     package init(
         tableName: String,
         client: Client,
-        tableConfiguration: AWSDynamoDBTableConfiguration = .init(),
-        tableMetrics: AWSDynamoDBTableMetrics = .init(),
+        tableConfiguration: DynamoDBTableConfiguration = .init(),
+        tableMetrics: DynamoDBTableMetrics = .init(),
         logger: Logging.Logger? = nil
     ) {
-        self.logger = logger ?? Logging.Logger(label: "AWSDynamoDBCompositePrimaryKeyTable")
+        self.logger = logger ?? Logging.Logger(label: "GenericDynamoDBCompositePrimaryKeyTable")
         self.dynamodb = client
         self.targetTableName = tableName
         self.tableConfiguration = tableConfiguration
         self.tableMetrics = tableMetrics
 
-        self.logger.trace("AWSDynamoDBCompositePrimaryKeyTable created with existing client")
+        self.logger.trace("GenericDynamoDBCompositePrimaryKeyTable created with existing client")
     }
 }
 
