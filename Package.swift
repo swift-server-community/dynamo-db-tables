@@ -50,7 +50,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"603.0.0"),
-        .package(url: "https://github.com/tachyonics/smockable", from: "0.7.0"),
+        .package(url: "https://github.com/tachyonics/smockable", from: "0.10.0"),
     ],
     targets: [
         .macro(
@@ -66,7 +66,6 @@ let package = Package(
                 .target(name: "DynamoDBTablesMacros"),
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Metrics", package: "swift-metrics"),
-                .product(name: "AWSDynamoDB", package: "aws-sdk-swift"),
             ],
             swiftSettings: swiftSettings
         ),

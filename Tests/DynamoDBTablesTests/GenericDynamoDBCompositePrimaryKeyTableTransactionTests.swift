@@ -17,7 +17,6 @@
 //  DynamoDBTablesTests
 //
 
-import AWSDynamoDB
 import Foundation
 import Logging
 import Smockable
@@ -139,7 +138,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
             .deleteAtKey(key: testKey2),
         ]
 
-        let transactionConflictError = AWSDynamoDB.TransactionConflictException(
+        let transactionConflictError = DynamoDBClientError.transactionConflict(
             message: "Transaction conflict occurred"
         )
         when(expectations.executeTransaction(input: .any), times: .unbounded, throw: transactionConflictError)
@@ -174,9 +173,9 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
             .insert(new: testItemA)
         ]
 
-        let transactionCanceledError = AWSDynamoDB.TransactionCanceledException(
-            cancellationReasons: [
-                DynamoDBClientTypes.CancellationReason(code: "conditionalCheckFailed", message: "Condition failed")
+        let transactionCanceledError = DynamoDBClientError.transactionCanceled(
+            reasons: [
+                DynamoDBModel.CancellationReason(code: "conditionalCheckFailed", message: "Condition failed")
             ],
             message: "Transaction was canceled"
         )
@@ -321,10 +320,10 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
         when(expectations.batchGetItem(input: .any), return: batchGetOutput)
 
         // ConditionalCheckFailed at the constraint's position (index 1), None at write entry (index 0)
-        let canceledError = AWSDynamoDB.TransactionCanceledException(
-            cancellationReasons: [
-                DynamoDBClientTypes.CancellationReason(code: "None"),
-                DynamoDBClientTypes.CancellationReason(
+        let canceledError = DynamoDBClientError.transactionCanceled(
+            reasons: [
+                DynamoDBModel.CancellationReason(code: "None"),
+                DynamoDBModel.CancellationReason(
                     code: "ConditionalCheckFailed",
                     message: "Constraint not met"
                 ),
@@ -375,13 +374,13 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
         when(expectations.batchGetItem(input: .any), times: .unbounded, return: batchGetOutput)
 
         // ConditionalCheckFailed at the write entry's position (index 0), None at constraint (index 1)
-        let canceledError = AWSDynamoDB.TransactionCanceledException(
-            cancellationReasons: [
-                DynamoDBClientTypes.CancellationReason(
+        let canceledError = DynamoDBClientError.transactionCanceled(
+            reasons: [
+                DynamoDBModel.CancellationReason(
                     code: "ConditionalCheckFailed",
                     message: "Write conflict"
                 ),
-                DynamoDBClientTypes.CancellationReason(code: "None"),
+                DynamoDBModel.CancellationReason(code: "None"),
             ],
             message: "Transaction canceled"
         )
@@ -429,9 +428,9 @@ struct AWSDynamoDBCompositePrimaryKeyTableTransactionTests {
         when(expectations.batchGetItem(input: .any), times: .unbounded, return: batchGetOutput)
 
         // ConditionalCheckFailed at the write entry's position
-        let canceledError = AWSDynamoDB.TransactionCanceledException(
-            cancellationReasons: [
-                DynamoDBClientTypes.CancellationReason(
+        let canceledError = DynamoDBClientError.transactionCanceled(
+            reasons: [
+                DynamoDBModel.CancellationReason(
                     code: "ConditionalCheckFailed",
                     message: "Write conflict"
                 )

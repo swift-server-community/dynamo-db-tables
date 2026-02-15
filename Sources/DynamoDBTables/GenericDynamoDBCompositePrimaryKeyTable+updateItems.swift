@@ -24,7 +24,6 @@
 //  DynamoDBTables
 //
 
-import AWSDynamoDB
 import Logging
 
 extension DynamoDBClientTypes.AttributeValue {
@@ -145,13 +144,13 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         return statement
     }
 
-    private func writeTransactionItems<AttributesType, ItemType, TimeToLiveAttributesType>(
+    private func getExecuteTransactionInput<AttributesType, ItemType, TimeToLiveAttributesType>(
         _ entries: [WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>],
         constraints: [TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>]
-    ) async throws {
+    ) throws -> DynamoDBModel.ExecuteTransactionInput? {
         // if there are no items, there is nothing to update
         guard entries.count > 0 else {
-            return
+            return nil
         }
 
         let entryStatements = try entries.map { entry -> DynamoDBModel.ParameterizedStatement in
@@ -166,11 +165,9 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             return DynamoDBModel.ParameterizedStatement(statement: statement)
         }
 
-        let transactionInput = DynamoDBModel.ExecuteTransactionInput(
+        return DynamoDBModel.ExecuteTransactionInput(
             transactStatements: entryStatements + requiredItemsStatements
         )
-
-        _ = try await dynamodb.executeTransaction(input: transactionInput)
     }
 
     private func getExecuteTransactionInput(
@@ -344,54 +341,51 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             )
         }
 
+        guard let transactionInput = try getExecuteTransactionInput(entries, constraints: constraints) else {
+            return
+        }
+
         let result: Swift.Result<Void, DynamoDBTableError>
         do {
-            try await self.writeTransactionItems(entries, constraints: constraints)
+            _ = try await dynamodb.executeTransaction(input: transactionInput)
 
             result = .success(())
-        } catch let exception as TransactionCanceledException {
-            guard let cancellationReasons = exception.properties.cancellationReasons else {
-                throw DynamoDBTableError.transactionCanceled(reasons: [])
-            }
+        } catch {
+            switch error {
+            case .transactionCanceled(let cancellationReasons, _):
+                let keys: [CompositePrimaryKey<AttributesType>] =
+                    entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
 
-            let keys: [CompositePrimaryKey<AttributesType>] =
-                entries.map(\.compositePrimaryKey) + constraints.map(\.compositePrimaryKey)
-
-            let modelReasons = cancellationReasons.map { reason in
-                DynamoDBModel.CancellationReason(
-                    code: reason.code,
-                    item: reason.item?.mapValues(\.toDynamoDBModel),
-                    message: reason.message
+                let (reasons, isTransactionConflict) = try getErrorReasons(
+                    cancellationReasons: cancellationReasons,
+                    keys: keys,
+                    entryCount: entryCount
                 )
+
+                if isTransactionConflict, retriesRemaining > 0 {
+                    return try await retryTransactWrite(
+                        entries,
+                        constraints: constraints,
+                        retriesRemaining: retriesRemaining
+                    )
+                }
+
+                result = .failure(DynamoDBTableError.transactionCanceled(reasons: reasons))
+            case .transactionConflict(let message):
+                if retriesRemaining > 0 {
+                    return try await retryTransactWrite(
+                        entries,
+                        constraints: constraints,
+                        retriesRemaining: retriesRemaining
+                    )
+                }
+
+                let reason = DynamoDBTableError.transactionConflict(message: message)
+
+                result = .failure(DynamoDBTableError.transactionCanceled(reasons: [reason]))
+            default:
+                throw DynamoDBTableError.unexpectedError(cause: error)
             }
-
-            let (reasons, isTransactionConflict) = try getErrorReasons(
-                cancellationReasons: modelReasons,
-                keys: keys,
-                entryCount: entryCount
-            )
-
-            if isTransactionConflict, retriesRemaining > 0 {
-                return try await retryTransactWrite(
-                    entries,
-                    constraints: constraints,
-                    retriesRemaining: retriesRemaining
-                )
-            }
-
-            result = .failure(DynamoDBTableError.transactionCanceled(reasons: reasons))
-        } catch let exception as TransactionConflictException {
-            if retriesRemaining > 0 {
-                return try await retryTransactWrite(
-                    entries,
-                    constraints: constraints,
-                    retriesRemaining: retriesRemaining
-                )
-            }
-
-            let reason = DynamoDBTableError.transactionConflict(message: exception.properties.message)
-
-            result = .failure(DynamoDBTableError.transactionCanceled(reasons: [reason]))
         }
 
         let retryCount = self.tableConfiguration.retry.numRetries - retriesRemaining
@@ -439,46 +433,39 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             _ = try await dynamodb.executeTransaction(input: transactionInput)
 
             result = .success(())
-        } catch let exception as TransactionCanceledException {
-            guard let cancellationReasons = exception.properties.cancellationReasons else {
-                throw DynamoDBTableError.transactionCanceled(reasons: [])
-            }
-
-            let modelReasons = cancellationReasons.map { reason in
-                DynamoDBModel.CancellationReason(
-                    code: reason.code,
-                    item: reason.item?.mapValues(\.toDynamoDBModel),
-                    message: reason.message
+        } catch {
+            switch error {
+            case .transactionCanceled(let cancellationReasons, _):
+                let (reasons, isTransactionConflict) = try getErrorReasons(
+                    cancellationReasons: cancellationReasons,
+                    keys: inputKeys,
+                    entryCount: inputKeys.count
                 )
+
+                if isTransactionConflict, retriesRemaining > 0 {
+                    return try await retryPolymorphicTransactWrite(
+                        transactionInput,
+                        inputKeys: inputKeys,
+                        retriesRemaining: retriesRemaining
+                    )
+                }
+
+                result = .failure(DynamoDBTableError.transactionCanceled(reasons: reasons))
+            case .transactionConflict(let message):
+                if retriesRemaining > 0 {
+                    return try await retryPolymorphicTransactWrite(
+                        transactionInput,
+                        inputKeys: inputKeys,
+                        retriesRemaining: retriesRemaining
+                    )
+                }
+
+                let reason = DynamoDBTableError.transactionConflict(message: message)
+
+                result = .failure(DynamoDBTableError.transactionCanceled(reasons: [reason]))
+            default:
+                throw DynamoDBTableError.unexpectedError(cause: error)
             }
-
-            let (reasons, isTransactionConflict) = try getErrorReasons(
-                cancellationReasons: modelReasons,
-                keys: inputKeys,
-                entryCount: inputKeys.count
-            )
-
-            if isTransactionConflict, retriesRemaining > 0 {
-                return try await retryPolymorphicTransactWrite(
-                    transactionInput,
-                    inputKeys: inputKeys,
-                    retriesRemaining: retriesRemaining
-                )
-            }
-
-            result = .failure(DynamoDBTableError.transactionCanceled(reasons: reasons))
-        } catch let exception as TransactionConflictException {
-            if retriesRemaining > 0 {
-                return try await retryPolymorphicTransactWrite(
-                    transactionInput,
-                    inputKeys: inputKeys,
-                    retriesRemaining: retriesRemaining
-                )
-            }
-
-            let reason = DynamoDBTableError.transactionConflict(message: exception.message)
-
-            result = .failure(DynamoDBTableError.transactionCanceled(reasons: [reason]))
         }
 
         let retryCount = self.tableConfiguration.retry.numRetries - retriesRemaining
@@ -610,7 +597,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             let response = try await dynamodb.batchExecuteStatement(input: executeInput)
             return response.responses ?? []
         } catch {
-            throw error.asUnrecognizedDynamoDBTableError()
+            throw DynamoDBTableError.unexpectedError(cause: error)
         }
     }
 

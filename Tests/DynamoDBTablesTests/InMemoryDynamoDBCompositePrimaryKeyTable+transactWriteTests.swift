@@ -24,7 +24,6 @@
 //  DynamoDBTablesTests
 //
 
-import AWSDynamoDB
 import Testing
 
 @testable import DynamoDBTables

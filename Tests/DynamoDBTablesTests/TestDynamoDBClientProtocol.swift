@@ -17,7 +17,6 @@
 //  DynamoDBTablesTests
 //
 
-import AWSDynamoDB
 import Smockable
 
 @testable import DynamoDBTables
@@ -37,16 +36,18 @@ import Smockable
     ]
 )
 protocol TestDynamoDBClientProtocol: DynamoDBClientProtocol {
-    func putItem(input: DynamoDBModel.PutItemInput) async throws
-    func getItem(input: DynamoDBModel.GetItemInput) async throws -> DynamoDBModel.GetItemOutput
-    func deleteItem(input: DynamoDBModel.DeleteItemInput) async throws
-    func query(input: DynamoDBModel.QueryInput) async throws -> DynamoDBModel.QueryOutput
-    func batchGetItem(input: DynamoDBModel.BatchGetItemInput) async throws -> DynamoDBModel.BatchGetItemOutput
+    func putItem(input: DynamoDBModel.PutItemInput) async throws(DynamoDBClientError)
+    func getItem(input: DynamoDBModel.GetItemInput) async throws(DynamoDBClientError) -> DynamoDBModel.GetItemOutput
+    func deleteItem(input: DynamoDBModel.DeleteItemInput) async throws(DynamoDBClientError)
+    func query(input: DynamoDBModel.QueryInput) async throws(DynamoDBClientError) -> DynamoDBModel.QueryOutput
+    func batchGetItem(
+        input: DynamoDBModel.BatchGetItemInput
+    ) async throws(DynamoDBClientError) -> DynamoDBModel.BatchGetItemOutput
     func batchExecuteStatement(
         input: DynamoDBModel.BatchExecuteStatementInput
-    ) async throws -> DynamoDBModel.BatchExecuteStatementOutput
+    ) async throws(DynamoDBClientError) -> DynamoDBModel.BatchExecuteStatementOutput
     func executeStatement(
         input: DynamoDBModel.ExecuteStatementInput
-    ) async throws -> DynamoDBModel.ExecuteStatementOutput
-    func executeTransaction(input: DynamoDBModel.ExecuteTransactionInput) async throws
+    ) async throws(DynamoDBClientError) -> DynamoDBModel.ExecuteStatementOutput
+    func executeTransaction(input: DynamoDBModel.ExecuteTransactionInput) async throws(DynamoDBClientError)
 }

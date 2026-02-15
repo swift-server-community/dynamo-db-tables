@@ -17,7 +17,6 @@
 //  DynamoDBTablesTests
 //
 
-import AWSDynamoDB
 import Foundation
 import Logging
 import Smockable
@@ -120,7 +119,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
     func insertItemConditionalCheckFailed() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
-        let conditionalCheckError = AWSDynamoDB.ConditionalCheckFailedException(message: "Item already exists")
+        let conditionalCheckError = DynamoDBClientError.conditionalCheckFailed(message: "Item already exists")
 
         when(expectations.putItem(input: .any), throw: conditionalCheckError)
 
@@ -287,7 +286,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
             timeToLive: existingItem.timeToLive
         )
 
-        let conditionalCheckError = AWSDynamoDB.ConditionalCheckFailedException(message: "Version mismatch")
+        let conditionalCheckError = DynamoDBClientError.conditionalCheckFailed(message: "Version mismatch")
 
         when(expectations.putItem(input: .any), throw: conditionalCheckError)
 

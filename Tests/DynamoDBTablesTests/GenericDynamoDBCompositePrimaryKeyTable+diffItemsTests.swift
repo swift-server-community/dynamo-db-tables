@@ -24,7 +24,6 @@
 //  DynamoDBTablesTests
 //
 
-import AWSDynamoDB
 import Foundation
 import Testing
 
