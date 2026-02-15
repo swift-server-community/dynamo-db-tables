@@ -19,7 +19,6 @@
 
 #if SOTOSDK
 import DynamoDBTables
-import Foundation
 import SotoDynamoDB
 
 // MARK: - AttributeValue Conversions
