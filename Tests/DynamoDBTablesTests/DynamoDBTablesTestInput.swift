@@ -22,7 +22,7 @@
 import Foundation
 
 //
-//  SmokeDynamoDBTestInput.swift
+//  DynamoDBTablesTestInput.swift
 //  DynamoDBTablesTests
 //
 @testable import DynamoDBTables

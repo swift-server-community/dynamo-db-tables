@@ -12,6 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+//
+//  SotoDynamoDBCompositePrimaryKeyTable.swift
+//  DynamoDBTablesSoto
+//
+
 #if SOTOSDK
 import DynamoDBTables
 import Logging

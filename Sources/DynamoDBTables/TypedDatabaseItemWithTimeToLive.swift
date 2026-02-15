@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  TypedTTLDatabaseItem.swift
+//  TypedDatabaseItemWithTimeToLive.swift
 //  DynamoDBTables
 //
 

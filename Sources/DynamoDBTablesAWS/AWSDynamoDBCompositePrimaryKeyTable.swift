@@ -12,6 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+//
+//  AWSDynamoDBCompositePrimaryKeyTable.swift
+//  DynamoDBTablesAWS
+//
+
 #if AWSSDK
 import AWSDynamoDB
 import ClientRuntime

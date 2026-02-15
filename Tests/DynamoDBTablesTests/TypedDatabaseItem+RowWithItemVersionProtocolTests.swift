@@ -20,7 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-//  TypedTTLDatabaseItem+RowWithItemVersionProtocolTests.swift
+//  TypedDatabaseItem+RowWithItemVersionProtocolTests.swift
 //  DynamoDBTablesTests
 //
 
