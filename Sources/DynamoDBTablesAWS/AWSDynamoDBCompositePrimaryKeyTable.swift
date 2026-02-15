@@ -19,31 +19,23 @@ import DynamoDBTables
 import Logging
 import SmithyIdentity
 
-/// A concrete wrapper around `GenericDynamoDBCompositePrimaryKeyTable<DynamoDBClient>` that conforms to
-/// `DynamoDBCompositePrimaryKeyTable`.
-///
-/// This provides a convenient way to use the DynamoDB table implementation with the standard AWS DynamoDB client
-/// without needing to interact with the generic type directly.
-///
-/// ## Usage
-///
-/// Use this type when working with the real AWS DynamoDB service:
+/// A `DynamoDBCompositePrimaryKeyTable` implementation backed by the AWS DynamoDB 
+/// service provided by aws-sdk-swift.
 ///
 /// ```swift
-/// // Create a table using region-based initialization
 /// let table = try AWSDynamoDBCompositePrimaryKeyTable(
 ///     tableName: "MyTable",
 ///     region: "us-east-1"
 /// )
 ///
-/// // Create a table with an existing AWS client
-/// let awsClient = AWSDynamoDB.DynamoDBClient(config: config)
 /// let table = AWSDynamoDBCompositePrimaryKeyTable(
 ///     tableName: "MyTable",
-///     client: awsClient
+///     client: existingDynamoDBClient
 /// )
 /// ```
 public struct AWSDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable, Sendable {
+    // Wrapper struct rather than typealias so that GenericDynamoDBCompositePrimaryKeyTable
+    // can use package access level while this type remains public.
     private let wrapped: GenericDynamoDBCompositePrimaryKeyTable<AWSDynamoDB.DynamoDBClient>
 
     public var tableConfiguration: AWSDynamoDBTableConfiguration { self.wrapped.tableConfiguration }
