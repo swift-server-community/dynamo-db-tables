@@ -3,13 +3,16 @@
 <img src="https://github.com/swift-server-community/dynamo-db-tables/actions/workflows/swift.yml/badge.svg?branch=main" alt="Build - Main Branch">
 </a>
 <a href="http://swift.org">
-<img src="https://img.shields.io/badge/swift-6.2-orange.svg?style=flat" alt="Swift 6.2 Compatible and Tested">
+<img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fswift-server-community%2Fdynamo-db-tables%2Fbadge%3Ftype%3Dswift-versions" alt="Swift Version compatibility">
 </a>
 <a href="https://swiftpackageindex.com/swift-server-community/dynamo-db-tables/documentation">
 <img src="https://img.shields.io/badge/docc-documentation-blue.svg?style=flat" alt="Package documentation">
 </a>
-<img src="https://img.shields.io/badge/ubuntu-22.04|24.04-yellow.svg?style=flat" alt="Ubuntu 22.04 and 24.04 Tested">
-<img src="https://img.shields.io/badge/license-Apache2-blue.svg?style=flat" alt="Apache 2">
+<a href="https://codecov.io/gh/swift-server-community/dynamo-db-tables">
+<img src="https://img.shields.io/codecov/c/github/swift-server-community/dynamo-db-tables?logo=codecov&label=codecov" alt="Code Coverage">
+</a>
+<img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fswift-server-community%2Fdynamo-db-tables%2Fbadge%3Ftype%3Dplatforms" alt="Platform Compatibility">
+<img src="https://img.shields.io/badge/license-Apache2-yellow.svg?style=flat" alt="Apache 2">
 </p>
 
 # DynamoDBTables
