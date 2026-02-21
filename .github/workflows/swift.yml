@@ -147,6 +147,8 @@ jobs:
     container:
       image: swift:6.2.3-noble
     steps:
+      - name: Install dependencies                                                                                                                                              
+        run: apt-get update && apt-get install -y libssl-dev
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
