@@ -105,7 +105,7 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git diff --exit-code
-  overage:
+  Coverage:
     runs-on: ubuntu-latest
     container:
       image: swift:6.2.3-noble
