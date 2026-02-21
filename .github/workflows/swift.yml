@@ -155,4 +155,6 @@ jobs:
       - name: Check for API breaking changes
         run: |                                                                                                                                                                  
           git config --global --add safe.directory "$GITHUB_WORKSPACE"                                                                                                          
-          swift package diagnose-api-breaking-changes origin/main
+          # DynamoDBTablesAWS excluded due to swift-api-digester C module redefinition bug
+          # https://github.com/swiftlang/swift-package-manager/issues/8103
+          swift package diagnose-api-breaking-changes origin/main --targets DynamoDBTables DynamoDBTablesSoto
