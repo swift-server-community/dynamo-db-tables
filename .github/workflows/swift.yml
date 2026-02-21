@@ -111,7 +111,7 @@ jobs:
       image: swift:6.2.3-noble
     steps:
       - name: Install dependencies                                                                                                                                              
-        run: apt-get update && apt-get install -y curl
+        run: apt-get update && apt-get install -y curl libssl-dev
       - uses: actions/checkout@v6
       - name: Run tests with coverage
         run: swift test --enable-code-coverage --xunit-output test-results.xml
