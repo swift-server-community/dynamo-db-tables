@@ -24,18 +24,33 @@ func createDynamoDBTable(
 import DynamoDBTablesSoto
 import SotoDynamoDB
 
+/// Wraps `AWSClient` so that `syncShutdown()` is called in deinit,
+/// satisfying Soto's assertion that the client is shut down before deallocation.
+private final class ManagedAWSClient: @unchecked Sendable {
+    let client: AWSClient
+
+    init() {
+        self.client = AWSClient(
+            credentialProvider: .static(
+                accessKeyId: "test",
+                secretAccessKey: "test"
+            )
+        )
+    }
+
+    deinit {
+        try? client.syncShutdown()
+    }
+}
+
+private let sharedClient = ManagedAWSClient()
+
 func createDynamoDBTable(
     tableName: String,
     endpoint: String
 ) throws -> any DynamoDBCompositePrimaryKeyTable {
-    let awsClient = AWSClient(
-        credentialProvider: .static(
-            accessKeyId: "test",
-            secretAccessKey: "test"
-        )
-    )
     let dynamoDB = DynamoDB(
-        client: awsClient,
+        client: sharedClient.client,
         region: .useast1,
         endpoint: endpoint
     )
