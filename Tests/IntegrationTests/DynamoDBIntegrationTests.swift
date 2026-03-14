@@ -1,8 +1,8 @@
+import ContainerMacrosLib
 import ContainerTestSupport
 import DynamoDBTables
 import Foundation
 import Testing
-import ContainerMacrosLib
 
 // ContainerizationContainerRuntime is not yet fully implemented,
 // so integration tests only run where PlatformRuntime uses Docker.
