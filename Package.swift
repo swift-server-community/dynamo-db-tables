@@ -57,7 +57,8 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
         .package(url: "https://github.com/apple/swift-configuration.git", from: "1.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"603.0.0"),
-        .package(url: "https://github.com/tachyonics/smockable", from: "0.10.0"),
+        .package(url: "https://github.com/tachyonics/smockable", from: "1.0.0-alpha.1"),
+        .package(url: "https://github.com/tachyonics/swift-local-containers", from: "0.2.1"),
     ],
     targets: [
         .macro(
@@ -101,6 +102,18 @@ let package = Package(
                 .product(name: "Smockable", package: "smockable"),
             ],
             swiftSettings: swiftSettings
+        ),
+        .testTarget(
+            name: "IntegrationTests",
+            dependencies: [
+                .target(name: "DynamoDBTables"),
+                .target(name: "DynamoDBTablesAWS", condition: .when(traits: ["AWSSDK"])),
+                .target(name: "DynamoDBTablesSoto", condition: .when(traits: ["SOTOSDK"])),
+                .product(name: "ContainerMacrosLib", package: "swift-local-containers"),
+                .product(name: "ContainerTestSupport", package: "swift-local-containers"),
+            ],
+            swiftSettings: swiftSettings,
+            plugins: [.plugin(name: "ContainerCodeGen", package: "swift-local-containers")]
         ),
     ]
 )

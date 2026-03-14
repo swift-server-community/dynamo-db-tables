@@ -11,13 +11,15 @@ jobs:
     name: Image ${{ matrix.image }}
     strategy:
       matrix:
-        image: ["swift:6.2.3-noble"]
+        image: ["swift:6.2.4-noble"]
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.image }}
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     steps:
       - name: Install dependencies
-        run: apt-get update && apt-get install -y libssl-dev curl unzip
+        run: apt-get update && apt-get install -y libssl-dev curl unzip docker.io
       - uses: actions/checkout@v6
       - name: Build
         run: swift build -c release -Xswiftc -strict-concurrency=complete
@@ -34,7 +36,7 @@ jobs:
     name: Image ${{ matrix.image }}
     strategy:
       matrix:
-        image: ["swift:6.2.3-jammy"]
+        image: ["swift:6.2.4-jammy"]
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.image }}
@@ -50,13 +52,15 @@ jobs:
     name: Soto ${{ matrix.image }}
     strategy:
       matrix:
-        image: ["swift:6.2.3-noble"]
+        image: ["swift:6.2.4-noble"]
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.image }}
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     steps:
       - name: Install dependencies
-        run: apt-get update && apt-get install -y libssl-dev curl unzip
+        run: apt-get update && apt-get install -y libssl-dev curl unzip docker.io
       - uses: actions/checkout@v6
       - name: Build
         run: swift build -c release --traits SOTOSDK -Xswiftc -strict-concurrency=complete
@@ -73,7 +77,7 @@ jobs:
     name: Soto ${{ matrix.image }}
     strategy:
       matrix:
-        image: ["swift:6.2.3-jammy"]
+        image: ["swift:6.2.4-jammy"]
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.image }}
@@ -96,7 +100,7 @@ jobs:
     name: swift-format
     runs-on: ubuntu-latest
     container:
-      image: swift:6.2.3-noble
+      image: swift:6.2.4-noble
     steps:
       - uses: actions/checkout@v6
       - name: Run swift-format
@@ -108,7 +112,7 @@ jobs:
   Coverage:
     runs-on: ubuntu-latest
     container:
-      image: swift:6.2.3-noble
+      image: swift:6.2.4-noble
     steps:
       - name: Install dependencies                                                                                                                                              
         run: apt-get update && apt-get install -y curl libssl-dev
@@ -145,7 +149,7 @@ jobs:
   APIBreakage:
     runs-on: ubuntu-latest
     container:
-      image: swift:6.2.3-noble
+      image: swift:6.2.4-noble
     steps:
       - name: Install dependencies                                                                                                                                              
         run: apt-get update && apt-get install -y libssl-dev

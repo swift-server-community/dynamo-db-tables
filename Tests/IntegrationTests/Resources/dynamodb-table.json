@@ -1,0 +1,23 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "TestTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "integration-test-table",
+        "AttributeDefinitions": [
+          { "AttributeName": "PK", "AttributeType": "S" },
+          { "AttributeName": "SK", "AttributeType": "S" }
+        ],
+        "KeySchema": [
+          { "AttributeName": "PK", "KeyType": "HASH" },
+          { "AttributeName": "SK", "KeyType": "RANGE" }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      }
+    }
+  },
+  "Outputs": {
+    "TableName": { "Value": { "Ref": "TestTable" } }
+  }
+}
