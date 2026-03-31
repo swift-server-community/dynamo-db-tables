@@ -46,7 +46,7 @@ public struct RetryConfiguration: Sendable {
 
     /**
      Initializer.
-    
+
      - Parameters:
          - numRetries: number of retries to be attempted.
          - baseRetryInterval: first interval of retry in millis.
