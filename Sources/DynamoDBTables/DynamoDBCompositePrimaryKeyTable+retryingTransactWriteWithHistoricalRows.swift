@@ -25,11 +25,11 @@ extension DynamoDBCompositePrimaryKeyTable {
      or nil if the item currently doesn't exist. The provider should return a tuple of the primary `WriteEntry`
      and an optional historical `WriteEntry`, or nil if the key should not be part of the transaction. The
      transaction may fail in which case the process repeats until the retry limit has been reached.
-    
+
      The total number of write entries, historical entries, and constraints must not exceed the DynamoDB
      transaction limit of 100 items. This method validates the total count before attempting the transaction
      and throws `itemCollectionSizeLimitExceeded` if exceeded.
-    
+
      - Parameters:
         - keys: the item keys to use in the transaction.
         - withRetries: the number of times to attempt to retry the update before failing.

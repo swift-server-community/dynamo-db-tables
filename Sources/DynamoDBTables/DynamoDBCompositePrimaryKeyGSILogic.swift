@@ -72,7 +72,7 @@ public protocol DynamoDBCompositePrimaryKeyGSILogic {
 
     /**
      * Called when an item is delete on the main table. Can be used to also delete the corresponding item on the GSI.
-    
+
      */
     func onDeleteItem(
         forKey key: CompositePrimaryKey<some Any>,
@@ -81,7 +81,7 @@ public protocol DynamoDBCompositePrimaryKeyGSILogic {
 
     /**
      * Called when an transact write in the main table. Can be used to also transact write the corresponding item on the GSI.
-    
+
      */
     func onTransactWrite(
         _ entries: [WriteEntryType],

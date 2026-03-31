@@ -61,7 +61,7 @@ extension [String] {
     /**
      Transforms the Array into a DynamoDB key - putting dots between each element - with a prefix
      element specifying the version.
-    
+
      - Parameters:
         - versionNumber: The version number to prefix.
         - minimumFieldWidth: the minimum field width of the version field. Leading
