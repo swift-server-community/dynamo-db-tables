@@ -17,9 +17,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      - uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: ${{ matrix.swift-version }}
+      - name: Install Swift
+        run: |
+          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+          sudo tar -xzf swift.tar.gz -C /opt/
+          rm swift.tar.gz
+          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
       - name: Free disk space
         # LocalStack's image is large; clear out preinstalled runner tooling
         # we don't need so `docker pull` has room.
@@ -69,9 +76,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      - uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: ${{ matrix.swift-version }}
+      - name: Install Swift
+        run: |
+          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+          sudo tar -xzf swift.tar.gz -C /opt/
+          rm swift.tar.gz
+          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
       - name: Free disk space
         # LocalStack's image is large; clear out preinstalled runner tooling
         # we don't need so `docker pull` has room.
@@ -123,9 +137,16 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
-      - uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: ${{ matrix.swift-version }}
+      - name: Install Swift
+        run: |
+          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+          sudo tar -xzf swift.tar.gz -C /opt/
+          rm swift.tar.gz
+          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
       - name: Run swift-format
         run: swift-format format --recursive --in-place .
       - name: Check for formatting differences
@@ -140,9 +161,16 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
-      - uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: ${{ matrix.swift-version }}
+      - name: Install Swift
+        run: |
+          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+          sudo tar -xzf swift.tar.gz -C /opt/
+          rm swift.tar.gz
+          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
@@ -198,9 +226,16 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: ${{ matrix.swift-version }}
+      - name: Install Swift
+        run: |
+          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+          sudo tar -xzf swift.tar.gz -C /opt/
+          rm swift.tar.gz
+          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y libssl-dev
       - name: Check for API breaking changes
