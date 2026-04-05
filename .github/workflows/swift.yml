@@ -20,11 +20,23 @@ jobs:
       - uses: SwiftyLab/setup-swift@v1
         with:
           swift-version: ${{ matrix.swift-version }}
+      - name: Free disk space
+        # LocalStack's image is large; clear out preinstalled runner tooling
+        # we don't need so `docker pull` has room.
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h
       - name: Install dependencies
         # libcurl4-openssl-dev + ca-certificates are required at runtime
         # by aws-crt-swift (used by aws-sdk-swift) for TLS context creation
         # and endpoint ruleset parsing.
         run: sudo apt-get update && sudo apt-get install -y libssl-dev libcurl4-openssl-dev ca-certificates curl unzip
+      - name: Diagnose AWS CRT environment
+        run: |
+          echo "=== OpenSSL ===" && openssl version
+          echo "=== CA certs ===" && ls -la /etc/ssl/certs/ca-certificates.crt && wc -l /etc/ssl/certs/ca-certificates.crt
+          echo "=== libcurl ===" && dpkg -l | grep -i libcurl
+          echo "=== libssl/libcrypto ===" && ldconfig -p | grep -E "libssl|libcrypto" | head -10
       - name: Build
         run: swift build -c release -Xswiftc -strict-concurrency=complete
       - name: Build tests
@@ -58,11 +70,23 @@ jobs:
       - uses: SwiftyLab/setup-swift@v1
         with:
           swift-version: ${{ matrix.swift-version }}
+      - name: Free disk space
+        # LocalStack's image is large; clear out preinstalled runner tooling
+        # we don't need so `docker pull` has room.
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h
       - name: Install dependencies
         # libcurl4-openssl-dev + ca-certificates are required at runtime
         # by aws-crt-swift (used by aws-sdk-swift) for TLS context creation
         # and endpoint ruleset parsing.
         run: sudo apt-get update && sudo apt-get install -y libssl-dev libcurl4-openssl-dev ca-certificates curl unzip
+      - name: Diagnose AWS CRT environment
+        run: |
+          echo "=== OpenSSL ===" && openssl version
+          echo "=== CA certs ===" && ls -la /etc/ssl/certs/ca-certificates.crt && wc -l /etc/ssl/certs/ca-certificates.crt
+          echo "=== libcurl ===" && dpkg -l | grep -i libcurl
+          echo "=== libssl/libcrypto ===" && ldconfig -p | grep -E "libssl|libcrypto" | head -10
       - name: Build
         run: swift build -c release --traits SOTOSDK -Xswiftc -strict-concurrency=complete
       - name: Build tests
@@ -115,8 +139,18 @@ jobs:
       - uses: SwiftyLab/setup-swift@v1
         with:
           swift-version: ${{ matrix.swift-version }}
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y curl libssl-dev libcurl4-openssl-dev ca-certificates
+      - name: Diagnose AWS CRT environment
+        run: |
+          echo "=== OpenSSL ===" && openssl version
+          echo "=== CA certs ===" && ls -la /etc/ssl/certs/ca-certificates.crt && wc -l /etc/ssl/certs/ca-certificates.crt
+          echo "=== libcurl ===" && dpkg -l | grep -i libcurl
+          echo "=== libssl/libcrypto ===" && ldconfig -p | grep -E "libssl|libcrypto" | head -10
       - name: Run tests with coverage
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
