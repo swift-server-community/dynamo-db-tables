@@ -58,7 +58,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-configuration.git", from: "1.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"603.0.0"),
         .package(url: "https://github.com/tachyonics/smockable", from: "1.0.0-alpha.1"),
-        .package(url: "https://github.com/tachyonics/swift-local-containers", from: "0.4.0"),
+        .package(url: "https://github.com/tachyonics/swift-local-containers", from: "0.5.0"),
     ],
     targets: [
         .macro(
