@@ -5,3 +5,6 @@ build
 *.xcodeproj
 .swift-version
 *~
+
+# Local test configuration — secrets and per-developer overrides
+/.local-containers/env
