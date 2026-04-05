@@ -21,7 +21,10 @@ jobs:
         with:
           swift-version: ${{ matrix.swift-version }}
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libssl-dev curl unzip
+        # libcurl4-openssl-dev + ca-certificates are required at runtime
+        # by aws-crt-swift (used by aws-sdk-swift) for TLS context creation
+        # and endpoint ruleset parsing.
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev libcurl4-openssl-dev ca-certificates curl unzip
       - name: Build
         run: swift build -c release -Xswiftc -strict-concurrency=complete
       - name: Build tests
@@ -56,7 +59,10 @@ jobs:
         with:
           swift-version: ${{ matrix.swift-version }}
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libssl-dev curl unzip
+        # libcurl4-openssl-dev + ca-certificates are required at runtime
+        # by aws-crt-swift (used by aws-sdk-swift) for TLS context creation
+        # and endpoint ruleset parsing.
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev libcurl4-openssl-dev ca-certificates curl unzip
       - name: Build
         run: swift build -c release --traits SOTOSDK -Xswiftc -strict-concurrency=complete
       - name: Build tests
@@ -110,7 +116,7 @@ jobs:
         with:
           swift-version: ${{ matrix.swift-version }}
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y curl libssl-dev
+        run: sudo apt-get update && sudo apt-get install -y curl libssl-dev libcurl4-openssl-dev ca-certificates
       - name: Run tests with coverage
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
