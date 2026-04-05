@@ -190,11 +190,17 @@ jobs:
           echo "=== libcurl ===" && dpkg -l | grep -i libcurl
           echo "=== libssl/libcrypto ===" && ldconfig -p | grep -E "libssl|libcrypto" | head -10
       - name: Run tests with coverage
+        # aws-crt-swift has a flaky TLS-context init failure on Linux GHA
+        # runners; retry to work around it. See aws-sdk-swift #1984.
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
           SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
           SSL_CERT_DIR: /etc/ssl/certs
-        run: swift test --enable-code-coverage --xunit-output test-results.xml
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: swift test --enable-code-coverage --xunit-output test-results.xml
       - name: Convert to LCOV
         run: |
           BIN_PATH=$(swift build --show-bin-path)
