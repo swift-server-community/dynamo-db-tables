@@ -46,16 +46,21 @@ jobs:
           echo "=== libssl/libcrypto ===" && ldconfig -p | grep -E "libssl|libcrypto" | head -10
       - name: Build
         run: swift build -c release -Xswiftc -strict-concurrency=complete
-      - name: Build tests
-        # -v captures compiler invocations for SwiftLint analyze; redirected
-        # to file to keep the CI log readable.
-        run: swift build --build-tests -v > build.log 2>&1
       - name: Run tests
+        # Matches Coverage's invocation pattern. Splitting into
+        # `swift build --build-tests -v` + `swift test --skip-build` triggered
+        # a memory-corruption crash in aws-crt-swift's endpoint ruleset parser.
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
           SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
           SSL_CERT_DIR: /etc/ssl/certs
-        run: swift test --skip-build
+        run: swift test 2>&1 | tee build.log
+      - name: Rebuild tests for SwiftLint analyze
+        # Separate verbose build to produce a compiler invocation log;
+        # needs to happen after the real test run so the crash-triggering
+        # build path isn't the one that produced the test artifacts.
+        if: matrix.os == 'ubuntu-24.04'
+        run: swift build --build-tests -v > build.log 2>&1
       - name: Install SwiftLint
         # SwiftLint's prebuilt Linux binary requires a GLIBC only present on 24.04+
         if: matrix.os == 'ubuntu-24.04'
@@ -105,14 +110,15 @@ jobs:
           echo "=== libssl/libcrypto ===" && ldconfig -p | grep -E "libssl|libcrypto" | head -10
       - name: Build
         run: swift build -c release --traits SOTOSDK -Xswiftc -strict-concurrency=complete
-      - name: Build tests
-        run: swift build --build-tests --traits SOTOSDK -v > build.log 2>&1
       - name: Run tests
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
           SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
           SSL_CERT_DIR: /etc/ssl/certs
-        run: swift test --traits SOTOSDK --skip-build
+        run: swift test --traits SOTOSDK 2>&1 | tee build.log
+      - name: Rebuild tests for SwiftLint analyze
+        if: matrix.os == 'ubuntu-24.04'
+        run: swift build --build-tests --traits SOTOSDK -v > build.log 2>&1
       - name: Install SwiftLint
         if: matrix.os == 'ubuntu-24.04'
         run: |
