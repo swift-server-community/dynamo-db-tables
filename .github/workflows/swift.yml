@@ -54,7 +54,9 @@ jobs:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
           SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
           SSL_CERT_DIR: /etc/ssl/certs
-        run: swift test 2>&1 | tee build.log
+        run: |
+          set -o pipefail
+          swift test 2>&1 | tee build.log
       - name: Rebuild tests for SwiftLint analyze
         # Separate verbose build to produce a compiler invocation log;
         # needs to happen after the real test run so the crash-triggering
@@ -115,7 +117,9 @@ jobs:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
           SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
           SSL_CERT_DIR: /etc/ssl/certs
-        run: swift test --traits SOTOSDK 2>&1 | tee build.log
+        run: |
+          set -o pipefail
+          swift test --traits SOTOSDK 2>&1 | tee build.log
       - name: Rebuild tests for SwiftLint analyze
         if: matrix.os == 'ubuntu-24.04'
         run: swift build --build-tests --traits SOTOSDK -v > build.log 2>&1
