@@ -5,100 +5,161 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-      
+
 jobs:
-  BuildTestAndAnalyze:
-    name: Image ${{ matrix.image }}
-    strategy:
-      matrix:
-        image: ["swift:6.2.3-noble"]
-    runs-on: ubuntu-latest
-    container:
-      image: ${{ matrix.image }}
-    steps:
-      - name: Install dependencies
-        run: apt-get update && apt-get install -y libssl-dev curl unzip
-      - uses: actions/checkout@v6
-      - name: Build
-        run: swift build -c release -Xswiftc -strict-concurrency=complete
-      - name: Run tests
-        run: swift test -v 2>&1 | tee build.log
-      - name: Install SwiftLint
-        run: |
-          curl -sL https://github.com/realm/SwiftLint/releases/download/0.63.2/swiftlint_linux_amd64.zip -o swiftlint.zip
-          unzip -o swiftlint.zip -d /usr/local/bin
-          chmod +x /usr/local/bin/swiftlint
-      - name: SwiftLint unused imports
-        run: grep -v DynamoDBTablesSoto build.log > analyze.log && swiftlint analyze --strict --quiet --compiler-log-path analyze.log
   BuildAndTest:
-    name: Image ${{ matrix.image }}
+    name: Linux ${{ matrix.os }} / Swift ${{ matrix.swift-version }}
     strategy:
+      fail-fast: false
       matrix:
-        image: ["swift:6.2.3-jammy"]
-    runs-on: ubuntu-latest
-    container:
-      image: ${{ matrix.image }}
+        os: [ubuntu-22.04, ubuntu-24.04]
+        swift-version: ["6.2.4"]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Install libssl-dev
-        run: apt-get update && apt-get install -y libssl-dev
       - uses: actions/checkout@v6
+      - name: Install Swift
+        run: |
+          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+          sudo tar -xzf swift.tar.gz -C /opt/
+          rm swift.tar.gz
+          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
+      - name: Free disk space
+        # LocalStack's image is large; clear out preinstalled runner tooling
+        # we don't need so `docker pull` has room.
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h
+      - name: Install dependencies
+        # libcurl4-openssl-dev + ca-certificates are required at runtime
+        # by aws-crt-swift (used by aws-sdk-swift) for TLS context creation
+        # and endpoint ruleset parsing.
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev libcurl4-openssl-dev ca-certificates curl unzip
+      - name: Diagnose AWS CRT environment
+        run: |
+          echo "=== OpenSSL ===" && openssl version
+          echo "=== CA certs ===" && ls -la /etc/ssl/certs/ca-certificates.crt && wc -l /etc/ssl/certs/ca-certificates.crt
+          echo "=== libcurl ===" && dpkg -l | grep -i libcurl
+          echo "=== libssl/libcrypto ===" && ldconfig -p | grep -E "libssl|libcrypto" | head -10
       - name: Build
         run: swift build -c release -Xswiftc -strict-concurrency=complete
       - name: Run tests
-        run: swift test
-  BuildTestAndAnalyzeSoto:
-    name: Soto ${{ matrix.image }}
-    strategy:
-      matrix:
-        image: ["swift:6.2.3-noble"]
-    runs-on: ubuntu-latest
-    container:
-      image: ${{ matrix.image }}
-    steps:
-      - name: Install dependencies
-        run: apt-get update && apt-get install -y libssl-dev curl unzip
-      - uses: actions/checkout@v6
-      - name: Build
-        run: swift build -c release --traits SOTOSDK -Xswiftc -strict-concurrency=complete
-      - name: Run tests
-        run: swift test --traits SOTOSDK -v 2>&1 | tee build.log
+        # aws-crt-swift has a flaky TLS-context init failure on Linux GHA
+        # runners; retry to work around it. See aws-sdk-swift #1984.
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+          SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+          SSL_CERT_DIR: /etc/ssl/certs
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: |
+            set -o pipefail
+            swift test 2>&1 | tee build.log
+      - name: Rebuild tests for SwiftLint analyze
+        # Separate verbose build to produce a compiler invocation log;
+        # needs to happen after the real test run so the crash-triggering
+        # build path isn't the one that produced the test artifacts.
+        if: matrix.os == 'ubuntu-24.04'
+        run: swift build --build-tests -v > build.log 2>&1
       - name: Install SwiftLint
+        # SwiftLint's prebuilt Linux binary requires a GLIBC only present on 24.04+
+        if: matrix.os == 'ubuntu-24.04'
         run: |
           curl -sL https://github.com/realm/SwiftLint/releases/download/0.63.2/swiftlint_linux_amd64.zip -o swiftlint.zip
           unzip -o swiftlint.zip -d /usr/local/bin
           chmod +x /usr/local/bin/swiftlint
       - name: SwiftLint unused imports
-        run: grep -v DynamoDBTablesAWS build.log > analyze.log && swiftlint analyze --strict --quiet --compiler-log-path analyze.log
+        if: matrix.os == 'ubuntu-24.04'
+        run: grep -v DynamoDBTablesSoto build.log > analyze.log && swiftlint analyze --strict --quiet --compiler-log-path analyze.log
   BuildAndTestSoto:
-    name: Soto ${{ matrix.image }}
+    name: Soto Linux ${{ matrix.os }} / Swift ${{ matrix.swift-version }}
     strategy:
+      fail-fast: false
       matrix:
-        image: ["swift:6.2.3-jammy"]
-    runs-on: ubuntu-latest
-    container:
-      image: ${{ matrix.image }}
+        os: [ubuntu-22.04, ubuntu-24.04]
+        swift-version: ["6.2.4"]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Install libssl-dev
-        run: apt-get update && apt-get install -y libssl-dev
       - uses: actions/checkout@v6
+      - name: Install Swift
+        run: |
+          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+          sudo tar -xzf swift.tar.gz -C /opt/
+          rm swift.tar.gz
+          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
+      - name: Free disk space
+        # LocalStack's image is large; clear out preinstalled runner tooling
+        # we don't need so `docker pull` has room.
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h
+      - name: Install dependencies
+        # libcurl4-openssl-dev + ca-certificates are required at runtime
+        # by aws-crt-swift (used by aws-sdk-swift) for TLS context creation
+        # and endpoint ruleset parsing.
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev libcurl4-openssl-dev ca-certificates curl unzip
+      - name: Diagnose AWS CRT environment
+        run: |
+          echo "=== OpenSSL ===" && openssl version
+          echo "=== CA certs ===" && ls -la /etc/ssl/certs/ca-certificates.crt && wc -l /etc/ssl/certs/ca-certificates.crt
+          echo "=== libcurl ===" && dpkg -l | grep -i libcurl
+          echo "=== libssl/libcrypto ===" && ldconfig -p | grep -E "libssl|libcrypto" | head -10
       - name: Build
         run: swift build -c release --traits SOTOSDK -Xswiftc -strict-concurrency=complete
       - name: Run tests
-        run: swift test --traits SOTOSDK
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+          SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+          SSL_CERT_DIR: /etc/ssl/certs
+        run: |
+          set -o pipefail
+          swift test --traits SOTOSDK 2>&1 | tee build.log
+      - name: Rebuild tests for SwiftLint analyze
+        if: matrix.os == 'ubuntu-24.04'
+        run: swift build --build-tests --traits SOTOSDK -v > build.log 2>&1
+      - name: Install SwiftLint
+        if: matrix.os == 'ubuntu-24.04'
+        run: |
+          curl -sL https://github.com/realm/SwiftLint/releases/download/0.63.2/swiftlint_linux_amd64.zip -o swiftlint.zip
+          unzip -o swiftlint.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/swiftlint
+      - name: SwiftLint unused imports
+        if: matrix.os == 'ubuntu-24.04'
+        run: grep -v DynamoDBTablesAWS build.log > analyze.log && swiftlint analyze --strict --quiet --compiler-log-path analyze.log
   SwiftLint:
     name: SwiftLint version 3.2.1
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - name: GitHub Action for SwiftLint
         uses: norio-nomura/action-swiftlint@3.2.1
   SwiftFormat:
-    name: swift-format
-    runs-on: ubuntu-latest
-    container:
-      image: swift:6.2.3-noble
+    name: swift-format / Swift ${{ matrix.swift-version }}
+    strategy:
+      matrix:
+        swift-version: ["6.2.4"]
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
+      - name: Install Swift
+        run: |
+          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+          sudo tar -xzf swift.tar.gz -C /opt/
+          rm swift.tar.gz
+          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
       - name: Run swift-format
         run: swift-format format --recursive --in-place .
       - name: Check for formatting differences
@@ -106,15 +167,47 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git diff --exit-code
   Coverage:
-    runs-on: ubuntu-latest
-    container:
-      image: swift:6.2.3-noble
+    name: Coverage / Swift ${{ matrix.swift-version }}
+    strategy:
+      matrix:
+        swift-version: ["6.2.4"]
+    runs-on: ubuntu-24.04
     steps:
-      - name: Install dependencies                                                                                                                                              
-        run: apt-get update && apt-get install -y curl libssl-dev
       - uses: actions/checkout@v6
+      - name: Install Swift
+        run: |
+          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+          sudo tar -xzf swift.tar.gz -C /opt/
+          rm swift.tar.gz
+          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y curl libssl-dev libcurl4-openssl-dev ca-certificates
+      - name: Diagnose AWS CRT environment
+        run: |
+          echo "=== OpenSSL ===" && openssl version
+          echo "=== CA certs ===" && ls -la /etc/ssl/certs/ca-certificates.crt && wc -l /etc/ssl/certs/ca-certificates.crt
+          echo "=== libcurl ===" && dpkg -l | grep -i libcurl
+          echo "=== libssl/libcrypto ===" && ldconfig -p | grep -E "libssl|libcrypto" | head -10
       - name: Run tests with coverage
-        run: swift test --enable-code-coverage --xunit-output test-results.xml
+        # aws-crt-swift has a flaky TLS-context init failure on Linux GHA
+        # runners; retry to work around it. See aws-sdk-swift #1984.
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+          SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+          SSL_CERT_DIR: /etc/ssl/certs
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: swift test --enable-code-coverage --xunit-output test-results.xml
       - name: Convert to LCOV
         run: |
           BIN_PATH=$(swift build --show-bin-path)
@@ -143,18 +236,30 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   APIBreakage:
-    runs-on: ubuntu-latest
-    container:
-      image: swift:6.2.3-noble
+    name: API Breakage / Swift ${{ matrix.swift-version }}
+    strategy:
+      matrix:
+        swift-version: ["6.2.4"]
+    runs-on: ubuntu-24.04
     steps:
-      - name: Install dependencies                                                                                                                                              
-        run: apt-get update && apt-get install -y libssl-dev
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+      - name: Install Swift
+        run: |
+          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+          sudo tar -xzf swift.tar.gz -C /opt/
+          rm swift.tar.gz
+          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
       - name: Check for API breaking changes
-        run: |                                                                                                                                                                  
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"                                                                                                          
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           # DynamoDBTablesAWS excluded due to swift-api-digester C module redefinition bug
           # https://github.com/swiftlang/swift-package-manager/issues/8103
           swift package diagnose-api-breaking-changes origin/main --targets DynamoDBTables DynamoDBTablesSoto
