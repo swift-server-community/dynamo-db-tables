@@ -25,6 +25,7 @@ import Smockable
 /// ``DynamoDBClientProtocol`` so the `@Smock` macro can generate a mock.
 @Smock(
     additionalEquatableTypes: [
+        DynamoDBModel.PutItemInput.self,
         DynamoDBModel.GetItemInput.self,
         DynamoDBModel.DeleteItemInput.self,
         DynamoDBModel.QueryInput.self,
@@ -35,9 +36,7 @@ import Smockable
     ]
 )
 protocol TestDynamoDBClientProtocol: DynamoDBClientProtocol {
-    func putItem<ItemType: Encodable & Sendable>(
-        input: DynamoDBModel.PutItemInput<ItemType>
-    ) async throws(DynamoDBClientError)
+    func putItem(input: DynamoDBModel.PutItemInput) async throws(DynamoDBClientError)
     func getItem(input: DynamoDBModel.GetItemInput) async throws(DynamoDBClientError) -> DynamoDBModel.GetItemOutput
     func deleteItem(input: DynamoDBModel.DeleteItemInput) async throws(DynamoDBClientError)
     func query(input: DynamoDBModel.QueryInput) async throws(DynamoDBClientError) -> DynamoDBModel.QueryOutput
@@ -52,7 +51,3 @@ protocol TestDynamoDBClientProtocol: DynamoDBClientProtocol {
     ) async throws(DynamoDBClientError) -> DynamoDBModel.ExecuteStatementOutput
     func executeTransaction(input: DynamoDBModel.ExecuteTransactionInput) async throws(DynamoDBClientError)
 }
-
-/// Shorthand used by mock matchers to avoid repeating the long generic
-/// specialization at every `.matchingAs(...)` call site.
-typealias TestPutItemInput = DynamoDBModel.PutItemInput<StandardTypedDatabaseItem<TestTypeA>>

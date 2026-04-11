@@ -209,7 +209,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
         )
         // The items that exceed the statement length - both update and insert call putItem
         verify(mockClient, times: 6).putItem(
-            input: .matchingAs(TestPutItemInput.self) { input in
+            input: .matching { input in
                 input.tableName == testTableName
             }
         )
@@ -373,7 +373,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
             }
         )
         verify(mockClient, times: 6).putItem(
-            input: .matchingAs(TestPutItemInput.self) { input in
+            input: .matching { input in
                 input.tableName == testTableName
             }
         )
@@ -434,7 +434,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableBulkTests {
             }
         )
         verify(mockClient, times: 6).putItem(
-            input: .matchingAs(TestPutItemInput.self) { input in
+            input: .matching { input in
                 input.tableName == testTableName
             }
         )
