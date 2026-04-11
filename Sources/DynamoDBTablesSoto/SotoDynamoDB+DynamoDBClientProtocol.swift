@@ -211,14 +211,17 @@ private func mapError(_ error: any Error) -> DynamoDBClientError {
 // MARK: - DynamoDBClientProtocol Conformance
 
 extension DynamoDB: DynamoDBClientProtocol {
-    package func putItem(input: DynamoDBModel.PutItemInput) async throws(DynamoDBClientError) {
+    package func putItem<ItemType: Encodable & Sendable>(
+        input: DynamoDBModel.PutItemInput<ItemType>
+    ) async throws(DynamoDBClientError) {
         do {
+            let item = try DynamoDBEncoder().encode(input.item)
             _ = try await self.putItem(
                 .init(
                     conditionExpression: input.conditionExpression,
                     expressionAttributeNames: input.expressionAttributeNames,
                     expressionAttributeValues: input.expressionAttributeValues?.toSoto,
-                    item: input.item.toSoto,
+                    item: item,
                     tableName: input.tableName
                 )
             )

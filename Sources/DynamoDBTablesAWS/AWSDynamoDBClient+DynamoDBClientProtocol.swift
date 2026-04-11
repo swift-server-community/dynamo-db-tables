@@ -209,12 +209,24 @@ private func mapError(_ error: any Error) -> DynamoDBClientError {
 // MARK: - DynamoDBClientProtocol Conformance
 
 extension DynamoDBClient: DynamoDBClientProtocol {
-    package func putItem(input: DynamoDBModel.PutItemInput) async throws(DynamoDBClientError) {
+    package func putItem<ItemType: Encodable & Sendable>(
+        input: DynamoDBModel.PutItemInput<ItemType>
+    ) async throws(DynamoDBClientError) {
+        let attributes: [String: DynamoDBModel.AttributeValue]
+        do {
+            let attributeValue = try DynamoDBTables.DynamoDBEncoder().encode(input.item)
+            guard case let .m(itemAttributes) = attributeValue else {
+                throw DynamoDBTableError.unexpectedResponse(reason: "Expected a map.")
+            }
+            attributes = itemAttributes
+        } catch {
+            throw .unknown(message: "\(error)")
+        }
         let sdkInput = AWSDynamoDB.PutItemInput(
             conditionExpression: input.conditionExpression,
             expressionAttributeNames: input.expressionAttributeNames,
             expressionAttributeValues: input.expressionAttributeValues?.toSDK,
-            item: input.item.toSDK,
+            item: attributes.toSDK,
             tableName: input.tableName
         )
         do {

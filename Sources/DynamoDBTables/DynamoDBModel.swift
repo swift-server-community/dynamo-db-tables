@@ -313,18 +313,18 @@ public enum DynamoDBModel {
 
     // MARK: - Input Types
 
-    package struct PutItemInput: Sendable, Equatable {
+    package struct PutItemInput<ItemType: Encodable & Sendable>: Sendable {
         package let conditionExpression: String?
         package let expressionAttributeNames: [String: String]?
         package let expressionAttributeValues: [String: AttributeValue]?
-        package let item: [String: AttributeValue]
+        package let item: ItemType
         package let tableName: String
 
         package init(
             conditionExpression: String? = nil,
             expressionAttributeNames: [String: String]? = nil,
             expressionAttributeValues: [String: AttributeValue]? = nil,
-            item: [String: AttributeValue],
+            item: ItemType,
             tableName: String
         ) {
             self.conditionExpression = conditionExpression
