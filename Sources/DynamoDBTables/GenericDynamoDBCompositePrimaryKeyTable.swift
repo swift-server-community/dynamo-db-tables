@@ -88,13 +88,11 @@ package struct GenericDynamoDBCompositePrimaryKeyTable<Client: DynamoDBClientPro
 }
 
 extension GenericDynamoDBCompositePrimaryKeyTable {
-    func getInputForInsert<AttributesType>(
-        _ item: TypedTTLDatabaseItem<AttributesType, some Any, some Any>
-    ) throws
-        -> DynamoDBModel.PutItemInput
+    func getInputForInsert<AttributesType, ItemType, TimeToLiveAttributesType>(
+        _ item: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+    )
+        -> DynamoDBModel.PutItemInput<TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>>
     {
-        let attributes = try getAttributes(forItem: item)
-
         let expressionAttributeNames = [
             "#pk": AttributesType.partitionKeyAttributeName, "#sk": AttributesType.sortKeyAttributeName,
         ]
@@ -103,7 +101,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         return DynamoDBModel.PutItemInput(
             conditionExpression: conditionExpression,
             expressionAttributeNames: expressionAttributeNames,
-            item: attributes,
+            item: item,
             tableName: self.targetTableName
         )
     }
@@ -111,9 +109,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
     func getInputForUpdateItem<AttributesType, ItemType, TimeToLiveAttributesType>(
         newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
-    ) throws -> DynamoDBModel.PutItemInput {
-        let attributes = try getAttributes(forItem: newItem)
-
+    ) -> DynamoDBModel.PutItemInput<TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>> {
         let expressionAttributeNames = [
             "#rowversion": RowStatus.CodingKeys.rowVersion.stringValue,
             "#createdate": TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>.CodingKeys
@@ -130,7 +126,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
             conditionExpression: conditionExpression,
             expressionAttributeNames: expressionAttributeNames,
             expressionAttributeValues: expressionAttributeValues,
-            item: attributes,
+            item: newItem,
             tableName: self.targetTableName
         )
     }

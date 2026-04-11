@@ -30,17 +30,19 @@ import Logging
 
 /// DynamoDBTable conformance async functions
 extension GenericDynamoDBCompositePrimaryKeyTable {
-    package func insertItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
-        let putItemInput = try getInputForInsert(item)
+    package func insertItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+        _ item: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+    ) async throws {
+        let putItemInput = getInputForInsert(item)
 
         try await putItem(forInput: putItemInput, withKey: item.compositePrimaryKey)
     }
 
-    package func clobberItem(_ item: TypedTTLDatabaseItem<some Any, some Any, some Any>) async throws {
-        let attributes = try getAttributes(forItem: item)
-
+    package func clobberItem<AttributesType, ItemType, TimeToLiveAttributesType>(
+        _ item: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
+    ) async throws {
         let putItemInput = DynamoDBModel.PutItemInput(
-            item: attributes,
+            item: item,
             tableName: targetTableName
         )
 
@@ -51,7 +53,7 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         newItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>,
         existingItem: TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
     ) async throws {
-        let putItemInput = try getInputForUpdateItem(newItem: newItem, existingItem: existingItem)
+        let putItemInput = getInputForUpdateItem(newItem: newItem, existingItem: existingItem)
 
         try await putItem(forInput: putItemInput, withKey: newItem.compositePrimaryKey)
     }
@@ -243,8 +245,8 @@ extension GenericDynamoDBCompositePrimaryKeyTable {
         }
     }
 
-    private func putItem(
-        forInput putItemInput: DynamoDBModel.PutItemInput,
+    private func putItem<ItemType: Encodable & Sendable>(
+        forInput putItemInput: DynamoDBModel.PutItemInput<ItemType>,
         withKey compositePrimaryKey: CompositePrimaryKey<some Any>
     ) async throws {
         let logMessage = "dynamodb.putItem with item: \(putItemInput) and table name \(targetTableName)."

@@ -18,7 +18,9 @@
 //
 
 package protocol DynamoDBClientProtocol {
-    func putItem(input: DynamoDBModel.PutItemInput) async throws(DynamoDBClientError)
+    func putItem<ItemType: Encodable & Sendable>(
+        input: DynamoDBModel.PutItemInput<ItemType>
+    ) async throws(DynamoDBClientError)
     func getItem(input: DynamoDBModel.GetItemInput) async throws(DynamoDBClientError) -> DynamoDBModel.GetItemOutput
     func deleteItem(input: DynamoDBModel.DeleteItemInput) async throws(DynamoDBClientError)
     func query(input: DynamoDBModel.QueryInput) async throws(DynamoDBClientError) -> DynamoDBModel.QueryOutput
