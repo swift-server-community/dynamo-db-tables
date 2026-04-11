@@ -212,16 +212,24 @@ private func mapError(_ error: any Error) -> DynamoDBClientError {
 
 extension DynamoDB: DynamoDBClientProtocol {
     package func putItem(input: DynamoDBModel.PutItemInput) async throws(DynamoDBClientError) {
+        // Construct `DynamoDB.PutItemInput` explicitly rather than relying on
+        // `.init(...)` shorthand. Soto provides a `PutItemCodableInput<T>`
+        // overload that re-encodes its `item` via Soto's `DynamoDBEncoder`,
+        // and `[String: DynamoDB.AttributeValue]` conforms to `Encodable`, so
+        // the shorthand is ambiguous and resolves to the codable overload —
+        // which double-wraps each pre-encoded `AttributeValue` (e.g.
+        // `{"S": "v"}` becomes `{"M": {"S": {"S": "v"}}}`). Constructing the
+        // raw shape and calling `self.putItem(_:logger:)` positionally forces
+        // the unambiguous raw overload.
+        let sotoInput = DynamoDB.PutItemInput(
+            conditionExpression: input.conditionExpression,
+            expressionAttributeNames: input.expressionAttributeNames,
+            expressionAttributeValues: input.expressionAttributeValues?.toSoto,
+            item: input.item.toSoto,
+            tableName: input.tableName
+        )
         do {
-            _ = try await self.putItem(
-                .init(
-                    conditionExpression: input.conditionExpression,
-                    expressionAttributeNames: input.expressionAttributeNames,
-                    expressionAttributeValues: input.expressionAttributeValues?.toSoto,
-                    item: input.item.toSoto,
-                    tableName: input.tableName
-                )
-            )
+            _ = try await self.putItem(sotoInput)
         } catch {
             throw mapError(error)
         }
