@@ -21,6 +21,7 @@
 import DynamoDBTables
 // swiftlint:disable:next unused_import
 import Foundation
+// swiftlint:disable:next unused_import
 import SotoDynamoDB
 
 // MARK: - AttributeValue Conversions
