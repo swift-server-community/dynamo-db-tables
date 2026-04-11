@@ -63,12 +63,40 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         )
     }
 
+    private func createExpectedPutItemInput(
+        for item: StandardTypedDatabaseItem<TestTypeA>,
+        isInsert: Bool = false
+    ) throws -> DynamoDBModel.PutItemInput {
+        let attributes = try getAttributes(forItem: item)
+
+        if isInsert {
+            let expressionAttributeNames = [
+                "#pk": StandardPrimaryKeyAttributes.partitionKeyAttributeName,
+                "#sk": StandardPrimaryKeyAttributes.sortKeyAttributeName,
+            ]
+            let conditionExpression = "attribute_not_exists (#pk) AND attribute_not_exists (#sk)"
+
+            return DynamoDBModel.PutItemInput(
+                conditionExpression: conditionExpression,
+                expressionAttributeNames: expressionAttributeNames,
+                item: attributes,
+                tableName: testTableName
+            )
+        } else {
+            return DynamoDBModel.PutItemInput(
+                item: attributes,
+                tableName: testTableName
+            )
+        }
+    }
+
     // MARK: - Insert Item Tests
 
     @Test("Insert item succeeds with correct condition expression")
     func insertItemSuccess() async throws {
         // Given
         var expectations = MockTestDynamoDBClientProtocol.Expectations()
+        let expectedInput = try createExpectedPutItemInput(for: testItemA, isInsert: true)
         when(expectations.putItem(input: .any), complete: .withSuccess)
 
         let mockClient = MockTestDynamoDBClientProtocol(expectations: expectations)
@@ -78,14 +106,11 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         try await table.insertItem(testItemA)
 
         // Verify
-        let expectedPK = testItemA.compositePrimaryKey.partitionKey
-        let expectedSK = testItemA.compositePrimaryKey.sortKey
         verify(mockClient).putItem(
-            input: .matchingAs(TestPutItemInput.self) { input in
-                input.tableName == testTableName
-                    && input.conditionExpression?.contains("attribute_not_exists") == true
-                    && input.item.compositePrimaryKey.partitionKey == expectedPK
-                    && input.item.compositePrimaryKey.sortKey == expectedSK
+            input: .matching { input in
+                input.tableName == testTableName && input.conditionExpression?.contains("attribute_not_exists") == true
+                    && input.item["PK"]?.asString == testItemA.compositePrimaryKey.partitionKey
+                    && input.item["SK"]?.asString == testItemA.compositePrimaryKey.sortKey
             }
         )
     }
@@ -115,9 +140,8 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         }
 
         verify(mockClient).putItem(
-            input: .matchingAs(TestPutItemInput.self) { input in
-                input.tableName == testTableName
-                    && input.conditionExpression?.contains("attribute_not_exists") == true
+            input: .matching { input in
+                input.tableName == testTableName && input.conditionExpression?.contains("attribute_not_exists") == true
             }
         )
     }
@@ -135,14 +159,11 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         try await table.clobberItem(testItemA)
 
         // Verify
-        let expectedPK = testItemA.compositePrimaryKey.partitionKey
-        let expectedSK = testItemA.compositePrimaryKey.sortKey
         verify(mockClient).putItem(
-            input: .matchingAs(TestPutItemInput.self) { input in
-                input.tableName == testTableName
-                    && input.conditionExpression == nil
-                    && input.item.compositePrimaryKey.partitionKey == expectedPK
-                    && input.item.compositePrimaryKey.sortKey == expectedSK
+            input: .matching { input in
+                input.tableName == testTableName && input.conditionExpression == nil
+                    && input.item["PK"]?.asString == testItemA.compositePrimaryKey.partitionKey
+                    && input.item["SK"]?.asString == testItemA.compositePrimaryKey.sortKey
             }
         )
     }
@@ -242,15 +263,12 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         try await table.updateItem(newItem: updatedItem, existingItem: existingItem)
 
         // Verify
-        let expectedPK = existingItem.compositePrimaryKey.partitionKey
-        let expectedSK = existingItem.compositePrimaryKey.sortKey
         verify(mockClient).putItem(
-            input: .matchingAs(TestPutItemInput.self) { input in
-                input.tableName == testTableName
-                    && input.conditionExpression?.contains("rowversion") == true
+            input: .matching { input in
+                input.tableName == testTableName && input.conditionExpression?.contains("rowversion") == true
                     && input.conditionExpression?.contains("createdate") == true
-                    && input.item.compositePrimaryKey.partitionKey == expectedPK
-                    && input.item.compositePrimaryKey.sortKey == expectedSK
+                    && input.item["PK"]?.asString == existingItem.compositePrimaryKey.partitionKey
+                    && input.item["SK"]?.asString == existingItem.compositePrimaryKey.sortKey
             }
         )
     }
@@ -289,7 +307,7 @@ struct AWSDynamoDBCompositePrimaryKeyTableTests {
         }
 
         verify(mockClient).putItem(
-            input: .matchingAs(TestPutItemInput.self) { input in
+            input: .matching { input in
                 input.conditionExpression?.contains("rowversion") == true
                     && input.conditionExpression?.contains("createdate") == true
             }
