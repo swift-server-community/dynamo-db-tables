@@ -34,6 +34,14 @@ struct DynamoDBIntegrationTests {
         )
     }
 
+    private func makeProjection() throws -> any DynamoDBCompositePrimaryKeysProjection {
+        let stack = containers.integrationStack
+        return try createDynamoDBProjection(
+            tableName: stack.tableName,
+            endpoint: stack.awsEndpoint
+        )
+    }
+
     private func uniqueKey(sortKey: String = "sk") -> StandardCompositePrimaryKey {
         CompositePrimaryKey(partitionKey: UUID().uuidString, sortKey: sortKey)
     }
@@ -381,13 +389,73 @@ struct DynamoDBIntegrationTests {
         let messages = results.map(\.rowValue.message)
         #expect(messages == ["ex-1", "ex-2", "ex-3"])
     }
+
+    // MARK: - GSI projection coverage
+
+    @Test("GSI projection returns keys for items with matching GSI partition key")
+    func gsiProjectionQuery() async throws {
+        let table = try makeTable()
+        let projection = try makeProjection()
+        let gsiPartitionKey = UUID().uuidString
+
+        for index in 1...3 {
+            let key = uniqueKey(sortKey: "gsi-item-\(index)")
+            let item = StandardTypedDatabaseItem.newItem(
+                withKey: key,
+                andValue: GSITestPayload(
+                    GSI1PK: gsiPartitionKey,
+                    GSI1SK: "gsi-sk-\(index)",
+                    message: "msg-\(index)"
+                )
+            )
+            try await table.insertItem(item)
+        }
+
+        let keys: [CompositePrimaryKey<GSI1PrimaryKeyAttributes>] =
+            try await projection.query(
+                forPartitionKey: gsiPartitionKey,
+                sortKeyCondition: nil
+            )
+        #expect(keys.count == 3)
+        let sortKeys = keys.map(\.sortKey).sorted()
+        #expect(sortKeys == ["gsi-sk-1", "gsi-sk-2", "gsi-sk-3"])
+    }
+
+    @Test("GSI projection returns empty results for non-existent partition key")
+    func gsiProjectionEmptyResults() async throws {
+        let projection = try makeProjection()
+
+        let keys: [CompositePrimaryKey<GSI1PrimaryKeyAttributes>] =
+            try await projection.query(
+                forPartitionKey: UUID().uuidString,
+                sortKeyCondition: nil
+            )
+        #expect(keys.isEmpty)
+    }
 }
 
 #endif
 
-// MARK: - Test Payload
+// MARK: - Test Types
 
 struct TestPayload: Codable, Equatable, Sendable {
     let message: String
     let count: Int
+}
+
+/// Payload type whose fields include GSI key attributes. DynamoDB projects
+/// these into the GSI automatically because the CloudFormation template
+/// declares `GSI1PK` and `GSI1SK` as attribute definitions on the table.
+struct GSITestPayload: Codable, Sendable {
+    let GSI1PK: String
+    let GSI1SK: String
+    let message: String
+}
+
+/// `PrimaryKeyAttributes` for the GSI1 index. The `indexName` tells
+/// DynamoDBTables to include `IndexName: "GSI1"` in the query request.
+struct GSI1PrimaryKeyAttributes: PrimaryKeyAttributes {
+    static var partitionKeyAttributeName: String { "GSI1PK" }
+    static var sortKeyAttributeName: String { "GSI1SK" }
+    static var indexName: String? { "GSI1" }
 }
