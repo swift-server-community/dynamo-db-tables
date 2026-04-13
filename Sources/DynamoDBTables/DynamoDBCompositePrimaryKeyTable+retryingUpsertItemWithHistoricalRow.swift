@@ -34,8 +34,8 @@ extension DynamoDBCompositePrimaryKeyTable {
      * item that was written to the database table.
      *
      * - Parameters:
-     *   - forKey: the composite primary key of the item to upsert.
-     *   - withRetries: the number of times to attempt to retry the upsert before failing.
+     *   - key: the composite primary key of the item to upsert.
+     *   - retries: the number of times to attempt to retry the upsert before failing.
      *   - newItemProvider: provider called to create a new item when none exists.
      *   - updatedItemProvider: provider called with the existing item to produce an updated item.
      *   - historicalItemProvider: provider called with the written item to produce a historical record.

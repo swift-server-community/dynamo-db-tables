@@ -32,7 +32,7 @@ extension DynamoDBCompositePrimaryKeyTable {
     
      - Parameters:
         - keys: the item keys to use in the transaction.
-        - withRetries: the number of times to attempt to retry the update before failing.
+        - retries: the number of times to attempt to retry the update before failing.
         - constraints: the constraints to include as part of the transaction.
         - writeEntryProvider: the provider that returns a write entry and an optional historical entry per key.
      - Returns: the list of primary `WriteEntry` values used in the successful transaction (excluding historical entries).

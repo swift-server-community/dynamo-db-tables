@@ -35,7 +35,8 @@ extension DynamoDBCompositePrimaryKeyTable {
       inserted into the database table.
     
      - Parameters:
-        - forKey: The composite key for the version to update.
+        - key: The composite key for the version to update.
+        - retries: the number of times to attempt to retry the update before failing.
         - primaryItemProvider: Function to provide the updated item or throw if the current item can't be updated.
         - historicalItemProvider: Function to provide the historical item for the primary item.
      - Returns: the updated database item.
