@@ -20,11 +20,11 @@
 import Foundation
 
 // swiftlint:disable type_body_length
-public enum DynamoDBModel {
+package enum DynamoDBModel {
     // MARK: - Core Types
 
     // swiftlint:disable identifier_name
-    public indirect enum AttributeValue: Sendable, Equatable, Encodable, Decodable {
+    package indirect enum AttributeValue: Sendable, Equatable, Encodable, Decodable {
         case b(Data)
         case bool(Bool)
         case bs([Data])
@@ -51,7 +51,7 @@ public enum DynamoDBModel {
             case sdkUnknown
         }
 
-        public func encode(to encoder: Swift.Encoder) throws {
+        package func encode(to encoder: Swift.Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             switch self {
             case let .b(b):
@@ -95,7 +95,7 @@ public enum DynamoDBModel {
         }
 
         // swiftlint:disable cyclomatic_complexity function_body_length
-        public init(from decoder: Swift.Decoder) throws {
+        package init(from decoder: Swift.Decoder) throws {
             let values = try decoder.container(keyedBy: CodingKeys.self)
             let sDecoded = try values.decodeIfPresent(Swift.String.self, forKey: .s)
             if let s = sDecoded {

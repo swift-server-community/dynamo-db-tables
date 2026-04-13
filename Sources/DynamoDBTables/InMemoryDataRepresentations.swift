@@ -29,8 +29,8 @@ import Foundation
 
 /// Representation of a `DatabaseItem` when stored in `InMemoryDynamoDBCompositePrimaryKeyTableStore`.
 /// This type stores the serialised `DynamoDBModel.AttributeValue` map
-public struct InMemoryDatabaseItem: Sendable {
-    public var item: [Swift.String: DynamoDBModel.AttributeValue]
+package struct InMemoryDatabaseItem: Sendable {
+    package var item: [Swift.String: DynamoDBModel.AttributeValue]
     var metadata: DatabaseItemMetadata
 
     var createDate: Date {
@@ -44,7 +44,7 @@ public struct InMemoryDatabaseItem: Sendable {
     /**
      De-serialises the `DynamoDBModel.AttributeValue` map into an appropriate `TypedTTLDatabaseItem`.
      */
-    public func getItem<AttributesType, ItemType, TimeToLiveAttributesType>() throws
+    package func getItem<AttributesType, ItemType, TimeToLiveAttributesType>() throws
         -> TypedTTLDatabaseItem<AttributesType, ItemType, TimeToLiveAttributesType>
     {
         do {

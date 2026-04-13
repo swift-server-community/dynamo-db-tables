@@ -31,10 +31,6 @@ extension TypedTTLDatabaseItem {
     }
 }
 
-public typealias ExecuteItemFilterType =
-    @Sendable (String, String, String, InMemoryDatabaseItem)
-    -> Bool
-
 public protocol InMemoryTransactionDelegate: Sendable {
     /**
       Inject errors into a `transactWrite` or `polymorphicTransactWrite` call.
@@ -47,19 +43,16 @@ public protocol InMemoryTransactionDelegate: Sendable {
 
 public struct InMemoryDynamoDBCompositePrimaryKeyTable: DynamoDBCompositePrimaryKeyTable, Sendable {
     public let transactionDelegate: InMemoryTransactionDelegate?
-    public let executeItemFilter: ExecuteItemFilterType?
     let storeWrapper: InMemoryDynamoDBCompositePrimaryKeyTableStore
 
     public init(
-        executeItemFilter: ExecuteItemFilterType? = nil,
         transactionDelegate: InMemoryTransactionDelegate? = nil
     ) {
         self.storeWrapper = InMemoryDynamoDBCompositePrimaryKeyTableStore()
         self.transactionDelegate = transactionDelegate
-        self.executeItemFilter = executeItemFilter
     }
 
-    public var store: [String: [String: InMemoryDatabaseItem]] {
+    package var store: [String: [String: InMemoryDatabaseItem]] {
         get async {
             await self.storeWrapper.store
         }

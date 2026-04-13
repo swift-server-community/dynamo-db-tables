@@ -117,4 +117,4 @@ The `insertItem` call above produces the following row in DynamoDB:
 - <doc:CRUDOperations> — Learn about all CRUD operations including optimistic concurrency on updates.
 - <doc:CompositePrimaryKeys> — Understand how partition and sort keys work.
 - <doc:DatabaseItems> — Explore the database item type hierarchy, versioning, and TTL.
-- <doc:Testing> — Set up in-memory tables for unit testing.
+- <doc:TestingAndValidation> — Set up in-memory tables for unit testing.

@@ -24,14 +24,14 @@
 //  DynamoDBTables
 //
 
-public class DynamoDBDecoder {
+package class DynamoDBDecoder {
     let attributeNameTransform: ((String) -> String)?
 
-    public init(attributeNameTransform: ((String) -> String)? = nil) {
+    package init(attributeNameTransform: ((String) -> String)? = nil) {
         self.attributeNameTransform = attributeNameTransform
     }
 
-    public func decode<T: Swift.Decodable>(
+    package func decode<T: Swift.Decodable>(
         _ value: DynamoDBModel.AttributeValue,
         userInfo: [CodingUserInfoKey: Any] = [:]
     ) throws
