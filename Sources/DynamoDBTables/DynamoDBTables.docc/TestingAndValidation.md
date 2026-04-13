@@ -86,7 +86,7 @@ func serviceQueriesProjection() async throws {
     var expectations = MockTestProjection.Expectations()
     when(
         expectations.query(
-            forPartitionKey: .exact("tenant-1"),
+            forPartitionKey: "tenant-1",
             sortKeyCondition: .any
         ),
         return: expectedKeys
