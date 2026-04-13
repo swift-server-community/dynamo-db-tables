@@ -42,13 +42,12 @@ public struct InMemoryDynamoDBCompositePrimaryKeyTableWithIndex<
 
     public init(
         gsiName: String,
-        gsiLogic: GSILogic,
-        executeItemFilter: ExecuteItemFilterType? = nil
+        gsiLogic: GSILogic
     ) {
         self.gsiName = gsiName
         self.gsiLogic = gsiLogic
-        self.primaryTable = InMemoryDynamoDBCompositePrimaryKeyTable(executeItemFilter: executeItemFilter)
-        self.gsiDataStore = InMemoryDynamoDBCompositePrimaryKeyTable(executeItemFilter: executeItemFilter)
+        self.primaryTable = InMemoryDynamoDBCompositePrimaryKeyTable()
+        self.gsiDataStore = InMemoryDynamoDBCompositePrimaryKeyTable()
     }
 
     public func validateEntry(entry: WriteEntry<some Any, some Any, some Any>) throws {

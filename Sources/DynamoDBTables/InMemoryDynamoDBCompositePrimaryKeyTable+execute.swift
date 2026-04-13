@@ -111,24 +111,15 @@ extension InMemoryDynamoDBCompositePrimaryKeyTable {
                 continue
             }
 
-            for (sortKey, databaseItem) in partition {
-                // if there is an additional where clause
-                if let additionalWhereClause {
-                    // there must be an executeItemFilter
-                    if let executeItemFilter = self.executeItemFilter {
-                        if executeItemFilter(partitionKey, sortKey, additionalWhereClause, databaseItem) {
-                            // add if the filter says yes
-                            items.append(databaseItem)
-                        }
-                    } else {
-                        fatalError(
-                            "An executeItemFilter must be provided when an excute call includes an additionalWhereClause"
-                        )
-                    }
-                } else {
-                    // otherwise just add the item
-                    items.append(databaseItem)
-                }
+            if additionalWhereClause != nil {
+                fatalError(
+                    "The in-memory table cannot evaluate PartiQL WHERE clauses. "
+                        + "Use integration tests against LocalStack for queries with additionalWhereClause."
+                )
+            }
+
+            for (_, databaseItem) in partition {
+                items.append(databaseItem)
             }
         }
 

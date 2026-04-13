@@ -24,14 +24,14 @@
 //  DynamoDBTables
 //
 
-public class DynamoDBEncoder {
+package class DynamoDBEncoder {
     private let attributeNameTransform: ((String) -> String)?
 
-    public init(attributeNameTransform: ((String) -> String)? = nil) {
+    package init(attributeNameTransform: ((String) -> String)? = nil) {
         self.attributeNameTransform = attributeNameTransform
     }
 
-    public func encode(
+    package func encode(
         _ value: some Swift.Encodable,
         userInfo: [CodingUserInfoKey: Any] = [:]
     ) throws -> DynamoDBModel.AttributeValue {
