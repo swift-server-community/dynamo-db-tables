@@ -65,7 +65,7 @@ Retry keys are nested under a `retry` prefix when used through `DynamoDBTableCon
 
 | Key | Type | Description |
 |-----|------|-------------|
-| `consistentRead` | Bool | Use strongly consistent reads |
+| `consistentRead` | Bool | Use strongly consistent reads (automatically disabled for GSI queries) |
 | `escapeSingleQuoteInPartiQL` | Bool | Escape `'` in PartiQL statements |
 | `retry.numRetries` | Int | Maximum number of retry attempts |
 | `retry.baseRetryInterval` | Int | Initial retry interval in milliseconds |

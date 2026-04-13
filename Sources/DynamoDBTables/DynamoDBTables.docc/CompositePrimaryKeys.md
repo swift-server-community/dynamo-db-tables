@@ -41,7 +41,7 @@ let gsiKey = CompositePrimaryKey<GSI1PrimaryKeyAttributes>(
 )
 ```
 
-The `indexName` property defaults to `nil` for primary table queries. Set it to the GSI name when querying an index.
+The `indexName` property defaults to `nil` for primary table queries. Set it to the GSI name when querying an index. When `indexName` is set, the library automatically disables `consistentRead` for that query because DynamoDB GSIs only support eventually consistent reads.
 
 ## Querying with Custom Keys
 

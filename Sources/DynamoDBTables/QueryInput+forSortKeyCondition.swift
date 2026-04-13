@@ -98,8 +98,14 @@ extension DynamoDBModel.QueryInput {
                 nil
             }
 
+        // GSIs only support eventually consistent reads. If the query targets
+        // an index (indexName is non-nil), force consistentRead to false
+        // regardless of the table configuration to avoid a ValidationException
+        // from DynamoDB.
+        let effectiveConsistentRead = primaryKeyType.indexName != nil ? false : consistentRead
+
         return DynamoDBModel.QueryInput(
-            consistentRead: consistentRead,
+            consistentRead: effectiveConsistentRead,
             exclusiveStartKey: inputExclusiveStartKey,
             expressionAttributeNames: expressionAttributeNames,
             expressionAttributeValues: expressionAttributeValues,

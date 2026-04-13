@@ -1,15 +1,115 @@
 # Testing and Validation
 
-Use in-memory table implementations for unit testing and LocalStack (or the actual DynamoDB service) for integration testing.
+Three complementary strategies for testing DynamoDBTables code — from fast
+in-memory unit tests through to full integration tests against a real
+DynamoDB implementation.
 
 ## Overview
 
-DynamoDBTables supports two complementary testing strategies:
+DynamoDBTables supports three testing tiers, each suited to a different
+category of behavior:
 
-- **In-memory tables** for fast, reliable unit tests of core DynamoDB semantics — CRUD, optimistic concurrency, transactions, batch operations, and retry logic. No external dependencies required.
-- **Integration tests against LocalStack/or the actual DynamoDB service** for features that depend on DynamoDB's server-side behavior — PartiQL WHERE clause evaluation, GSI projections, capacity limits, and any scenario where the in-memory simulation isn't faithful enough.
+1. **Protocol mocks** — for code that depends on a narrow protocol surface
+   like ``DynamoDBCompositePrimaryKeysProjection`` (a GSI keys-only
+   projection). A mock gives you full control over return values and lets
+   you verify the exact query parameters your code passes, without needing
+   to populate a data store or run a real DynamoDB instance. Best suited
+   for read-only interactions where the test cares about *what the code
+   asks for*, not *how the store evaluates it*.
 
-The two approaches are complementary: use in-memory tables for the fast feedback loop during development, and integration tests against LocalStack for greater confidence .
+2. **In-memory tables** — fast, deterministic unit tests for core DynamoDB
+   semantics. ``InMemoryDynamoDBCompositePrimaryKeyTable`` conforms to the
+   same ``DynamoDBCompositePrimaryKeyTable`` protocol as the production
+   client, and provides a basic level of state propagation. Use
+   this tier for CRUD operations, optimistic concurrency, transactions,
+   batch writes, polymorphic queries, and retry logic. No external
+   dependencies, no network, no Docker — tests run in milliseconds.
+
+3. **Integration tests against LocalStack (or the actual DynamoDB
+   service)** — for behaviors that depend on DynamoDB's server-side
+   implementation: PartiQL WHERE clause evaluation, GSI write-through and
+   projection semantics, capacity and throttling, and end-to-end SDK
+   serialization. These tests run against a real DynamoDB-compatible
+   service (typically LocalStack in Docker via
+   [swift-local-containers](https://github.com/tachyonics/swift-local-containers)),
+   so you get full fidelity at the cost of a container startup per test
+   suite.
+
+The three tiers are complementary: use in-memory tables and mocks for the
+fast feedback loop during development, and integration tests for confidence
+that your code works against a real DynamoDB implementation.
+
+## Protocol Mocks
+
+For code that depends on a narrow protocol surface like
+``DynamoDBCompositePrimaryKeysProjection`` (a GSI keys-only projection), a
+mock is the simplest and most explicit testing approach. The protocol has a
+small read-only surface (three `query` methods), making it straightforward
+to mock with [Smockable](https://github.com/tachyonics/smockable):
+
+```swift
+import Smockable
+@testable import MyApp
+
+@Smock
+protocol TestProjection: DynamoDBCompositePrimaryKeysProjection {
+    func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?
+    ) async throws -> [CompositePrimaryKey<AttributesType>]
+
+    func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        exclusiveStartKey: String?
+    ) async throws
+        -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
+
+    func query<AttributesType>(
+        forPartitionKey partitionKey: String,
+        sortKeyCondition: AttributeCondition?,
+        limit: Int?,
+        scanIndexForward: Bool,
+        exclusiveStartKey: String?
+    ) async throws
+        -> (keys: [CompositePrimaryKey<AttributesType>], lastEvaluatedKey: String?)
+}
+
+@Test("Service queries the GSI projection for matching keys")
+func serviceQueriesProjection() async throws {
+    let expectedKeys = [
+        StandardCompositePrimaryKey(partitionKey: "tenant-1", sortKey: "order-1"),
+        StandardCompositePrimaryKey(partitionKey: "tenant-1", sortKey: "order-2"),
+    ]
+
+    var expectations = MockTestProjection.Expectations()
+    when(
+        expectations.query(
+            forPartitionKey: .exact("tenant-1"),
+            sortKeyCondition: .any
+        ),
+        return: expectedKeys
+    )
+
+    let mock = MockTestProjection(expectations: expectations)
+    let service = OrderService(projection: mock)
+
+    let orders = try await service.listOrders(forTenant: "tenant-1")
+    #expect(orders.count == 2)
+}
+```
+
+This approach lets you:
+- **Control the exact return values** for each query pattern, including empty
+  results, pagination tokens, and specific key orderings.
+- **Verify the query parameters** your code passes (partition key, sort key
+  condition, limit, scan direction) without running a real DynamoDB instance.
+- **Test edge cases** (empty results, pagination boundaries) that are
+  difficult to reproduce with an in-memory store.
+
+For write-through GSI behavior (verifying that writes to the primary table
+correctly propagate to a GSI), use integration tests against LocalStack.
 
 ## In-Memory Tables
 
@@ -73,10 +173,10 @@ features should be tested against the actual DynamoDB service or LocalStack:
   `additionalWhereClause` parameter passes a PartiQL expression to DynamoDB
   for server-side evaluation. The in-memory table cannot parse or evaluate
   PartiQL and will fatal-error if an `additionalWhereClause` is provided.
-- **GSI projections and secondary index queries.** While
-  `InMemoryDynamoDBCompositePrimaryKeyTableWithIndex` simulates basic GSI
-  behavior, real GSI projection behavior (attribute subsetting, eventual
-  consistency) is not faithfully reproduced.
+- **GSI write-through behavior.** Real GSI behavior (projection semantics,
+  attribute subsetting, eventual consistency, index key mapping) is not
+  simulated. Use integration tests against LocalStack for end-to-end GSI
+  verification.
 - **Capacity and throttling behavior.** The in-memory table never throttles
   and has no concept of provisioned or on-demand capacity.
 - **Item size limits and request size limits.** The in-memory table does not
@@ -141,10 +241,11 @@ struct MyIntegrationTests {
 
 | Scenario | Recommended approach |
 |---|---|
+| Code that reads from a GSI keys projection | Mock `DynamoDBCompositePrimaryKeysProjection` |
 | CRUD operations, concurrency, retries | In-memory table |
 | Transaction and bulk write correctness | In-memory table |
 | PartiQL WHERE clause evaluation | Integration test (LocalStack) |
-| GSI projection behavior | Integration test (LocalStack) |
+| GSI write-through behavior | Integration test (LocalStack) |
 | End-to-end SDK serialization | Integration test (LocalStack) |
-| CI pipeline (fast feedback) | In-memory table |
-| CI pipeline (full confidence) | Both |
+| CI pipeline (fast feedback) | Mocks + in-memory table |
+| CI pipeline (full confidence) | All three |
