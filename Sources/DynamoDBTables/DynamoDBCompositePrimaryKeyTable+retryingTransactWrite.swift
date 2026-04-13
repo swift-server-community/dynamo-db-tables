@@ -55,9 +55,9 @@ extension DynamoDBCompositePrimaryKeyTable {
     
      - Parameters:
         - keys: the item keys to use in the transaction
-        - withRetries: the number of times to attempt to retry the update before failing.
-        - constraints: the contraints to include as part of the transaction
-        - updatedPayloadProvider: the provider that will the `WriteEntry`s to use in the transaction.
+        - retries: the number of times to attempt to retry the update before failing.
+        - constraints: the constraints to include as part of the transaction.
+        - writeEntryProvider: the provider that will return the `WriteEntry`s to use in the transaction.
      - Returns: the list of `WriteEntry` used in the successful transaction
      */
     @discardableResult
@@ -160,8 +160,8 @@ extension DynamoDBCompositePrimaryKeyTable {
     
      - Parameters:
         - keys: the item keys to use in the transaction
-        - withRetries: the number of times to attempt to retry the update before failing.
-        - updatedPayloadProvider: the provider that will the `WriteEntry`s to use in the transaction.
+        - retries: the number of times to attempt to retry the update before failing.
+        - writeEntryProvider: the provider that will return the `WriteEntry`s to use in the transaction.
      - Returns: the list of `WriteEntry` used in the successful transaction
      */
     @discardableResult
@@ -195,9 +195,9 @@ extension DynamoDBCompositePrimaryKeyTable {
     
      - Parameters:
         - keys: the item keys to use in the transaction
-        - withRetries: the number of times to attempt to retry the update before failing.
-        - constraints: the contraints to include as part of the transaction
-        - updatedPayloadProvider: the provider that will the `WriteEntry`s to use in the transaction.
+        - retries: the number of times to attempt to retry the update before failing.
+        - constraints: the constraints to include as part of the transaction.
+        - writeEntryProvider: the provider that will return the `WriteEntry`s to use in the transaction.
      - Returns: the list of `WriteEntry` used in the successful transaction
      */
     @discardableResult
