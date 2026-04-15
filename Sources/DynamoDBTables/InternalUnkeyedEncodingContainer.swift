@@ -111,7 +111,9 @@ struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
         // Non-throwing protocol entry point: failure here indicates a Codable
         // contract violation by the enclosing container, consistent with the
         // fatalError in `Encoder.unkeyedContainer()`.
-        let nestedContainer = try! self.createNestedContainer(defaultValue: .keyedContainer([:]))
+        guard let nestedContainer = try? self.createNestedContainer(defaultValue: .keyedContainer([:])) else {
+            fatalError("Unable to create nested keyed container; the enclosing container is in an invalid state.")
+        }
 
         let nestedKeyContainer = InternalKeyedEncodingContainer<NestedKey>(enclosingContainer: nestedContainer)
 
@@ -120,7 +122,9 @@ struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
 
     func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
         // See note in nestedContainer(keyedBy:).
-        let nestedContainer = try! self.createNestedContainer(defaultValue: .unkeyedContainer([]))
+        guard let nestedContainer = try? self.createNestedContainer(defaultValue: .unkeyedContainer([])) else {
+            fatalError("Unable to create nested unkeyed container; the enclosing container is in an invalid state.")
+        }
 
         let nestedKeyContainer = InternalUnkeyedEncodingContainer(enclosingContainer: nestedContainer)
 
@@ -129,16 +133,17 @@ struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
 
     func superEncoder() -> Encoder {
         // See note in nestedContainer(keyedBy:).
-        try! self.createNestedContainer()
+        guard let nestedContainer = try? self.createNestedContainer() else {
+            fatalError("Unable to create super encoder; the enclosing container is in an invalid state.")
+        }
+        return nestedContainer
     }
 
     // MARK: -
 
     private func createNestedContainer(
         defaultValue: ContainerValueType? = nil
-    ) throws
-        -> InternalSingleValueEncodingContainer
-    {
+    ) throws -> InternalSingleValueEncodingContainer {
         let index = self.enclosingContainer.unkeyedContainerCount
 
         let nestedContainer = InternalSingleValueEncodingContainer(

@@ -148,7 +148,9 @@ struct InternalKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProto
         // Non-throwing protocol entry point: failure here indicates a Codable
         // contract violation by the enclosing container, consistent with the
         // fatalError in `Encoder.container(keyedBy:)`.
-        let nestedContainer = try! self.createNestedContainer(for: key, defaultValue: .keyedContainer([:]))
+        guard let nestedContainer = try? self.createNestedContainer(for: key, defaultValue: .keyedContainer([:])) else {
+            fatalError("Unable to create nested keyed container; the enclosing container is in an invalid state.")
+        }
 
         let nestedKeyContainer = InternalKeyedEncodingContainer<NestedKey>(enclosingContainer: nestedContainer)
 
@@ -157,7 +159,10 @@ struct InternalKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProto
 
     func nestedUnkeyedContainer(forKey key: Key) -> UnkeyedEncodingContainer {
         // See note in nestedContainer(keyedBy:forKey:).
-        let nestedContainer = try! self.createNestedContainer(for: key, defaultValue: .unkeyedContainer([]))
+        guard let nestedContainer = try? self.createNestedContainer(for: key, defaultValue: .unkeyedContainer([]))
+        else {
+            fatalError("Unable to create nested unkeyed container; the enclosing container is in an invalid state.")
+        }
 
         let nestedKeyContainer = InternalUnkeyedEncodingContainer(enclosingContainer: nestedContainer)
 
@@ -166,12 +171,18 @@ struct InternalKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProto
 
     func superEncoder() -> Encoder {
         // See note in nestedContainer(keyedBy:forKey:).
-        try! self.createNestedContainer(for: InternalDynamoDBCodingKey.super)
+        guard let nestedContainer = try? self.createNestedContainer(for: InternalDynamoDBCodingKey.super) else {
+            fatalError("Unable to create super encoder; the enclosing container is in an invalid state.")
+        }
+        return nestedContainer
     }
 
     func superEncoder(forKey key: Key) -> Encoder {
         // See note in nestedContainer(keyedBy:forKey:).
-        try! self.createNestedContainer(for: key)
+        guard let nestedContainer = try? self.createNestedContainer(for: key) else {
+            fatalError("Unable to create super encoder for key; the enclosing container is in an invalid state.")
+        }
+        return nestedContainer
     }
 
     // MARK: -
@@ -179,9 +190,7 @@ struct InternalKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProto
     private func createNestedContainer(
         for key: some CodingKey,
         defaultValue: ContainerValueType? = nil
-    ) throws
-        -> InternalSingleValueEncodingContainer
-    {
+    ) throws -> InternalSingleValueEncodingContainer {
         let nestedContainer = InternalSingleValueEncodingContainer(
             userInfo: enclosingContainer.userInfo,
             codingPath: self.enclosingContainer.codingPath + [key],
