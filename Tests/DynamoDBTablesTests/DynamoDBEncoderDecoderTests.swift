@@ -24,6 +24,7 @@
 //  DynamoDBTablesTests
 //
 
+import Foundation
 import Testing
 
 @testable import DynamoDBTables
@@ -160,6 +161,172 @@ struct DynamoDBEncoderDecoderTests {
 
         let encoded = try DynamoDBEncoder().encode(box)
         let decoded: Box = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == box)
+    }
+
+    // MARK: - Optional round-trip
+
+    @Test
+    func optionalFieldsRoundTrip() throws {
+        struct Box: Codable, Equatable {
+            let present: String?
+            let absent: String?
+            let presentInt: Int?
+            let absentInt: Int?
+        }
+        let box = Box(present: "hello", absent: nil, presentInt: 42, absentInt: nil)
+
+        let encoded = try DynamoDBEncoder().encode(box)
+        let decoded: Box = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == box)
+    }
+
+    @Test
+    func topLevelOptionalRoundTrip() throws {
+        let some: String? = "hello"
+        let encodedSome = try DynamoDBEncoder().encode(some)
+        let decodedSome: String? = try DynamoDBDecoder().decode(encodedSome)
+        #expect(decodedSome == some)
+
+        let none: String? = nil
+        let encodedNone = try DynamoDBEncoder().encode(none)
+        let decodedNone: String? = try DynamoDBDecoder().decode(encodedNone)
+        #expect(decodedNone == none)
+    }
+
+    // Known limitation: double-Optional `.some(.none)` collapses to `.none` on
+    // decode because the outer wrapper emits `encodeNil()`, which is
+    // indistinguishable from the outer value being absent. This matches the
+    // behavior of `JSONEncoder` and is a `Codable` framework constraint, not a
+    // bug in this encoder. Non-collapsing cases still round-trip.
+    @Test
+    func doubleOptionalRoundTrip() throws {
+        struct Box: Codable, Equatable {
+            let outerSomeInnerSome: String??
+            let outerNone: String??
+        }
+        let box = Box(outerSomeInnerSome: .some(.some("hi")), outerNone: .none)
+
+        let encoded = try DynamoDBEncoder().encode(box)
+        let decoded: Box = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == box)
+    }
+
+    @Test
+    func nestedOptionalStructRoundTrip() throws {
+        struct Inner: Codable, Equatable { let value: Int }
+        struct Outer: Codable, Equatable {
+            let inner: Inner?
+            let missing: Inner?
+        }
+        let box = Outer(inner: Inner(value: 7), missing: nil)
+
+        let encoded = try DynamoDBEncoder().encode(box)
+        let decoded: Outer = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == box)
+    }
+
+    // MARK: - Empty containers
+
+    @Test
+    func emptyStructRoundTrip() throws {
+        struct Empty: Codable, Equatable {}
+        let encoded = try DynamoDBEncoder().encode(Empty())
+        let decoded: Empty = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == Empty())
+    }
+
+    @Test
+    func emptyCollectionsRoundTrip() throws {
+        struct Box: Codable, Equatable {
+            let list: [Int]
+            let map: [String: Int]
+        }
+        let box = Box(list: [], map: [:])
+
+        let encoded = try DynamoDBEncoder().encode(box)
+        let decoded: Box = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == box)
+    }
+
+    // MARK: - Date / Data / Decimal
+
+    @Test
+    func dateRoundTrip() throws {
+        struct Box: Codable, Equatable {
+            let date: Date
+        }
+        // Round to whole seconds so ISO8601 stringification is lossless.
+        let box = Box(date: Date(timeIntervalSince1970: 1_700_000_000))
+
+        let encoded = try DynamoDBEncoder().encode(box)
+        let decoded: Box = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == box)
+    }
+
+    @Test
+    func dataRoundTrip() throws {
+        struct Box: Codable, Equatable {
+            let payload: Data
+        }
+        let box = Box(payload: Data([0x00, 0x01, 0x02, 0xFF]))
+
+        let encoded = try DynamoDBEncoder().encode(box)
+        let decoded: Box = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == box)
+    }
+
+    @Test
+    func decimalRoundTrip() throws {
+        struct Box: Codable, Equatable {
+            let amount: Decimal
+        }
+        let box = Box(amount: Decimal(string: "123.456")!)
+
+        let encoded = try DynamoDBEncoder().encode(box)
+        let decoded: Box = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == box)
+    }
+
+    // MARK: - Int64 / UInt64 precision
+
+    @Test
+    func int64BoundariesRoundTrip() throws {
+        struct Box: Codable, Equatable {
+            let max: Int64
+            let min: Int64
+            let umax: UInt64
+        }
+        let box = Box(max: .max, min: .min, umax: .max)
+
+        let encoded = try DynamoDBEncoder().encode(box)
+        let decoded: Box = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == box)
+    }
+
+    // MARK: - attributeNameTransform symmetry
+
+    @Test
+    func attributeNameTransformRoundTrip() throws {
+        struct Box: Codable, Equatable {
+            let firstName: String
+            let lastName: String
+            let age: Int
+        }
+        let box = Box(firstName: "Ada", lastName: "Lovelace", age: 36)
+
+        let transform: (String) -> String = { $0.uppercased() }
+        let encoded = try DynamoDBEncoder(attributeNameTransform: transform).encode(box)
+
+        // Confirm the transform was actually applied on the wire.
+        if case let .m(attrs) = encoded {
+            #expect(attrs["FIRSTNAME"] != nil)
+            #expect(attrs["firstName"] == nil)
+        } else {
+            Issue.record("Expected map attribute value, got \(encoded)")
+        }
+
+        let decoded: Box = try DynamoDBDecoder(attributeNameTransform: transform).decode(encoded)
         #expect(decoded == box)
     }
 }
