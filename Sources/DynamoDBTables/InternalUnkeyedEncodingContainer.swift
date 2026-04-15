@@ -40,67 +40,67 @@ struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     var count: Int { self.enclosingContainer.unkeyedContainerCount }
 
     func encodeNil() throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.null(true))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.null(true))
     }
 
     func encode(_ value: Bool) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.bool(value))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.bool(value))
     }
 
     func encode(_ value: Int) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: Int8) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: Int16) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: Int32) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: Int64) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: UInt) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: UInt8) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: UInt16) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: UInt32) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: UInt64) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
     }
 
     func encode(_ value: Float) throws {
-        self.enclosingContainer.addToUnkeyedContainer(
+        try self.enclosingContainer.addToUnkeyedContainer(
             value: DynamoDBModel.AttributeValue.n(try self.enclosingContainer.encodeFloatingPoint(value))
         )
     }
 
     func encode(_ value: Double) throws {
-        self.enclosingContainer.addToUnkeyedContainer(
+        try self.enclosingContainer.addToUnkeyedContainer(
             value: DynamoDBModel.AttributeValue.n(try self.enclosingContainer.encodeFloatingPoint(value))
         )
     }
 
     func encode(_ value: String) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.s(value))
+        try self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.s(value))
     }
 
     func encode(_ value: some Encodable) throws {
@@ -108,7 +108,10 @@ struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     }
 
     func nestedContainer<NestedKey>(keyedBy _: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> {
-        let nestedContainer = self.createNestedContainer(defaultValue: .keyedContainer([:]))
+        // Non-throwing protocol entry point: failure here indicates a Codable
+        // contract violation by the enclosing container, consistent with the
+        // fatalError in `Encoder.unkeyedContainer()`.
+        let nestedContainer = try! self.createNestedContainer(defaultValue: .keyedContainer([:]))
 
         let nestedKeyContainer = InternalKeyedEncodingContainer<NestedKey>(enclosingContainer: nestedContainer)
 
@@ -116,20 +119,24 @@ struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     }
 
     func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
-        let nestedContainer = self.createNestedContainer(defaultValue: .unkeyedContainer([]))
+        // See note in nestedContainer(keyedBy:).
+        let nestedContainer = try! self.createNestedContainer(defaultValue: .unkeyedContainer([]))
 
         let nestedKeyContainer = InternalUnkeyedEncodingContainer(enclosingContainer: nestedContainer)
 
         return nestedKeyContainer
     }
 
-    func superEncoder() -> Encoder { self.createNestedContainer() }
+    func superEncoder() -> Encoder {
+        // See note in nestedContainer(keyedBy:).
+        try! self.createNestedContainer()
+    }
 
     // MARK: -
 
     private func createNestedContainer(
         defaultValue: ContainerValueType? = nil
-    )
+    ) throws
         -> InternalSingleValueEncodingContainer
     {
         let index = self.enclosingContainer.unkeyedContainerCount
@@ -140,7 +147,7 @@ struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
             attributeNameTransform: self.enclosingContainer.attributeNameTransform,
             defaultValue: defaultValue
         )
-        self.enclosingContainer.addToUnkeyedContainer(value: nestedContainer)
+        try self.enclosingContainer.addToUnkeyedContainer(value: nestedContainer)
 
         return nestedContainer
     }

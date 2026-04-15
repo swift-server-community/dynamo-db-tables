@@ -40,103 +40,103 @@ struct InternalKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProto
     }
 
     func encodeNil(forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBModel.AttributeValue.null(true))
+        try self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBModel.AttributeValue.null(true))
     }
 
     func encode(_ value: Bool, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBModel.AttributeValue.bool(value))
+        try self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBModel.AttributeValue.bool(value))
     }
 
     func encode(_ value: Int, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(String(value))
         )
     }
 
     func encode(_ value: Int8, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(String(value))
         )
     }
 
     func encode(_ value: Int16, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(String(value))
         )
     }
 
     func encode(_ value: Int32, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(String(value))
         )
     }
 
     func encode(_ value: Int64, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(String(value))
         )
     }
 
     func encode(_ value: UInt, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(String(value))
         )
     }
 
     func encode(_ value: UInt8, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(String(value))
         )
     }
 
     func encode(_ value: UInt16, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(String(value))
         )
     }
 
     func encode(_ value: UInt32, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(String(value))
         )
     }
 
     func encode(_ value: UInt64, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(String(value))
         )
     }
 
     func encode(_ value: Float, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(try self.enclosingContainer.encodeFloatingPoint(value))
         )
     }
 
     func encode(_ value: Double, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(
+        try self.enclosingContainer.addToKeyedContainer(
             key: key,
             value: DynamoDBModel.AttributeValue.n(try self.enclosingContainer.encodeFloatingPoint(value))
         )
     }
 
     func encode(_ value: String, forKey key: Key) throws {
-        self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBModel.AttributeValue.s(value))
+        try self.enclosingContainer.addToKeyedContainer(key: key, value: DynamoDBModel.AttributeValue.s(value))
     }
 
     func encode(_ value: some Encodable, forKey key: Key) throws {
-        let nestedContainer = self.createNestedContainer(for: key)
+        let nestedContainer = try self.createNestedContainer(for: key)
 
         try nestedContainer.encode(value)
     }
@@ -145,7 +145,10 @@ struct InternalKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProto
         keyedBy _: NestedKey.Type,
         forKey key: Key
     ) -> KeyedEncodingContainer<NestedKey> {
-        let nestedContainer = self.createNestedContainer(for: key, defaultValue: .keyedContainer([:]))
+        // Non-throwing protocol entry point: failure here indicates a Codable
+        // contract violation by the enclosing container, consistent with the
+        // fatalError in `Encoder.container(keyedBy:)`.
+        let nestedContainer = try! self.createNestedContainer(for: key, defaultValue: .keyedContainer([:]))
 
         let nestedKeyContainer = InternalKeyedEncodingContainer<NestedKey>(enclosingContainer: nestedContainer)
 
@@ -153,22 +156,30 @@ struct InternalKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProto
     }
 
     func nestedUnkeyedContainer(forKey key: Key) -> UnkeyedEncodingContainer {
-        let nestedContainer = self.createNestedContainer(for: key, defaultValue: .unkeyedContainer([]))
+        // See note in nestedContainer(keyedBy:forKey:).
+        let nestedContainer = try! self.createNestedContainer(for: key, defaultValue: .unkeyedContainer([]))
 
         let nestedKeyContainer = InternalUnkeyedEncodingContainer(enclosingContainer: nestedContainer)
 
         return nestedKeyContainer
     }
 
-    func superEncoder() -> Encoder { self.createNestedContainer(for: InternalDynamoDBCodingKey.super) }
-    func superEncoder(forKey key: Key) -> Encoder { self.createNestedContainer(for: key) }
+    func superEncoder() -> Encoder {
+        // See note in nestedContainer(keyedBy:forKey:).
+        try! self.createNestedContainer(for: InternalDynamoDBCodingKey.super)
+    }
+
+    func superEncoder(forKey key: Key) -> Encoder {
+        // See note in nestedContainer(keyedBy:forKey:).
+        try! self.createNestedContainer(for: key)
+    }
 
     // MARK: -
 
     private func createNestedContainer(
         for key: some CodingKey,
         defaultValue: ContainerValueType? = nil
-    )
+    ) throws
         -> InternalSingleValueEncodingContainer
     {
         let nestedContainer = InternalSingleValueEncodingContainer(
@@ -177,7 +188,7 @@ struct InternalKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProto
             attributeNameTransform: self.enclosingContainer.attributeNameTransform,
             defaultValue: defaultValue
         )
-        self.enclosingContainer.addToKeyedContainer(key: key, value: nestedContainer)
+        try self.enclosingContainer.addToKeyedContainer(key: key, value: nestedContainer)
 
         return nestedContainer
     }

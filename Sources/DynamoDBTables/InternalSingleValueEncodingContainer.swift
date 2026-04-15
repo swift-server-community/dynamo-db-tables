@@ -129,13 +129,19 @@ class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
         try value.encode(to: self)
     }
 
-    func addToKeyedContainer(key: some CodingKey, value: AttributeValueConvertable) {
+    func addToKeyedContainer(key: some CodingKey, value: AttributeValueConvertable) throws {
         guard let currentContainerValue = containerValue else {
-            fatalError("Attempted to add a keyed item to an unitinialized container.")
+            throw EncodingError.invalidValue(value, EncodingError.Context(
+                codingPath: self.codingPath,
+                debugDescription: "Attempted to add a keyed item to an uninitialized container."
+            ))
         }
 
         guard case var .keyedContainer(values) = currentContainerValue else {
-            fatalError("Expected keyed container and there wasn't one.")
+            throw EncodingError.invalidValue(value, EncodingError.Context(
+                codingPath: self.codingPath,
+                debugDescription: "Expected a keyed container but found \(currentContainerValue)."
+            ))
         }
 
         let attributeName = self.getAttributeName(key: key)
@@ -145,13 +151,19 @@ class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
         self.containerValue = .keyedContainer(values)
     }
 
-    func addToUnkeyedContainer(value: AttributeValueConvertable) {
+    func addToUnkeyedContainer(value: AttributeValueConvertable) throws {
         guard let currentContainerValue = containerValue else {
-            fatalError("Attempted to add an unkeyed item to an uninitialized container.")
+            throw EncodingError.invalidValue(value, EncodingError.Context(
+                codingPath: self.codingPath,
+                debugDescription: "Attempted to add an unkeyed item to an uninitialized container."
+            ))
         }
 
         guard case var .unkeyedContainer(values) = currentContainerValue else {
-            fatalError("Expected unkeyed container and there wasn't one.")
+            throw EncodingError.invalidValue(value, EncodingError.Context(
+                codingPath: self.codingPath,
+                debugDescription: "Expected an unkeyed container but found \(currentContainerValue)."
+            ))
         }
 
         values.append(value)
