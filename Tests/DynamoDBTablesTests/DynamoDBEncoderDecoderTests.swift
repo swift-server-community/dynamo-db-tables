@@ -107,9 +107,12 @@ struct DynamoDBEncoderDecoderTests {
         #expect(timeToLiveTimestamp == output.timeToLive?.timeToLiveTimestamp)
     }
 
-    @Test("NaN and Infinity are rejected for Double and Float, at top level and nested", arguments: [
-        Double.nan, .infinity, -.infinity,
-    ])
+    @Test(
+        "NaN and Infinity are rejected for Double and Float, at top level and nested",
+        arguments: [
+            Double.nan, .infinity, -.infinity,
+        ]
+    )
     func rejectsNonFiniteDouble(value: Double) throws {
         struct DoubleBox: Codable { let value: Double }
         struct DoubleListBox: Codable { let values: [Double] }
@@ -125,9 +128,12 @@ struct DynamoDBEncoderDecoderTests {
         }
     }
 
-    @Test("NaN and Infinity are rejected for Float, at top level and nested", arguments: [
-        Float.nan, .infinity, -.infinity,
-    ])
+    @Test(
+        "NaN and Infinity are rejected for Float, at top level and nested",
+        arguments: [
+            Float.nan, .infinity, -.infinity,
+        ]
+    )
     func rejectsNonFiniteFloat(value: Float) throws {
         struct FloatBox: Codable { let value: Float }
         struct FloatListBox: Codable { let values: [Float] }
@@ -145,7 +151,11 @@ struct DynamoDBEncoderDecoderTests {
 
     @Test
     func finiteFloatingPointStillEncodes() throws {
-        struct Box: Codable, Equatable { let d: Double; let f: Float; let list: [Double] }
+        struct Box: Codable, Equatable {
+            let d: Double
+            let f: Float
+            let list: [Double]
+        }
         let box = Box(d: 1.5, f: -2.25, list: [0.0, 3.14, -1.0])
 
         let encoded = try DynamoDBEncoder().encode(box)

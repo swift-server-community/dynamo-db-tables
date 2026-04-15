@@ -103,10 +103,13 @@ class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
 
     func encodeFloatingPoint(_ value: some BinaryFloatingPoint) throws -> String {
         guard !value.isNaN, !value.isInfinite else {
-            throw EncodingError.invalidValue(value, EncodingError.Context(
-                codingPath: self.codingPath,
-                debugDescription: "DynamoDB numbers cannot represent NaN or Infinity."
-            ))
+            throw EncodingError.invalidValue(
+                value,
+                EncodingError.Context(
+                    codingPath: self.codingPath,
+                    debugDescription: "DynamoDB numbers cannot represent NaN or Infinity."
+                )
+            )
         }
         return "\(value)"
     }
