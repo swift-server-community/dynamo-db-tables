@@ -120,14 +120,14 @@ struct InternalKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProto
     func encode(_ value: Float, forKey key: Key) throws {
         self.enclosingContainer.addToKeyedContainer(
             key: key,
-            value: DynamoDBModel.AttributeValue.n(String(value))
+            value: DynamoDBModel.AttributeValue.n(try self.enclosingContainer.encodeFloatingPoint(value))
         )
     }
 
     func encode(_ value: Double, forKey key: Key) throws {
         self.enclosingContainer.addToKeyedContainer(
             key: key,
-            value: DynamoDBModel.AttributeValue.n(String(value))
+            value: DynamoDBModel.AttributeValue.n(try self.enclosingContainer.encodeFloatingPoint(value))
         )
     }
 

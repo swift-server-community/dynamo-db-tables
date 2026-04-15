@@ -88,11 +88,15 @@ struct InternalUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     }
 
     func encode(_ value: Float) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToUnkeyedContainer(
+            value: DynamoDBModel.AttributeValue.n(try self.enclosingContainer.encodeFloatingPoint(value))
+        )
     }
 
     func encode(_ value: Double) throws {
-        self.enclosingContainer.addToUnkeyedContainer(value: DynamoDBModel.AttributeValue.n(String(value)))
+        self.enclosingContainer.addToUnkeyedContainer(
+            value: DynamoDBModel.AttributeValue.n(try self.enclosingContainer.encodeFloatingPoint(value))
+        )
     }
 
     func encode(_ value: String) throws {
