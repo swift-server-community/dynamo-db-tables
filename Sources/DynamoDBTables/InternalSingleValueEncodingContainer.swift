@@ -94,11 +94,21 @@ class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
     }
 
     func encode(_ value: Float) throws {
-        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(try self.encodeFloatingPoint(value)))
     }
 
     func encode(_ value: Double) throws {
-        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(String(value)))
+        self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n(try self.encodeFloatingPoint(value)))
+    }
+
+    func encodeFloatingPoint(_ value: some BinaryFloatingPoint) throws -> String {
+        guard !value.isNaN, !value.isInfinite else {
+            throw EncodingError.invalidValue(value, EncodingError.Context(
+                codingPath: self.codingPath,
+                debugDescription: "DynamoDB numbers cannot represent NaN or Infinity."
+            ))
+        }
+        return "\(value)"
     }
 
     func encode(_ value: String) throws {
@@ -134,7 +144,7 @@ class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
 
     func addToUnkeyedContainer(value: AttributeValueConvertable) {
         guard let currentContainerValue = containerValue else {
-            fatalError("Attempted to ad an unkeyed item to an uninitialized container.")
+            fatalError("Attempted to add an unkeyed item to an uninitialized container.")
         }
 
         guard case var .unkeyedContainer(values) = currentContainerValue else {
