@@ -272,6 +272,28 @@ struct DynamoDBEncoderDecoderTests {
         let box = Box(payload: Data([0x00, 0x01, 0x02, 0xFF]))
 
         let encoded = try DynamoDBEncoder().encode(box)
+
+        // Verify Data encodes to the DynamoDB binary type (B), not a list of bytes.
+        if case let .m(attrs) = encoded {
+            if case .b = attrs["payload"] {
+                // expected
+            } else {
+                Issue.record("Expected .b for Data, got \(String(describing: attrs["payload"]))")
+            }
+        }
+
+        let decoded: Box = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == box)
+    }
+
+    @Test
+    func dataEmptyRoundTrip() throws {
+        struct Box: Codable, Equatable {
+            let payload: Data
+        }
+        let box = Box(payload: Data())
+
+        let encoded = try DynamoDBEncoder().encode(box)
         let decoded: Box = try DynamoDBDecoder().decode(encoded)
         #expect(decoded == box)
     }
@@ -282,6 +304,34 @@ struct DynamoDBEncoderDecoderTests {
             let amount: Decimal
         }
         let box = Box(amount: Decimal(string: "123.456")!)
+
+        let encoded = try DynamoDBEncoder().encode(box)
+
+        // Verify Decimal encodes to the DynamoDB number type (N), not a keyed struct.
+        if case let .m(attrs) = encoded {
+            if case let .n(numString) = attrs["amount"] {
+                #expect(numString == "123.456")
+            } else {
+                Issue.record("Expected .n for Decimal, got \(String(describing: attrs["amount"]))")
+            }
+        }
+
+        let decoded: Box = try DynamoDBDecoder().decode(encoded)
+        #expect(decoded == box)
+    }
+
+    @Test
+    func decimalLargeValueRoundTrip() throws {
+        struct Box: Codable, Equatable {
+            let big: Decimal
+            let precise: Decimal
+            let negative: Decimal
+        }
+        let box = Box(
+            big: Decimal(string: "99999999999999999999999999999")!,
+            precise: Decimal(string: "0.000000000000001")!,
+            negative: Decimal(string: "-42.5")!
+        )
 
         let encoded = try DynamoDBEncoder().encode(box)
         let decoded: Box = try DynamoDBDecoder().decode(encoded)
