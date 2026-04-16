@@ -120,9 +120,17 @@ class InternalSingleValueEncodingContainer: SingleValueEncodingContainer {
 
     func encode(_ value: some Encodable) throws {
         if let date = value as? Foundation.Date {
-            let dateAsString = date.iso8601
+            self.containerValue = .singleValue(DynamoDBModel.AttributeValue.s(date.iso8601))
+            return
+        }
 
-            self.containerValue = .singleValue(DynamoDBModel.AttributeValue.s(dateAsString))
+        if let data = value as? Foundation.Data {
+            self.containerValue = .singleValue(DynamoDBModel.AttributeValue.b(data))
+            return
+        }
+
+        if let decimal = value as? Foundation.Decimal {
+            self.containerValue = .singleValue(DynamoDBModel.AttributeValue.n("\(decimal)"))
             return
         }
 

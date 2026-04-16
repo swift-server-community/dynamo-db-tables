@@ -202,6 +202,25 @@ extension InternalSingleValueDecodingContainer: SingleValueDecodingContainer {
             return date
         }
 
+        if type == Data.self {
+            guard case let .b(data) = attributeValue, let result = data as? T else {
+                throw self.getTypeMismatchError(expectation: Data.self)
+            }
+
+            return result
+        }
+
+        if type == Decimal.self {
+            guard case let .n(valueAsString) = attributeValue,
+                let decimal = Decimal(string: valueAsString),
+                let result = decimal as? T
+            else {
+                throw self.getTypeMismatchError(expectation: Decimal.self)
+            }
+
+            return result
+        }
+
         return try T(from: self)
     }
 
