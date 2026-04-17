@@ -162,7 +162,8 @@ struct InternalUnkeyedDecodingContainer: UnkeyedDecodingContainer {
             codingPath: self.decodingContainer.codingPath
                 + [InternalDynamoDBCodingKey(index: index)],
             userInfo: self.decodingContainer.userInfo,
-            attributeNameTransform: self.decodingContainer.attributeNameTransform
+            attributeNameTransform: self.decodingContainer.attributeNameTransform,
+            reverseAttributeNameTransform: self.decodingContainer.reverseAttributeNameTransform
         )
     }
 }

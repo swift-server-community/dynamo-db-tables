@@ -379,4 +379,47 @@ struct DynamoDBEncoderDecoderTests {
         let decoded: Box = try DynamoDBDecoder(attributeNameTransform: transform).decode(encoded)
         #expect(decoded == box)
     }
+
+    @Test
+    func attributeNameTransformDictionaryRoundTrip() throws {
+        struct Box: Codable, Equatable {
+            let values: [String: Int]
+        }
+        let box = Box(values: ["alpha": 1, "beta": 2])
+
+        let transform: (String) -> String = { $0.uppercased() }
+        let reverse: (String) -> String = { $0.lowercased() }
+        let encoded = try DynamoDBEncoder(attributeNameTransform: transform).encode(box)
+        let decoded: Box = try DynamoDBDecoder(
+            attributeNameTransform: transform,
+            reverseAttributeNameTransform: reverse
+        ).decode(encoded)
+        #expect(decoded == box)
+    }
+
+    @Test
+    func attributeNameTransformAllKeys() throws {
+        struct DynamicBox: Codable, Equatable {
+            let known: [String: Int]
+
+            enum CodingKeys: String, CodingKey { case known }
+
+            init(known: [String: Int]) { self.known = known }
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.known = try container.decode([String: Int].self, forKey: .known)
+            }
+        }
+
+        let box = DynamicBox(known: ["hello": 1, "world": 2])
+        let transform: (String) -> String = { $0.uppercased() }
+        let reverse: (String) -> String = { $0.lowercased() }
+        let encoded = try DynamoDBEncoder(attributeNameTransform: transform).encode(box)
+        let decoded: DynamicBox = try DynamoDBDecoder(
+            attributeNameTransform: transform,
+            reverseAttributeNameTransform: reverse
+        ).decode(encoded)
+        #expect(decoded == box)
+    }
 }

@@ -125,9 +125,10 @@ struct InternalKeyedDecodingContainer<K: CodingKey>: KeyedDecodingContainerProto
     }
 
     var allKeys: [K] {
-        self.getValues().keys.map { key in K(stringValue: key) }
-            .filter { key in key != nil }
-            .map { key in key! }
+        self.getValues().keys.compactMap { key in
+            let resolvedKey = self.decodingContainer.reverseAttributeNameTransform?(key) ?? key
+            return K(stringValue: resolvedKey)
+        }
     }
 
     func contains(_ key: K) -> Bool {
@@ -165,7 +166,8 @@ struct InternalKeyedDecodingContainer<K: CodingKey>: KeyedDecodingContainerProto
             attributeValue: value,
             codingPath: self.decodingContainer.codingPath + [key],
             userInfo: self.decodingContainer.userInfo,
-            attributeNameTransform: self.decodingContainer.attributeNameTransform
+            attributeNameTransform: self.decodingContainer.attributeNameTransform,
+            reverseAttributeNameTransform: self.decodingContainer.reverseAttributeNameTransform
         )
     }
 

@@ -32,17 +32,20 @@ struct InternalSingleValueDecodingContainer {
     let userInfo: [CodingUserInfoKey: Any]
     let attributeValue: DynamoDBModel.AttributeValue
     let attributeNameTransform: ((String) -> String)?
+    let reverseAttributeNameTransform: ((String) -> String)?
 
     init(
         attributeValue: DynamoDBModel.AttributeValue,
         codingPath: [CodingKey],
         userInfo: [CodingUserInfoKey: Any],
-        attributeNameTransform: ((String) -> String)?
+        attributeNameTransform: ((String) -> String)?,
+        reverseAttributeNameTransform: ((String) -> String)? = nil
     ) {
         self.attributeValue = attributeValue
         self.codingPath = codingPath
         self.userInfo = userInfo
         self.attributeNameTransform = attributeNameTransform
+        self.reverseAttributeNameTransform = reverseAttributeNameTransform
     }
 }
 

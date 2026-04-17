@@ -26,9 +26,14 @@
 
 package class DynamoDBDecoder {
     let attributeNameTransform: ((String) -> String)?
+    let reverseAttributeNameTransform: ((String) -> String)?
 
-    package init(attributeNameTransform: ((String) -> String)? = nil) {
+    package init(
+        attributeNameTransform: ((String) -> String)? = nil,
+        reverseAttributeNameTransform: ((String) -> String)? = nil
+    ) {
         self.attributeNameTransform = attributeNameTransform
+        self.reverseAttributeNameTransform = reverseAttributeNameTransform
     }
 
     package func decode<T: Swift.Decodable>(
@@ -41,7 +46,8 @@ package class DynamoDBDecoder {
             attributeValue: value,
             codingPath: [],
             userInfo: userInfo,
-            attributeNameTransform: attributeNameTransform
+            attributeNameTransform: attributeNameTransform,
+            reverseAttributeNameTransform: reverseAttributeNameTransform
         )
 
         return try T(from: container)
