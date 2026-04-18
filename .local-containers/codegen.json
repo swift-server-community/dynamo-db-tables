@@ -1,0 +1,8 @@
+{
+  "templates": [
+    {
+      "source": "Resources/dynamodb-table.json",
+      "structName": "DynamodbTableOutputs"
+    }
+  ]
+}

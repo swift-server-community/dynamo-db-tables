@@ -1,5 +1,5 @@
 {
-  "originHash" : "ea6018581697a18068538887b14a1ceb6f547607cff06ae0340ba70aa9e73f5c",
+  "originHash" : "968d9511700b5d283a07f7b3b4cd1b238c949490ff62465e92c86b5dc2a46a3f",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tachyonics/smockable",
       "state" : {
-        "revision" : "4b9cd8251f1f0690d80fc1a10499833dca17d543",
-        "version" : "0.14.0"
+        "revision" : "b452bab70890db46c2d5d33837e02caefe7ad69f",
+        "version" : "0.15.0"
       }
     },
     {
@@ -177,8 +177,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tachyonics/swift-local-containers",
       "state" : {
-        "revision" : "fd7aad6d618be25c42e96a350db833a25e3f0b18",
-        "version" : "0.5.1"
+        "revision" : "0238a8a0cabafda5755a949db59695eebaf11fcb",
+        "version" : "0.6.0"
       }
     },
     {
