@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
+        os: [ubuntu-24.04]
         swift-version: ["6.2.4"]
     runs-on: ${{ matrix.os }}
     steps:
@@ -81,8 +81,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
-        swift-version: ["6.2.4"]
+        os: [ubuntu-24.04]
+        swift-version: ["6.2.4", "6.3.1"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -135,26 +135,15 @@ jobs:
       - name: SwiftLint unused imports
         if: matrix.os == 'ubuntu-24.04'
         run: grep -v DynamoDBTablesAWS build.log > analyze.log && swiftlint analyze --strict --quiet --compiler-log-path analyze.log
-  StaticLinuxSDK:
-    name: Static Linux SDK (cross-compile to aarch64-musl)
-    runs-on: ubuntu-24.04
-    container:
-      image: swift:6.3.0-noble
-    steps:
-      - uses: actions/checkout@v6
-      - name: Install Static Linux SDK
-        run: swift sdk install https://download.swift.org/swift-6.3-release/static-sdk/swift-6.3-RELEASE/swift-6.3-RELEASE_static-linux-0.1.0.artifactbundle.tar.gz --checksum d2078b69bdeb5c31202c10e9d8a11d6f66f82938b51a4b75f032ccb35c4c286c
-      - name: Cross-compile for ARM64 Linux (core)
-        run: swift build -c release --swift-sdk aarch64-swift-linux-musl
   StaticLinuxSDKSoto:
-    name: Static Linux SDK (cross-compile to aarch64-musl)
+    name: Static Linux SDK Soto (cross-compile to aarch64-musl)
     runs-on: ubuntu-24.04
     container:
-      image: swift:6.3.0-noble
+      image: swift:6.3.1-noble
     steps:
       - uses: actions/checkout@v6
       - name: Install Static Linux SDK
-        run: swift sdk install https://download.swift.org/swift-6.3-release/static-sdk/swift-6.3-RELEASE/swift-6.3-RELEASE_static-linux-0.1.0.artifactbundle.tar.gz --checksum d2078b69bdeb5c31202c10e9d8a11d6f66f82938b51a4b75f032ccb35c4c286c
+        run: swift sdk install https://download.swift.org/swift-6.3.1-release/static-sdk/swift-6.3.1-RELEASE/swift-6.3.1-RELEASE_static-linux-0.1.0.artifactbundle.tar.gz --checksum fac05271c1f7d060bd203240ce5251d5ca902d30ac899f553765dbb3a88b97ad
       - name: Cross-compile for ARM64 Linux (Soto)
         run: swift build -c release --swift-sdk aarch64-swift-linux-musl --traits SOTOSDK
   SwiftLint:
