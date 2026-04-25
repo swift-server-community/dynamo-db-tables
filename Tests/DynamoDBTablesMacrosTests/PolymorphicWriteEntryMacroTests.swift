@@ -29,7 +29,7 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
         "PolymorphicWriteEntry": MacroSpec(
             type: PolymorphicWriteEntryMacro.self,
             conformances: ["PolymorphicWriteEntry"]
-        ),
+        )
     ]
 
     func testExpansionWithTwoCases() {
@@ -42,30 +42,30 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum TestEntry {
-                case testTypeA(TestTypeAWriteEntry)
-                case testTypeB(TestTypeBWriteEntry)
-            }
+                enum TestEntry {
+                    case testTypeA(TestTypeAWriteEntry)
+                    case testTypeB(TestTypeBWriteEntry)
+                }
 
-            extension TestEntry: PolymorphicWriteEntry {
-                func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteEntryTransformType {
-                    switch self {
-                    case let .testTypeA(writeEntry):
-                        return try context.transform(writeEntry)
-                    case let .testTypeB(writeEntry):
-                        return try context.transform(writeEntry)
+                extension TestEntry: PolymorphicWriteEntry {
+                    func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteEntryTransformType {
+                        switch self {
+                        case let .testTypeA(writeEntry):
+                            return try context.transform(writeEntry)
+                        case let .testTypeB(writeEntry):
+                            return try context.transform(writeEntry)
+                        }
+                    }
+                    var compositePrimaryKey: StandardCompositePrimaryKey {
+                        switch self {
+                        case let .testTypeA(writeEntry):
+                            return writeEntry.compositePrimaryKey
+                        case let .testTypeB(writeEntry):
+                            return writeEntry.compositePrimaryKey
+                        }
                     }
                 }
-                var compositePrimaryKey: StandardCompositePrimaryKey {
-                    switch self {
-                    case let .testTypeA(writeEntry):
-                        return writeEntry.compositePrimaryKey
-                    case let .testTypeB(writeEntry):
-                        return writeEntry.compositePrimaryKey
-                    }
-                }
-            }
-            """,
+                """,
             macroSpecs: macroSpecs
         )
     }
@@ -78,15 +78,15 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            struct NotAnEnum {
-            }
-            """,
+                struct NotAnEnum {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@PolymorphicWriteEntry must be attached to an enum declaration.",
                     line: 1,
                     column: 1
-                ),
+                )
             ],
             macroSpecs: macroSpecs
         )
@@ -100,15 +100,15 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum Empty {
-            }
-            """,
+                enum Empty {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@PolymorphicWriteEntry decorated enum must be have at least a singe case.",
                     line: 1,
                     column: 1
-                ),
+                )
             ],
             macroSpecs: macroSpecs
         )
@@ -123,16 +123,17 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum BadEntry {
-                case bad(TestTypeAWriteEntry, String)
-            }
-            """,
+                enum BadEntry {
+                    case bad(TestTypeAWriteEntry, String)
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
-                    message: "@PolymorphicWriteEntry decorated enum can only have case entries with a single parameter.",
+                    message:
+                        "@PolymorphicWriteEntry decorated enum can only have case entries with a single parameter.",
                     line: 3,
                     column: 10
-                ),
+                )
             ],
             macroSpecs: macroSpecs
         )
@@ -147,16 +148,17 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum BadEntry {
-                case bad
-            }
-            """,
+                enum BadEntry {
+                    case bad
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
-                    message: "@PolymorphicWriteEntry decorated enum can only have case entries with a single parameter.",
+                    message:
+                        "@PolymorphicWriteEntry decorated enum can only have case entries with a single parameter.",
                     line: 3,
                     column: 10
-                ),
+                )
             ],
             macroSpecs: macroSpecs
         )

@@ -29,7 +29,7 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
         "PolymorphicOperationReturnType": MacroSpec(
             type: PolymorphicOperationReturnTypeMacro.self,
             conformances: ["PolymorphicOperationReturnType", "BatchCapableReturnType"]
-        ),
+        )
     ]
 
     func testExpansionWithDefaultDatabaseItemType() {
@@ -42,37 +42,37 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum TestQueryableTypes {
-                case testTypeA(StandardTypedDatabaseItem<TestTypeA>)
-                case testTypeB(StandardTypedDatabaseItem<TestTypeB>)
-            }
+                enum TestQueryableTypes {
+                    case testTypeA(StandardTypedDatabaseItem<TestTypeA>)
+                    case testTypeB(StandardTypedDatabaseItem<TestTypeB>)
+                }
 
-            extension TestQueryableTypes: PolymorphicOperationReturnType {
-                typealias AttributesType = StandardPrimaryKeyAttributes
-                typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
-                static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] =
-                [(
-                    TestTypeA.self, .init {
-                            .testTypeA($0)
-                        }
-                    ), (
-                    TestTypeB.self, .init {
-                            .testTypeB($0)
-                        }
-                    ),]
-            }
+                extension TestQueryableTypes: PolymorphicOperationReturnType {
+                    typealias AttributesType = StandardPrimaryKeyAttributes
+                    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
+                    static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] =
+                    [(
+                        TestTypeA.self, .init {
+                                .testTypeA($0)
+                            }
+                        ), (
+                        TestTypeB.self, .init {
+                                .testTypeB($0)
+                            }
+                        ),]
+                }
 
-            extension TestQueryableTypes: BatchCapableReturnType {
-                func getItemKey() -> CompositePrimaryKey<AttributesType> {
-                    switch self {
-                    case let .testTypeA(databaseItem):
-                        return databaseItem.compositePrimaryKey
-                    case let .testTypeB(databaseItem):
-                        return databaseItem.compositePrimaryKey
+                extension TestQueryableTypes: BatchCapableReturnType {
+                    func getItemKey() -> CompositePrimaryKey<AttributesType> {
+                        switch self {
+                        case let .testTypeA(databaseItem):
+                            return databaseItem.compositePrimaryKey
+                        case let .testTypeB(databaseItem):
+                            return databaseItem.compositePrimaryKey
+                        }
                     }
                 }
-            }
-            """,
+                """,
             macroSpecs: macroSpecs
         )
     }
@@ -86,30 +86,30 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum TestQueryableTypes {
-                case testTypeA(CustomTypedDatabaseItem<TestTypeA>)
-            }
+                enum TestQueryableTypes {
+                    case testTypeA(CustomTypedDatabaseItem<TestTypeA>)
+                }
 
-            extension TestQueryableTypes: PolymorphicOperationReturnType {
-                typealias AttributesType = StandardPrimaryKeyAttributes
-                typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
-                static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] =
-                [(
-                    TestTypeA.self, .init {
-                            .testTypeA($0)
+                extension TestQueryableTypes: PolymorphicOperationReturnType {
+                    typealias AttributesType = StandardPrimaryKeyAttributes
+                    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
+                    static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] =
+                    [(
+                        TestTypeA.self, .init {
+                                .testTypeA($0)
+                            }
+                        ),]
+                }
+
+                extension TestQueryableTypes: BatchCapableReturnType {
+                    func getItemKey() -> CompositePrimaryKey<AttributesType> {
+                        switch self {
+                        case let .testTypeA(databaseItem):
+                            return databaseItem.compositePrimaryKey
                         }
-                    ),]
-            }
-
-            extension TestQueryableTypes: BatchCapableReturnType {
-                func getItemKey() -> CompositePrimaryKey<AttributesType> {
-                    switch self {
-                    case let .testTypeA(databaseItem):
-                        return databaseItem.compositePrimaryKey
                     }
                 }
-            }
-            """,
+                """,
             macroSpecs: macroSpecs
         )
     }
@@ -122,15 +122,15 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            struct NotAnEnum {
-            }
-            """,
+                struct NotAnEnum {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@PolymorphicOperationReturnType must be attached to an enum declaration.",
                     line: 1,
                     column: 1
-                ),
+                )
             ],
             macroSpecs: macroSpecs
         )
@@ -144,15 +144,15 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum Empty {
-            }
-            """,
+                enum Empty {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@PolymorphicOperationReturnType decorated enum must be have at least a singe case.",
                     line: 1,
                     column: 1
-                ),
+                )
             ],
             macroSpecs: macroSpecs
         )
@@ -167,17 +167,17 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum BadTypes {
-                case bad(SomeOtherType<TestTypeA>)
-            }
-            """,
+                enum BadTypes {
+                    case bad(SomeOtherType<TestTypeA>)
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message:
-                    "PolymorphicOperationReturnTypeMacro decorated enum cases parameter must be of StandardTypedDatabaseItem type.",
+                        "PolymorphicOperationReturnTypeMacro decorated enum cases parameter must be of StandardTypedDatabaseItem type.",
                     line: 3,
                     column: 10
-                ),
+                )
             ],
             macroSpecs: macroSpecs
         )
@@ -192,16 +192,17 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum BadTypes {
-                case bad(StandardTypedDatabaseItem<TestTypeA>, String)
-            }
-            """,
+                enum BadTypes {
+                    case bad(StandardTypedDatabaseItem<TestTypeA>, String)
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
-                    message: "@PolymorphicOperationReturnType decorated enum can only have case entries with a single parameter.",
+                    message:
+                        "@PolymorphicOperationReturnType decorated enum can only have case entries with a single parameter.",
                     line: 3,
                     column: 10
-                ),
+                )
             ],
             macroSpecs: macroSpecs
         )

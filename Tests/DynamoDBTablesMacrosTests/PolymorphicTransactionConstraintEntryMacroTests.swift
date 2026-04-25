@@ -29,7 +29,7 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
         "PolymorphicTransactionConstraintEntry": MacroSpec(
             type: PolymorphicTransactionConstraintEntryMacro.self,
             conformances: ["PolymorphicTransactionConstraintEntry"]
-        ),
+        )
     ]
 
     func testExpansionWithTwoCases() {
@@ -42,30 +42,30 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum TestConstraint {
-                case testTypeA(TestTypeAStandardTransactionConstraintEntry)
-                case testTypeB(TestTypeBStandardTransactionConstraintEntry)
-            }
+                enum TestConstraint {
+                    case testTypeA(TestTypeAStandardTransactionConstraintEntry)
+                    case testTypeB(TestTypeBStandardTransactionConstraintEntry)
+                }
 
-            extension TestConstraint: PolymorphicTransactionConstraintEntry {
-                func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteTransactionConstraintType {
-                    switch self {
-                    case let .testTypeA(writeEntry):
-                        return try context.transform(writeEntry)
-                    case let .testTypeB(writeEntry):
-                        return try context.transform(writeEntry)
+                extension TestConstraint: PolymorphicTransactionConstraintEntry {
+                    func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteTransactionConstraintType {
+                        switch self {
+                        case let .testTypeA(writeEntry):
+                            return try context.transform(writeEntry)
+                        case let .testTypeB(writeEntry):
+                            return try context.transform(writeEntry)
+                        }
+                    }
+                    var compositePrimaryKey: StandardCompositePrimaryKey {
+                        switch self {
+                        case let .testTypeA(writeEntry):
+                            return writeEntry.compositePrimaryKey
+                        case let .testTypeB(writeEntry):
+                            return writeEntry.compositePrimaryKey
+                        }
                     }
                 }
-                var compositePrimaryKey: StandardCompositePrimaryKey {
-                    switch self {
-                    case let .testTypeA(writeEntry):
-                        return writeEntry.compositePrimaryKey
-                    case let .testTypeB(writeEntry):
-                        return writeEntry.compositePrimaryKey
-                    }
-                }
-            }
-            """,
+                """,
             macroSpecs: macroSpecs
         )
     }
@@ -78,15 +78,15 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            struct NotAnEnum {
-            }
-            """,
+                struct NotAnEnum {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@PolymorphicTransactionConstraintEntry must be attached to an enum declaration.",
                     line: 1,
                     column: 1
-                ),
+                )
             ],
             macroSpecs: macroSpecs
         )
@@ -100,15 +100,16 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum Empty {
-            }
-            """,
+                enum Empty {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
-                    message: "@PolymorphicTransactionConstraintEntry decorated enum must be have at least a singe case.",
+                    message:
+                        "@PolymorphicTransactionConstraintEntry decorated enum must be have at least a singe case.",
                     line: 1,
                     column: 1
-                ),
+                )
             ],
             macroSpecs: macroSpecs
         )
@@ -123,16 +124,17 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
             }
             """,
             expandedSource: """
-            enum BadConstraint {
-                case bad(TestTypeAStandardTransactionConstraintEntry, String)
-            }
-            """,
+                enum BadConstraint {
+                    case bad(TestTypeAStandardTransactionConstraintEntry, String)
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
-                    message: "@PolymorphicTransactionConstraintEntry decorated enum can only have case entries with a single parameter.",
+                    message:
+                        "@PolymorphicTransactionConstraintEntry decorated enum can only have case entries with a single parameter.",
                     line: 3,
                     column: 10
-                ),
+                )
             ],
             macroSpecs: macroSpecs
         )
