@@ -104,6 +104,14 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         .testTarget(
+            name: "DynamoDBTablesMacrosTests",
+            dependencies: [
+                .target(name: "DynamoDBTablesMacros"),
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+            ],
+            swiftSettings: swiftSettings
+        ),
+        .testTarget(
             name: "IntegrationTests",
             dependencies: [
                 .target(name: "DynamoDBTables"),
