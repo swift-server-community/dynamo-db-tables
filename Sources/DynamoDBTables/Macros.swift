@@ -20,7 +20,9 @@
 @attached(
     extension,
     conformances: PolymorphicWriteEntry,
-    names: named(handle(context:)), named(compositePrimaryKey), arbitrary
+    names: named(handle(context:)),
+    named(compositePrimaryKey),
+    arbitrary
 )
 public macro PolymorphicWriteEntry() =
     #externalMacro(
@@ -31,7 +33,9 @@ public macro PolymorphicWriteEntry() =
 @attached(
     extension,
     conformances: PolymorphicTransactionConstraintEntry,
-    names: named(handle(context:)), named(compositePrimaryKey), arbitrary
+    names: named(handle(context:)),
+    named(compositePrimaryKey),
+    arbitrary
 )
 public macro PolymorphicTransactionConstraintEntry() =
     #externalMacro(
