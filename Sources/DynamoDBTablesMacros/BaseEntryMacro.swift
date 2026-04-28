@@ -58,22 +58,24 @@ enum BaseEntryDiagnostic<Attributes: CoreMacroAttributes>: String, DiagnosticMes
     }
 }
 
+struct CaseExpansionResult {
+    var hasDiagnostics: Bool
+    var handleCases: SwitchCaseListSyntax
+    var compositePrimaryKeyCases: SwitchCaseListSyntax
+    var assertions: [DeclSyntax]
+}
+
 enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
     private static func getCases(
         caseMembers: [EnumCaseDeclSyntax],
         context: some MacroExpansionContext
-    )
-        -> (
-            hasDiagnostics: Bool,
-            handleCases: SwitchCaseListSyntax,
-            compositePrimaryKeyCases: SwitchCaseListSyntax,
-            assertions: [DeclSyntax]
+    ) -> CaseExpansionResult {
+        var result = CaseExpansionResult(
+            hasDiagnostics: false,
+            handleCases: [],
+            compositePrimaryKeyCases: [],
+            assertions: []
         )
-    {
-        var handleCases: SwitchCaseListSyntax = []
-        var compositePrimaryKeyCases: SwitchCaseListSyntax = []
-        var assertions: [DeclSyntax] = []
-        var hasDiagnostics = false
         for caseMember in caseMembers {
             for element in caseMember.elements {
                 // ensure that the enum case only has one parameter
@@ -83,36 +85,36 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
                     context.diagnose(
                         .init(node: element, message: BaseEntryDiagnostic<Attributes>.enumCasesMustHaveASingleParameter)
                     )
-                    hasDiagnostics = true
+                    result.hasDiagnostics = true
                     // do nothing for this case
                     continue
                 }
 
-                let handleCaseSyntax = SwitchCaseListSyntax.Element(
-                    """
-                    case let .\(element.name)(writeEntry):
-                        return try context.transform(writeEntry)
-                    """
+                result.handleCases.append(
+                    SwitchCaseListSyntax.Element(
+                        """
+                        case let .\(element.name)(writeEntry):
+                            return try context.transform(writeEntry)
+                        """
+                    )
                 )
 
-                handleCases.append(handleCaseSyntax)
-
-                let compositePrimaryKeyCaseSyntax = SwitchCaseListSyntax.Element(
-                    """
-                    case let .\(element.name)(writeEntry):
-                        return writeEntry.compositePrimaryKey
-                    """
+                result.compositePrimaryKeyCases.append(
+                    SwitchCaseListSyntax.Element(
+                        """
+                        case let .\(element.name)(writeEntry):
+                            return writeEntry.compositePrimaryKey
+                        """
+                    )
                 )
 
-                compositePrimaryKeyCases.append(compositePrimaryKeyCaseSyntax)
-
-                assertions.append(
+                result.assertions.append(
                     self.assertionDecl(for: element, parameter: parameter, in: context)
                 )
             }
         }
 
-        return (hasDiagnostics, handleCases, compositePrimaryKeyCases, assertions)
+        return result
     }
 
     /// Emits a per-case assertion helper that forces a compile-time check that the case parameter type
@@ -190,12 +192,9 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
             return []
         }
 
-        let (hasDiagnostics, handleCases, compositePrimaryKeyCases, assertions) = self.getCases(
-            caseMembers: caseMembers,
-            context: context
-        )
+        let cases = self.getCases(caseMembers: caseMembers, context: context)
 
-        if hasDiagnostics {
+        if cases.hasDiagnostics {
             return []
         }
 
@@ -210,14 +209,14 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
                 try FunctionDeclSyntax(
                     "func handle<Context: \(raw: Attributes.contextType)>(context: Context) throws -> Context.\(raw: Attributes.transformType)"
                 ) {
-                    SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: handleCases)
+                    SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: cases.handleCases)
                 }
 
                 try VariableDeclSyntax("var compositePrimaryKey: StandardCompositePrimaryKey") {
-                    SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: compositePrimaryKeyCases)
+                    SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: cases.compositePrimaryKeyCases)
                 }
 
-                for assertion in assertions {
+                for assertion in cases.assertions {
                     assertion
                 }
             }

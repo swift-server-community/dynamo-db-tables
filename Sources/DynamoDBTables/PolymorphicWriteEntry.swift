@@ -151,7 +151,8 @@ extension StandardPolymorphicWriteEntryContext: Sendable where WriteEntryTransfo
 // Internal helpers used by `@PolymorphicWriteEntry` and `@PolymorphicTransactionConstraintEntry`
 // macro expansions to surface compile-time diagnostics at the user's enum case declaration when
 // the case parameter type does not match the expected `WriteEntry<...>` / `TransactionConstraintEntry<...>`
-// shape. Not intended to be called directly from user code.
+// shape. The leading-underscore prefix signals "do not call from user code".
+// swiftlint:disable identifier_name
 public func _assertPolymorphicWriteEntryParameter<
     AttributesType: PrimaryKeyAttributes,
     ItemType: Codable & Sendable,
@@ -163,3 +164,4 @@ public func _assertPolymorphicTransactionConstraintEntryParameter<
     ItemType: Codable & Sendable,
     TimeToLiveAttributesType: TimeToLiveAttributes
 >(_: TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>.Type) {}
+// swiftlint:enable identifier_name
