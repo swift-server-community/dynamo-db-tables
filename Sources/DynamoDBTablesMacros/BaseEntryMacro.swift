@@ -31,6 +31,8 @@ protocol MacroAttributes: CoreMacroAttributes {
     static var transformType: String { get }
 
     static var contextType: String { get }
+
+    static var assertHelperName: String { get }
 }
 
 enum BaseEntryDiagnostic<Attributes: CoreMacroAttributes>: String, DiagnosticMessage {
@@ -56,52 +58,93 @@ enum BaseEntryDiagnostic<Attributes: CoreMacroAttributes>: String, DiagnosticMes
     }
 }
 
+struct CaseExpansionResult {
+    var hasDiagnostics: Bool
+    var handleCases: SwitchCaseListSyntax
+    var compositePrimaryKeyCases: SwitchCaseListSyntax
+    var assertions: [DeclSyntax]
+}
+
 enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
     private static func getCases(
         caseMembers: [EnumCaseDeclSyntax],
         context: some MacroExpansionContext
-    )
-        -> (hasDiagnostics: Bool, handleCases: SwitchCaseListSyntax, compositePrimaryKeyCases: SwitchCaseListSyntax)
-    {
-        var handleCases: SwitchCaseListSyntax = []
-        var compositePrimaryKeyCases: SwitchCaseListSyntax = []
-        var hasDiagnostics = false
+    ) -> CaseExpansionResult {
+        var result = CaseExpansionResult(
+            hasDiagnostics: false,
+            handleCases: [],
+            compositePrimaryKeyCases: [],
+            assertions: []
+        )
         for caseMember in caseMembers {
             for element in caseMember.elements {
                 // ensure that the enum case only has one parameter
-                guard let parameterClause = element.parameterClause, parameterClause.parameters.count == 1 else {
+                guard let parameterClause = element.parameterClause, parameterClause.parameters.count == 1,
+                    let parameter = parameterClause.parameters.first
+                else {
                     context.diagnose(
                         .init(node: element, message: BaseEntryDiagnostic<Attributes>.enumCasesMustHaveASingleParameter)
                     )
-                    hasDiagnostics = true
+                    result.hasDiagnostics = true
                     // do nothing for this case
                     continue
                 }
 
-                // TODO: when made possible by the language, check that the type of the parameter conforms to `WriteEntry` or `TransactionConstraintEntry`
-                // https://github.com/swift-server-community/dynamo-db-tables/issues/38
-
-                let handleCaseSyntax = SwitchCaseListSyntax.Element(
-                    """
-                    case let .\(element.name)(writeEntry):
-                        return try context.transform(writeEntry)
-                    """
+                result.handleCases.append(
+                    SwitchCaseListSyntax.Element(
+                        """
+                        case let .\(element.name)(writeEntry):
+                            return try context.transform(writeEntry)
+                        """
+                    )
                 )
 
-                handleCases.append(handleCaseSyntax)
-
-                let compositePrimaryKeyCaseSyntax = SwitchCaseListSyntax.Element(
-                    """
-                    case let .\(element.name)(writeEntry):
-                        return writeEntry.compositePrimaryKey
-                    """
+                result.compositePrimaryKeyCases.append(
+                    SwitchCaseListSyntax.Element(
+                        """
+                        case let .\(element.name)(writeEntry):
+                            return writeEntry.compositePrimaryKey
+                        """
+                    )
                 )
 
-                compositePrimaryKeyCases.append(compositePrimaryKeyCaseSyntax)
+                result.assertions.append(
+                    self.assertionDecl(for: element, parameter: parameter, in: context)
+                )
             }
         }
 
-        return (hasDiagnostics, handleCases, compositePrimaryKeyCases)
+        return result
+    }
+
+    /// Emits a per-case assertion helper that forces a compile-time check that the case parameter type
+    /// is a `WriteEntry<...>` (or `TransactionConstraintEntry<...>`). When the case has a known source
+    /// location, wraps the call in `#sourceLocation` directives so the diagnostic surfaces at the
+    /// user's enum case declaration rather than at the macro-generated buffer.
+    private static func assertionDecl(
+        for element: EnumCaseElementListSyntax.Element,
+        parameter: EnumCaseParameterListSyntax.Element,
+        in context: some MacroExpansionContext
+    ) -> DeclSyntax {
+        let paramType = parameter.type.trimmedDescription
+        let assertionCall = "\(Attributes.assertHelperName)(\(paramType).self)"
+        let body: String
+        if let location = context.location(of: element) {
+            body = """
+                #sourceLocation(file: \(location.file), line: \(location.line))
+                \(assertionCall)
+                #sourceLocation()
+                """
+        } else {
+            body = assertionCall
+        }
+        return DeclSyntax(
+            stringLiteral: """
+                private static func _assertCase_\(element.name.text)() {
+                    \(body)
+                }
+                """
+        )
     }
 
     static func expansion(
@@ -149,12 +192,9 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
             return []
         }
 
-        let (hasDiagnostics, handleCases, compositePrimaryKeyCases) = self.getCases(
-            caseMembers: caseMembers,
-            context: context
-        )
+        let cases = self.getCases(caseMembers: caseMembers, context: context)
 
-        if hasDiagnostics {
+        if cases.hasDiagnostics {
             return []
         }
 
@@ -169,11 +209,15 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
                 try FunctionDeclSyntax(
                     "func handle<Context: \(raw: Attributes.contextType)>(context: Context) throws -> Context.\(raw: Attributes.transformType)"
                 ) {
-                    SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: handleCases)
+                    SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: cases.handleCases)
                 }
 
                 try VariableDeclSyntax("var compositePrimaryKey: StandardCompositePrimaryKey") {
-                    SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: compositePrimaryKeyCases)
+                    SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: cases.compositePrimaryKeyCases)
+                }
+
+                for assertion in cases.assertions {
+                    assertion
                 }
             }
         )

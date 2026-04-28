@@ -147,3 +147,21 @@ where WriteEntryTransformType.TableType == WriteTransactionConstraintType.TableT
 }
 
 extension StandardPolymorphicWriteEntryContext: Sendable where WriteEntryTransformType.TableType: Sendable {}
+
+// Internal helpers used by `@PolymorphicWriteEntry` and `@PolymorphicTransactionConstraintEntry`
+// macro expansions to surface compile-time diagnostics at the user's enum case declaration when
+// the case parameter type does not match the expected `WriteEntry<...>` / `TransactionConstraintEntry<...>`
+// shape. The leading-underscore prefix signals "do not call from user code".
+// swiftlint:disable identifier_name
+public func _assertPolymorphicWriteEntryParameter<
+    AttributesType: PrimaryKeyAttributes,
+    ItemType: Codable & Sendable,
+    TimeToLiveAttributesType: TimeToLiveAttributes
+>(_: WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>.Type) {}
+
+public func _assertPolymorphicTransactionConstraintEntryParameter<
+    AttributesType: PrimaryKeyAttributes,
+    ItemType: Codable & Sendable,
+    TimeToLiveAttributesType: TimeToLiveAttributes
+>(_: TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>.Type) {}
+// swiftlint:enable identifier_name
