@@ -31,6 +31,8 @@ protocol MacroAttributes: CoreMacroAttributes {
     static var transformType: String { get }
 
     static var contextType: String { get }
+
+    static var assertHelperName: String { get }
 }
 
 enum BaseEntryDiagnostic<Attributes: CoreMacroAttributes>: String, DiagnosticMessage {
@@ -61,15 +63,23 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
         caseMembers: [EnumCaseDeclSyntax],
         context: some MacroExpansionContext
     )
-        -> (hasDiagnostics: Bool, handleCases: SwitchCaseListSyntax, compositePrimaryKeyCases: SwitchCaseListSyntax)
+        -> (
+            hasDiagnostics: Bool,
+            handleCases: SwitchCaseListSyntax,
+            compositePrimaryKeyCases: SwitchCaseListSyntax,
+            assertions: [DeclSyntax]
+        )
     {
         var handleCases: SwitchCaseListSyntax = []
         var compositePrimaryKeyCases: SwitchCaseListSyntax = []
+        var assertions: [DeclSyntax] = []
         var hasDiagnostics = false
         for caseMember in caseMembers {
             for element in caseMember.elements {
                 // ensure that the enum case only has one parameter
-                guard let parameterClause = element.parameterClause, parameterClause.parameters.count == 1 else {
+                guard let parameterClause = element.parameterClause, parameterClause.parameters.count == 1,
+                    let parameter = parameterClause.parameters.first
+                else {
                     context.diagnose(
                         .init(node: element, message: BaseEntryDiagnostic<Attributes>.enumCasesMustHaveASingleParameter)
                     )
@@ -77,9 +87,6 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
                     // do nothing for this case
                     continue
                 }
-
-                // TODO: when made possible by the language, check that the type of the parameter conforms to `WriteEntry` or `TransactionConstraintEntry`
-                // https://github.com/swift-server-community/dynamo-db-tables/issues/38
 
                 let handleCaseSyntax = SwitchCaseListSyntax.Element(
                     """
@@ -98,10 +105,44 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
                 )
 
                 compositePrimaryKeyCases.append(compositePrimaryKeyCaseSyntax)
+
+                assertions.append(
+                    self.assertionDecl(for: element, parameter: parameter, in: context)
+                )
             }
         }
 
-        return (hasDiagnostics, handleCases, compositePrimaryKeyCases)
+        return (hasDiagnostics, handleCases, compositePrimaryKeyCases, assertions)
+    }
+
+    /// Emits a per-case assertion helper that forces a compile-time check that the case parameter type
+    /// is a `WriteEntry<...>` (or `TransactionConstraintEntry<...>`). When the case has a known source
+    /// location, wraps the call in `#sourceLocation` directives so the diagnostic surfaces at the
+    /// user's enum case declaration rather than at the macro-generated buffer.
+    private static func assertionDecl(
+        for element: EnumCaseElementListSyntax.Element,
+        parameter: EnumCaseParameterListSyntax.Element,
+        in context: some MacroExpansionContext
+    ) -> DeclSyntax {
+        let paramType = parameter.type.trimmedDescription
+        let assertionCall = "\(Attributes.assertHelperName)(\(paramType).self)"
+        let body: String
+        if let location = context.location(of: element) {
+            body = """
+                #sourceLocation(file: \(location.file), line: \(location.line))
+                \(assertionCall)
+                #sourceLocation()
+                """
+        } else {
+            body = assertionCall
+        }
+        return DeclSyntax(
+            stringLiteral: """
+                private static func _assertCase_\(element.name.text)() {
+                    \(body)
+                }
+                """
+        )
     }
 
     static func expansion(
@@ -149,7 +190,7 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
             return []
         }
 
-        let (hasDiagnostics, handleCases, compositePrimaryKeyCases) = self.getCases(
+        let (hasDiagnostics, handleCases, compositePrimaryKeyCases, assertions) = self.getCases(
             caseMembers: caseMembers,
             context: context
         )
@@ -174,6 +215,10 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
 
                 try VariableDeclSyntax("var compositePrimaryKey: StandardCompositePrimaryKey") {
                     SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: compositePrimaryKeyCases)
+                }
+
+                for assertion in assertions {
+                    assertion
                 }
             }
         )

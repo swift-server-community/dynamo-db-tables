@@ -32,6 +32,12 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
         )
     ]
 
+    // The expansion includes per-case `_assertCase_*` helpers that force a compile-time check
+    // that the case parameter is a `WriteEntry<...>`. In real builds the helpers wrap their
+    // assertion call in `#sourceLocation(file:, line:)` so the diagnostic surfaces at the
+    // user's case declaration; `BasicMacroExpansionContext` (used by `assertMacroExpansion`)
+    // returns nil from `location(of:)` for detached nodes, so the test goldens see the
+    // fallback (no `#sourceLocation` directives) path.
     func testExpansionWithTwoCases() {
         assertMacroExpansion(
             """
@@ -63,6 +69,12 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
                         case let .testTypeB(writeEntry):
                             return writeEntry.compositePrimaryKey
                         }
+                    }
+                    private static func _assertCase_testTypeA() {
+                        _assertPolymorphicWriteEntryParameter(TestTypeAWriteEntry.self)
+                    }
+                    private static func _assertCase_testTypeB() {
+                        _assertPolymorphicWriteEntryParameter(TestTypeBWriteEntry.self)
                     }
                 }
                 """,

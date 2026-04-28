@@ -28,6 +28,8 @@ struct PolymorphicWriteEntryMacroAttributes: MacroAttributes {
     static let transformType: String = "WriteEntryTransformType"
 
     static let contextType: String = "PolymorphicWriteEntryContext"
+
+    static let assertHelperName: String = "_assertPolymorphicWriteEntryParameter"
 }
 
 public enum PolymorphicWriteEntryMacro: ExtensionMacro {

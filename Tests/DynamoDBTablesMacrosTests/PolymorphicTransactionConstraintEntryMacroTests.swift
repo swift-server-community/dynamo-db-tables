@@ -32,6 +32,8 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
         )
     ]
 
+    // See PolymorphicWriteEntryMacroTests for context on why `#sourceLocation` directives
+    // don't appear in the test goldens (test framework returns nil from `location(of:)`).
     func testExpansionWithTwoCases() {
         assertMacroExpansion(
             """
@@ -63,6 +65,12 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
                         case let .testTypeB(writeEntry):
                             return writeEntry.compositePrimaryKey
                         }
+                    }
+                    private static func _assertCase_testTypeA() {
+                        _assertPolymorphicTransactionConstraintEntryParameter(TestTypeAStandardTransactionConstraintEntry.self)
+                    }
+                    private static func _assertCase_testTypeB() {
+                        _assertPolymorphicTransactionConstraintEntryParameter(TestTypeBStandardTransactionConstraintEntry.self)
                     }
                 }
                 """,

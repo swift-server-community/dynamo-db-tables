@@ -17,7 +17,11 @@
 //  DynamoDBTables
 //
 
-@attached(extension, conformances: PolymorphicWriteEntry, names: named(handle(context:)), named(compositePrimaryKey))
+@attached(
+    extension,
+    conformances: PolymorphicWriteEntry,
+    names: named(handle(context:)), named(compositePrimaryKey), arbitrary
+)
 public macro PolymorphicWriteEntry() =
     #externalMacro(
         module: "DynamoDBTablesMacros",
@@ -27,8 +31,7 @@ public macro PolymorphicWriteEntry() =
 @attached(
     extension,
     conformances: PolymorphicTransactionConstraintEntry,
-    names: named(handle(context:)),
-    named(compositePrimaryKey)
+    names: named(handle(context:)), named(compositePrimaryKey), arbitrary
 )
 public macro PolymorphicTransactionConstraintEntry() =
     #externalMacro(
