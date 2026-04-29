@@ -79,22 +79,26 @@ enum TestPolymorphicTransactionConstraintEntry {
     case testTypeB(TestTypeBStandardTransactionConstraintEntry)
 }
 
-// Lock in that the macros work with non-Standard `PrimaryKeyAttributes` end-to-end. The rest of
-// the test suite uses `Standard*` everywhere; these fixtures exist purely to verify the
-// polymorphic behaviour of the macros.
+// Lock in that the macros work with non-Standard `PrimaryKeyAttributes` and `TimeToLiveAttributes`
+// end-to-end. The rest of the test suite uses `Standard*` everywhere; these fixtures exist purely
+// to verify the polymorphic behaviour of the macros.
 struct CustomPrimaryKeyAttributes: PrimaryKeyAttributes {
     static var partitionKeyAttributeName: String { "CustomPK" }
     static var sortKeyAttributeName: String { "CustomSK" }
 }
 
+struct CustomTimeToLiveAttributes: TimeToLiveAttributes {
+    static var timeToLiveAttributeName: String { "CustomTTL" }
+}
+
 typealias CustomAttributesWriteEntry<ItemType: Codable & Sendable> = WriteEntry<
-    CustomPrimaryKeyAttributes, ItemType, StandardTimeToLiveAttributes
+    CustomPrimaryKeyAttributes, ItemType, CustomTimeToLiveAttributes
 >
 typealias CustomAttributesTransactionConstraintEntry<ItemType: Codable & Sendable> = TransactionConstraintEntry<
-    CustomPrimaryKeyAttributes, ItemType, StandardTimeToLiveAttributes
+    CustomPrimaryKeyAttributes, ItemType, CustomTimeToLiveAttributes
 >
 typealias CustomAttributesTypedDatabaseItem<RowType: Codable & Sendable> = TypedTTLDatabaseItem<
-    CustomPrimaryKeyAttributes, RowType, StandardTimeToLiveAttributes
+    CustomPrimaryKeyAttributes, RowType, CustomTimeToLiveAttributes
 >
 
 @PolymorphicWriteEntry
