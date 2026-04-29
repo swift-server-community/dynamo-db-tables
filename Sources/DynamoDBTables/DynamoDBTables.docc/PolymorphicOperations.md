@@ -92,3 +92,41 @@ try await table.polymorphicTransactWrite(
     constraints: [.customer(.required(existing: guardItem))]
 )
 ```
+
+## Custom Attribute Schemas
+
+The examples above use `Standard*` types throughout (``StandardTypedDatabaseItem``,
+``StandardWriteEntry``, ``StandardTransactionConstraintEntry``), which pin the
+partition/sort key column names to `"PK"` / `"SK"` and the TTL column name to
+`"ExpireDate"`. Tables with different column conventions can supply their own
+``PrimaryKeyAttributes`` and ``TimeToLiveAttributes`` conformers, and the polymorphic
+macros work with them transparently.
+
+```swift
+struct AccountKeyAttributes: PrimaryKeyAttributes {
+    static var partitionKeyAttributeName: String { "AccountId" }
+    static var sortKeyAttributeName: String { "ItemKey" }
+}
+
+typealias AccountTypedDatabaseItem<RowType: Codable & Sendable> = TypedTTLDatabaseItem<
+    AccountKeyAttributes, RowType, StandardTimeToLiveAttributes
+>
+
+@PolymorphicOperationReturnType
+enum AccountItem {
+    case customer(AccountTypedDatabaseItem<Customer>)
+    case order(AccountTypedDatabaseItem<Order>)
+}
+```
+
+The macro derives the enum's `AttributesType` (and, for
+``PolymorphicOperationReturnType``, `TimeToLiveAttributesType`) from the first case's
+parameter type, and verifies that subsequent cases agree. A case whose parameter has
+mismatched attributes — for example mixing `AccountTypedDatabaseItem<...>` with
+`StandardTypedDatabaseItem<...>` — produces a compile-time error pointing at the
+offending case declaration.
+
+The same pattern applies to ``PolymorphicWriteEntry`` /
+``PolymorphicTransactionConstraintEntry`` (using a ``WriteEntry`` /
+``TransactionConstraintEntry`` typealias parameterised by the custom attributes type)
+and to ``TimeToLiveAttributes`` for non-default TTL column conventions.
