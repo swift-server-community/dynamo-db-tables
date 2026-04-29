@@ -111,6 +111,48 @@ overload) carrying attempt index and elapsed time.
   their own metrics layer above the table API?
 - Would a swift-metrics integration be a better fit?
 
+### 2. Re-enable APIBreakage CI job
+
+**Status:** Disabled in CI pending upstream fix
+
+**Source-breaking?** No. CI-only change.
+
+**Description:** The `APIBreakage` job runs `swift package
+diagnose-api-breaking-changes` to catch unintended public-API changes against
+`origin/main`. It currently hits a `swift-api-digester` C module redefinition
+bug
+([swift-package-manager #8103](https://github.com/swiftlang/swift-package-manager/issues/8103))
+even with `DynamoDBTablesAWS` excluded from `--targets`. The job is commented
+out in `.github/workflows/swift.yml` rather than removed so it can be
+re-enabled cleanly when the upstream fix lands.
+
+**Recommendation:** Re-enable when swift-package-manager #8103 is resolved.
+Until then, public-API changes are guarded only by review (and by the
+deliberate decisions captured in this document).
+
+### 3. Re-enable AWS SDK integration tests in CI
+
+**Status:** Disabled in CI pending upstream fix
+
+**Source-breaking?** No. CI-only change.
+
+**Description:** The `BuildAndTest` job currently runs `swift test --skip
+IntegrationTests` because of a flaky TLS-context init failure in
+`aws-crt-swift` on Linux GitHub Actions runners
+([aws-sdk-swift #1984](https://github.com/awslabs/aws-sdk-swift/issues/1984)).
+Three retries weren't enough to make the job reliable. The Coverage job was
+also moved to the Soto trait for the same reason — Soto-path integration
+tests run cleanly. End-to-end coverage of the generic `DynamoDBTables` core
+is therefore exercised via `BuildAndTestSoto` only; `DynamoDBTablesAWS` (a
+thin translation layer to aws-sdk-swift) is built and unit-tested but not
+exercised against LocalStack in CI.
+
+**Recommendation:** When aws-sdk-swift #1984 is resolved, drop the `--skip
+IntegrationTests` from `BuildAndTest` and consider switching the `Coverage`
+job back to the AWS SDK trait (or running both adapters in coverage). Local
+runs of integration tests under the AWS SDK path still work — only CI is
+affected.
+
 ## Considered and Dropped
 
 Items that were on the backlog but, after concrete analysis, are not worth
