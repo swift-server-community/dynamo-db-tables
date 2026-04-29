@@ -32,7 +32,7 @@ private typealias DatabaseRowType = StandardTypedDatabaseItem<TestTypeA>
 
 typealias CustomTypedDatabaseItem = StandardTypedDatabaseItem
 
-@PolymorphicOperationReturnType(databaseItemType: "CustomTypedDatabaseItem")
+@PolymorphicOperationReturnType
 enum ExpectedQueryableTypes {
     case testTypeA(CustomTypedDatabaseItem<TestTypeA>)
 }

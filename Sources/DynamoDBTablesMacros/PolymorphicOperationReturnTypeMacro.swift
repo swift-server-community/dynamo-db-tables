@@ -27,20 +27,16 @@ private struct Attributes: CoreMacroAttributes {
     static let protocolName: String = "PolymorphicOperationReturnType"
 }
 
-private struct BasicDiagnosticMessage: DiagnosticMessage {
-    let message: String
-    let diagnosticID: MessageID
-    let severity: SwiftDiagnostics.DiagnosticSeverity = .error
-
-    init(message: String, rawValue: String) {
-        self.message = message
-        self.diagnosticID = MessageID(domain: "PolymorphicOperationReturnTypeMacro", id: rawValue)
-    }
+private struct OperationReturnTypeCases {
+    var hasDiagnostics: Bool
+    var typesArrayElements: ArrayElementListSyntax
+    var getItemKeyCases: SwitchCaseListSyntax
+    var assertions: [DeclSyntax]
 }
 
 public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
     public static func expansion(
-        of node: AttributeSyntax,
+        of _: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
         conformingTo protocols: [TypeSyntax],
@@ -53,18 +49,6 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
             )
 
             return []
-        }
-
-        let databaseItemType: String
-        let standardDatabaseType = "StandardTypedDatabaseItem"
-        if let arguments = node.arguments, case let .argumentList(argumentList) = arguments,
-            let firstArgument = argumentList.first, argumentList.count == 1,
-            firstArgument.label?.text == "databaseItemType",
-            let expression = firstArgument.expression.as(StringLiteralExprSyntax.self)
-        {
-            databaseItemType = expression.representedLiteralValue ?? standardDatabaseType
-        } else {
-            databaseItemType = standardDatabaseType
         }
 
         let requiresProtocolConformance = protocols.reduce(false) { partialResult, protocolSyntax in
@@ -96,13 +80,9 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
             return []
         }
 
-        let (hasDiagnostics, handleCases, getItemKeyCases) = self.getCases(
-            caseMembers: caseMembers,
-            context: context,
-            databaseItemType: databaseItemType
-        )
+        let cases = self.getCases(caseMembers: caseMembers, context: context)
 
-        if hasDiagnostics {
+        if cases.hasDiagnostics {
             return []
         }
 
@@ -119,7 +99,7 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
 
                 let casesArray = ArrayExprSyntax(
                     leftSquare: .leftSquareToken(),
-                    elements: handleCases,
+                    elements: cases.typesArrayElements,
                     rightSquare: .rightSquareToken()
                 )
 
@@ -129,12 +109,16 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
                     \(casesArray)
                     """
                 )
+
+                for assertion in cases.assertions {
+                    assertion
+                }
             }
         )
 
         let batchCapableExtensionDecl = try self.batchCapableExtension(
             type: type,
-            getItemKeyCases: getItemKeyCases
+            getItemKeyCases: cases.getItemKeyCases
         )
 
         return [extensionDecl, batchCapableExtensionDecl]
@@ -163,72 +147,87 @@ extension PolymorphicOperationReturnTypeMacro {
 
     private static func getCases(
         caseMembers: [EnumCaseDeclSyntax],
-        context: some MacroExpansionContext,
-        databaseItemType: String
-    )
-        -> (hasDiagnostics: Bool, handleCases: ArrayElementListSyntax, getItemKeyCases: SwitchCaseListSyntax)
-    {
-        var handleCases: ArrayElementListSyntax = []
-        var getItemKeyCases: SwitchCaseListSyntax = []
-        var hasDiagnostics = false
+        context: some MacroExpansionContext
+    ) -> OperationReturnTypeCases {
+        var result = OperationReturnTypeCases(
+            hasDiagnostics: false,
+            typesArrayElements: [],
+            getItemKeyCases: [],
+            assertions: []
+        )
         for caseMember in caseMembers {
             for element in caseMember.elements {
                 // ensure that the enum case only has one parameter
-                guard let parameters = element.parameterClause?.parameters,
-                    let parameterType = parameters.first?.type.as(IdentifierTypeSyntax.self),
-                    parameters.count == 1
+                guard let parameters = element.parameterClause?.parameters, parameters.count == 1,
+                    let parameter = parameters.first
                 else {
                     context.diagnose(
                         .init(node: element, message: BaseEntryDiagnostic<Attributes>.enumCasesMustHaveASingleParameter)
                     )
-                    hasDiagnostics = true
+                    result.hasDiagnostics = true
                     // do nothing for this case
                     continue
                 }
 
-                guard parameterType.name.text == databaseItemType,
-                    let firstArgumentType = parameterType.genericArgumentClause?.arguments.first?.argument
-                else {
-                    let message =
-                        "PolymorphicOperationReturnTypeMacro decorated enum cases parameter must be of \(databaseItemType) type."
-                    context.diagnose(
-                        .init(
-                            node: element,
-                            message: BasicDiagnosticMessage(
-                                message: message,
-                                rawValue: "enumCasesMustBeOfTheExpectedType"
+                let paramType = parameter.type.trimmedDescription
+
+                result.typesArrayElements.append(
+                    ArrayElementSyntax(
+                        expression: ExprSyntax(
+                            """
+                            (
+                                \(raw: paramType).RowType.self, .init { .\(element.name)($0) }
                             )
-                        )
+                            """
+                        ),
+                        trailingComma: .commaToken()
                     )
-                    hasDiagnostics = true
-                    // do nothing for this case
-                    continue
-                }
-
-                let handleCaseSyntax = ArrayElementSyntax(
-                    expression: ExprSyntax(
-                        """
-                        (
-                            \(firstArgumentType).self, .init { .\(element.name)($0) }
-                        )
-                        """
-                    ),
-                    trailingComma: .commaToken()
                 )
 
-                handleCases.append(handleCaseSyntax)
-
-                let getItemKeyCaseSyntax = SwitchCaseListSyntax.Element(
-                    """
-                    case let .\(element.name)(databaseItem):
-                        return databaseItem.compositePrimaryKey
-                    """
+                result.getItemKeyCases.append(
+                    SwitchCaseListSyntax.Element(
+                        """
+                        case let .\(element.name)(databaseItem):
+                            return databaseItem.compositePrimaryKey
+                        """
+                    )
                 )
 
-                getItemKeyCases.append(getItemKeyCaseSyntax)
+                result.assertions.append(
+                    self.assertionDecl(for: element, paramType: paramType, in: context)
+                )
             }
         }
 
-        return (hasDiagnostics, handleCases, getItemKeyCases)
+        return result
+    }
+
+    /// Emits a per-case assertion helper that forces a compile-time check that the case parameter type
+    /// is a `TypedTTLDatabaseItem<StandardPrimaryKeyAttributes, _, StandardTimeToLiveAttributes>` (or
+    /// any typealias thereof). When the case has a known source location, wraps the call in
+    /// `#sourceLocation` directives so the diagnostic surfaces at the user's case declaration.
+    private static func assertionDecl(
+        for element: EnumCaseElementListSyntax.Element,
+        paramType: String,
+        in context: some MacroExpansionContext
+    ) -> DeclSyntax {
+        let assertionCall = "_assertPolymorphicOperationReturnTypeParameter(\(paramType).self)"
+        let body: String
+        if let location = context.location(of: element) {
+            body = """
+                #sourceLocation(file: \(location.file), line: \(location.line))
+                \(assertionCall)
+                #sourceLocation()
+                """
+        } else {
+            body = assertionCall
+        }
+        return DeclSyntax(
+            stringLiteral: """
+                private static func _assertCase_\(element.name.text)() {
+                    \(body)
+                }
+                """
+        )
     }
 }

@@ -66,6 +66,27 @@ public struct PolymorphicOperationReturnOption<
     }
 }
 
+// Internal protocol used by the `@PolymorphicOperationReturnType` macro to extract the row type
+// of a case parameter via an associated type rather than a syntactic name match. Conforming types
+// (in practice only `TypedTTLDatabaseItem` and its typealiases) expose their carried `RowType` so
+// the macro can emit `<paramType>.RowType.self` and let Swift's type checker resolve typealias
+// chains transparently.
+// swiftlint:disable:next type_name
+public protocol _PolymorphicReturnTypeCaseParameter {
+    associatedtype RowType: Codable & Sendable
+}
+
+extension TypedTTLDatabaseItem: _PolymorphicReturnTypeCaseParameter {}
+
+// Internal helper used by the `@PolymorphicOperationReturnType` macro expansion to surface a
+// compile-time diagnostic at the user's enum case declaration when the case parameter type is not
+// a `TypedTTLDatabaseItem<StandardPrimaryKeyAttributes, _, StandardTimeToLiveAttributes>` (or a
+// typealias thereof). The leading-underscore prefix signals "do not call from user code".
+// swiftlint:disable:next identifier_name
+public func _assertPolymorphicOperationReturnTypeParameter<RowType: Codable & Sendable>(
+    _: TypedTTLDatabaseItem<StandardPrimaryKeyAttributes, RowType, StandardTimeToLiveAttributes>.Type
+) {}
+
 struct ReturnTypeDecodable<ReturnType: PolymorphicOperationReturnType>: Decodable {
     let decodedValue: ReturnType
 
