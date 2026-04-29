@@ -47,19 +47,18 @@ jobs:
       - name: Build
         run: swift build -c release -Xswiftc -strict-concurrency=complete
       - name: Run tests
-        # aws-crt-swift has a flaky TLS-context init failure on Linux GHA
-        # runners; retry to work around it. See aws-sdk-swift #1984.
+        # IntegrationTests skipped on the AWS SDK path: aws-crt-swift has a flaky
+        # TLS-context init failure on Linux GHA runners. See aws-sdk-swift #1984.
+        # End-to-end coverage of the generic table layer is provided by the Soto
+        # CI job (`BuildAndTestSoto`), which exercises IntegrationTests against
+        # LocalStack reliably.
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
           SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
           SSL_CERT_DIR: /etc/ssl/certs
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 15
-          max_attempts: 3
-          command: |
-            set -o pipefail
-            swift test 2>&1 | tee build.log
+        run: |
+          set -o pipefail
+          swift test --skip IntegrationTests 2>&1 | tee build.log
       - name: Rebuild tests for SwiftLint analyze
         # Separate verbose build to produce a compiler invocation log;
         # needs to happen after the real test run so the crash-triggering
@@ -208,17 +207,17 @@ jobs:
           echo "=== libcurl ===" && dpkg -l | grep -i libcurl
           echo "=== libssl/libcrypto ===" && ldconfig -p | grep -E "libssl|libcrypto" | head -10
       - name: Run tests with coverage
-        # aws-crt-swift has a flaky TLS-context init failure on Linux GHA
-        # runners; retry to work around it. See aws-sdk-swift #1984.
+        # Coverage is collected against the Soto trait so IntegrationTests can
+        # run reliably (the AWS SDK path hits the aws-crt-swift TLS-context init
+        # flake on Linux GHA — see aws-sdk-swift #1984). This means the report
+        # covers `DynamoDBTables` + `DynamoDBTablesSoto`, not `DynamoDBTablesAWS`,
+        # but the AWS adapter is a thin translation layer and most behavior under
+        # test lives in the generic core.
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
           SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
           SSL_CERT_DIR: /etc/ssl/certs
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 15
-          max_attempts: 3
-          command: swift test --enable-code-coverage --xunit-output test-results.xml
+        run: swift test --enable-code-coverage --xunit-output test-results.xml --traits SOTOSDK
       - name: Convert to LCOV
         run: |
           BIN_PATH=$(swift build --show-bin-path)

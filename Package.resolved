@@ -1,5 +1,5 @@
 {
-  "originHash" : "e28a4255a9e5e7219efb10c278dd54b1bbd4e4ef2283f48f28d6649b640a681c",
+  "originHash" : "ab6859114dd3109c3dc4ac4d9b865ccefaf6d3f5cc1d3ed5aa5ce1573ab18632",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/awslabs/aws-sdk-swift.git",
       "state" : {
-        "revision" : "b3a44d74387c886526c15adbd5a8051edde9271a",
-        "version" : "1.6.101"
+        "revision" : "0e6acf4a6ebab46c48acf8cdb206d1747bba294d",
+        "version" : "1.6.103"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/smithy-lang/smithy-swift",
       "state" : {
-        "revision" : "f092f39351555133910b9f5da9e002a82798f862",
-        "version" : "0.201.0"
+        "revision" : "3df71b8c33b21b9a76071c915504a8dfda663c33",
+        "version" : "0.203.0"
       }
     },
     {
@@ -195,8 +195,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tachyonics/swift-local-containers",
       "state" : {
-        "revision" : "0238a8a0cabafda5755a949db59695eebaf11fcb",
-        "version" : "0.6.0"
+        "revision" : "26938392a902efbe21bdba772741085af3c6e68b",
+        "version" : "0.8.0"
       }
     },
     {
