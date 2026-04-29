@@ -54,9 +54,11 @@ struct TestTypeC: Codable {
     }
 }
 
+typealias TestTypeAItem = StandardTypedDatabaseItem<TestTypeA>
+
 @PolymorphicOperationReturnType
 enum TestQueryableTypes {
-    case testTypeA(StandardTypedDatabaseItem<TestTypeA>)
+    case testTypeA(TestTypeAItem)
     case testTypeB(StandardTypedDatabaseItem<TestTypeB>)
 }
 
