@@ -111,7 +111,26 @@ overload) carrying attempt index and elapsed time.
   their own metrics layer above the table API?
 - Would a swift-metrics integration be a better fit?
 
-### 2. Re-enable AWS SDK integration tests in CI
+### 2. Re-enable APIBreakage CI job
+
+**Status:** Disabled in CI pending upstream fix
+
+**Source-breaking?** No. CI-only change.
+
+**Description:** The `APIBreakage` job runs `swift package
+diagnose-api-breaking-changes` to catch unintended public-API changes against
+`origin/main`. It currently hits a `swift-api-digester` C module redefinition
+bug
+([swift-package-manager #8103](https://github.com/swiftlang/swift-package-manager/issues/8103))
+even with `DynamoDBTablesAWS` excluded from `--targets`. The job is commented
+out in `.github/workflows/swift.yml` rather than removed so it can be
+re-enabled cleanly when the upstream fix lands.
+
+**Recommendation:** Re-enable when swift-package-manager #8103 is resolved.
+Until then, public-API changes are guarded only by review (and by the
+deliberate decisions captured in this document).
+
+### 3. Re-enable AWS SDK integration tests in CI
 
 **Status:** Disabled in CI pending upstream fix
 

@@ -245,31 +245,33 @@ jobs:
           fail_ci_if_error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  APIBreakage:
-    name: API Breakage / Swift ${{ matrix.swift-version }}
-    strategy:
-      matrix:
-        swift-version: ["6.2.4"]
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Install Swift
-        run: |
-          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
-          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
-          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
-          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
-          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
-          sudo tar -xzf swift.tar.gz -C /opt/
-          rm swift.tar.gz
-          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libssl-dev
-      - name: Check for API breaking changes
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          # DynamoDBTablesAWS excluded due to swift-api-digester C module redefinition bug
-          # https://github.com/swiftlang/swift-package-manager/issues/8103
-          swift package diagnose-api-breaking-changes origin/main --targets DynamoDBTables DynamoDBTablesSoto
+  # APIBreakage temporarily disabled: swift-api-digester hits a C module
+  # redefinition bug even with `DynamoDBTablesAWS` excluded from `--targets`.
+  # See https://github.com/swiftlang/swift-package-manager/issues/8103.
+  # Re-enable once the upstream fix lands.
+  # APIBreakage:
+  #   name: API Breakage / Swift ${{ matrix.swift-version }}
+  #   strategy:
+  #     matrix:
+  #       swift-version: ["6.2.4"]
+  #   runs-on: ubuntu-24.04
+  #   steps:
+  #     - uses: actions/checkout@v6
+  #       with:
+  #         fetch-depth: 0
+  #     - name: Install Swift
+  #       run: |
+  #         UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+  #         UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+  #         UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+  #         SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+  #         curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+  #         sudo tar -xzf swift.tar.gz -C /opt/
+  #         rm swift.tar.gz
+  #         echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
+  #     - name: Install dependencies
+  #       run: sudo apt-get update && sudo apt-get install -y libssl-dev
+  #     - name: Check for API breaking changes
+  #       run: |
+  #         git config --global --add safe.directory "$GITHUB_WORKSPACE"
+  #         swift package diagnose-api-breaking-changes origin/main --targets DynamoDBTables DynamoDBTablesSoto
