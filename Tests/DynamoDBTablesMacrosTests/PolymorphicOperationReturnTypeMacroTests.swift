@@ -32,12 +32,14 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
         )
     ]
 
-    // The expansion includes per-case `_assertCase_*` helpers that force a compile-time check
-    // that the case parameter is a `TypedTTLDatabaseItem<...>` specialization. In real builds the
-    // helpers wrap their assertion call in `#sourceLocation(file:, line:)` so the diagnostic
-    // surfaces at the user's case declaration; `BasicMacroExpansionContext` (used by
-    // `assertMacroExpansion`) returns nil from `location(of:)` for detached nodes, so the test
-    // goldens see the fallback (no `#sourceLocation` directives) path.
+    // The expansion derives both `AttributesType` and `TimeToLiveAttributesType` from the first
+    // case's parameter type and emits per-case `_assertCase_*` helpers that pin each case
+    // parameter to `TypedTTLDatabaseItem<AttributesType, _, TimeToLiveAttributesType>`. The pin
+    // catches both "wrong parameter shape" and "case attributes/TTL don't match the enum's" at
+    // the user's case declaration. In real builds the helpers wrap their assertion in
+    // `#sourceLocation(file:, line:)`; `BasicMacroExpansionContext` (used by `assertMacroExpansion`)
+    // returns nil from `location(of:)` for detached nodes, so the test goldens see the
+    // fallback (no `#sourceLocation` directives) path.
     func testExpansionWithStandardTypedDatabaseItem() {
         assertMacroExpansion(
             """
@@ -54,8 +56,8 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
                 }
 
                 extension TestQueryableTypes: PolymorphicOperationReturnType {
-                    typealias AttributesType = StandardPrimaryKeyAttributes
-                    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
+                    typealias AttributesType = StandardTypedDatabaseItem<TestTypeA>.AttributesType
+                    typealias TimeToLiveAttributesType = StandardTypedDatabaseItem<TestTypeA>.TimeToLiveAttributesType
                     static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] =
                     [(
                         StandardTypedDatabaseItem<TestTypeA>.RowType.self, .init {
@@ -67,10 +69,18 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
                             }
                         ),]
                     private static func _assertCase_testTypeA() {
-                        _assertPolymorphicOperationReturnTypeParameter(StandardTypedDatabaseItem<TestTypeA>.self)
+                        func _check<R: Codable & Sendable>(
+                        _: TypedTTLDatabaseItem<AttributesType, R, TimeToLiveAttributesType>.Type
+                        ) {
+                        }
+                        _check(StandardTypedDatabaseItem<TestTypeA>.self)
                     }
                     private static func _assertCase_testTypeB() {
-                        _assertPolymorphicOperationReturnTypeParameter(StandardTypedDatabaseItem<TestTypeB>.self)
+                        func _check<R: Codable & Sendable>(
+                        _: TypedTTLDatabaseItem<AttributesType, R, TimeToLiveAttributesType>.Type
+                        ) {
+                        }
+                        _check(StandardTypedDatabaseItem<TestTypeB>.self)
                     }
                 }
 
@@ -107,8 +117,8 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
                 }
 
                 extension TestQueryableTypes: PolymorphicOperationReturnType {
-                    typealias AttributesType = StandardPrimaryKeyAttributes
-                    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
+                    typealias AttributesType = MyAlias<TestTypeA>.AttributesType
+                    typealias TimeToLiveAttributesType = MyAlias<TestTypeA>.TimeToLiveAttributesType
                     static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] =
                     [(
                         MyAlias<TestTypeA>.RowType.self, .init {
@@ -116,7 +126,11 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
                             }
                         ),]
                     private static func _assertCase_testTypeA() {
-                        _assertPolymorphicOperationReturnTypeParameter(MyAlias<TestTypeA>.self)
+                        func _check<R: Codable & Sendable>(
+                        _: TypedTTLDatabaseItem<AttributesType, R, TimeToLiveAttributesType>.Type
+                        ) {
+                        }
+                        _check(MyAlias<TestTypeA>.self)
                     }
                 }
 
@@ -152,8 +166,8 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
                 }
 
                 extension TestQueryableTypes: PolymorphicOperationReturnType {
-                    typealias AttributesType = StandardPrimaryKeyAttributes
-                    typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes
+                    typealias AttributesType = ConcreteAlias.AttributesType
+                    typealias TimeToLiveAttributesType = ConcreteAlias.TimeToLiveAttributesType
                     static let types: [(Codable.Type, PolymorphicOperationReturnOption<AttributesType, Self, TimeToLiveAttributesType>)] =
                     [(
                         ConcreteAlias.RowType.self, .init {
@@ -161,7 +175,11 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
                             }
                         ),]
                     private static func _assertCase_testTypeA() {
-                        _assertPolymorphicOperationReturnTypeParameter(ConcreteAlias.self)
+                        func _check<R: Codable & Sendable>(
+                        _: TypedTTLDatabaseItem<AttributesType, R, TimeToLiveAttributesType>.Type
+                        ) {
+                        }
+                        _check(ConcreteAlias.self)
                     }
                 }
 

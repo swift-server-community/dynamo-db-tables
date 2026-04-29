@@ -32,12 +32,13 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
         )
     ]
 
-    // The expansion includes per-case `_assertCase_*` helpers that force a compile-time check
-    // that the case parameter is a `WriteEntry<...>`. In real builds the helpers wrap their
-    // assertion call in `#sourceLocation(file:, line:)` so the diagnostic surfaces at the
-    // user's case declaration; `BasicMacroExpansionContext` (used by `assertMacroExpansion`)
-    // returns nil from `location(of:)` for detached nodes, so the test goldens see the
-    // fallback (no `#sourceLocation` directives) path.
+    // The expansion derives `AttributesType` from the first case's parameter type and emits
+    // per-case `_assertCase_*` helpers that pin each case parameter to
+    // `WriteEntry<AttributesType, _, _>`. The pin catches both "wrong parameter shape" and
+    // "case attributes don't match the enum's" at the user's case declaration. In real builds
+    // the helpers wrap their assertion in `#sourceLocation(file:, line:)`; `BasicMacroExpansionContext`
+    // (used by `assertMacroExpansion`) returns nil from `location(of:)` for detached nodes, so
+    // the test goldens see the fallback (no `#sourceLocation` directives) path.
     func testExpansionWithTwoCases() {
         assertMacroExpansion(
             """
@@ -54,6 +55,7 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
                 }
 
                 extension TestEntry: PolymorphicWriteEntry {
+                    typealias AttributesType = TestTypeAWriteEntry.AttributesType
                     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteEntryTransformType {
                         switch self {
                         case let .testTypeA(writeEntry):
@@ -62,7 +64,7 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
                             return try context.transform(writeEntry)
                         }
                     }
-                    var compositePrimaryKey: StandardCompositePrimaryKey {
+                    var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
                         switch self {
                         case let .testTypeA(writeEntry):
                             return writeEntry.compositePrimaryKey
@@ -71,10 +73,18 @@ final class PolymorphicWriteEntryMacroTests: XCTestCase {
                         }
                     }
                     private static func _assertCase_testTypeA() {
-                        _assertPolymorphicWriteEntryParameter(TestTypeAWriteEntry.self)
+                        func _check<R: Codable & Sendable, T: TimeToLiveAttributes>(
+                        _: WriteEntry<AttributesType, R, T>.Type
+                        ) {
+                        }
+                        _check(TestTypeAWriteEntry.self)
                     }
                     private static func _assertCase_testTypeB() {
-                        _assertPolymorphicWriteEntryParameter(TestTypeBWriteEntry.self)
+                        func _check<R: Codable & Sendable, T: TimeToLiveAttributes>(
+                        _: WriteEntry<AttributesType, R, T>.Type
+                        ) {
+                        }
+                        _check(TestTypeBWriteEntry.self)
                     }
                 }
                 """,

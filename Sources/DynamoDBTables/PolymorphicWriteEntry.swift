@@ -148,20 +148,21 @@ where WriteEntryTransformType.TableType == WriteTransactionConstraintType.TableT
 
 extension StandardPolymorphicWriteEntryContext: Sendable where WriteEntryTransformType.TableType: Sendable {}
 
-// Internal helpers used by `@PolymorphicWriteEntry` and `@PolymorphicTransactionConstraintEntry`
-// macro expansions to surface compile-time diagnostics at the user's enum case declaration when
-// the case parameter type does not match the expected `WriteEntry<...>` / `TransactionConstraintEntry<...>`
-// shape. The leading-underscore prefix signals "do not call from user code".
-// swiftlint:disable identifier_name
-public func _assertPolymorphicWriteEntryParameter<
-    AttributesType: PrimaryKeyAttributes,
-    ItemType: Codable & Sendable,
-    TimeToLiveAttributesType: TimeToLiveAttributes
->(_: WriteEntry<AttributesType, ItemType, TimeToLiveAttributesType>.Type) {}
+// Internal protocols used by `@PolymorphicWriteEntry` and `@PolymorphicTransactionConstraintEntry`
+// macro expansions to derive the enum-level `AttributesType` from the case parameter type, rather
+// than hardcoding `StandardPrimaryKeyAttributes`. Conforming types (in practice only `WriteEntry`
+// and `TransactionConstraintEntry`) expose their attributes type via auto-witnessing — the generic
+// parameter `AttributesType` on each enum already shares the associated-type name.
+// swiftlint:disable type_name
+public protocol _PolymorphicWriteEntryCaseParameter {
+    associatedtype AttributesType: PrimaryKeyAttributes
+}
 
-public func _assertPolymorphicTransactionConstraintEntryParameter<
-    AttributesType: PrimaryKeyAttributes,
-    ItemType: Codable & Sendable,
-    TimeToLiveAttributesType: TimeToLiveAttributes
->(_: TransactionConstraintEntry<AttributesType, ItemType, TimeToLiveAttributesType>.Type) {}
-// swiftlint:enable identifier_name
+public protocol _PolymorphicTransactionConstraintEntryCaseParameter {
+    associatedtype AttributesType: PrimaryKeyAttributes
+}
+// swiftlint:enable type_name
+
+extension WriteEntry: _PolymorphicWriteEntryCaseParameter {}
+
+extension TransactionConstraintEntry: _PolymorphicTransactionConstraintEntryCaseParameter {}

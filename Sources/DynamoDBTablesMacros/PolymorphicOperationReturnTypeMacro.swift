@@ -29,6 +29,7 @@ private struct Attributes: CoreMacroAttributes {
 
 private struct OperationReturnTypeCases {
     var hasDiagnostics: Bool
+    var firstParameterType: String?
     var typesArrayElements: ArrayElementListSyntax
     var getItemKeyCases: SwitchCaseListSyntax
     var assertions: [DeclSyntax]
@@ -86,6 +87,13 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
             return []
         }
 
+        // The enum-level `AttributesType` and `TimeToLiveAttributesType` are derived from the first
+        // case's parameter type. Subsequent cases are verified to share these via the per-case
+        // assertion helpers.
+        guard let firstParameterType = cases.firstParameterType else {
+            return []
+        }
+
         let polymorphicType = TypeSyntax(
             extendedGraphemeClusterLiteral: requiresProtocolConformance
                 ? "\(type.trimmed): \(Attributes.protocolName) "
@@ -94,8 +102,12 @@ public enum PolymorphicOperationReturnTypeMacro: ExtensionMacro {
         let extensionDecl = try ExtensionDeclSyntax(
             extendedType: polymorphicType,
             memberBlockBuilder: {
-                try TypeAliasDeclSyntax("typealias AttributesType = StandardPrimaryKeyAttributes")
-                try TypeAliasDeclSyntax("typealias TimeToLiveAttributesType = StandardTimeToLiveAttributes")
+                try TypeAliasDeclSyntax(
+                    "typealias AttributesType = \(raw: firstParameterType).AttributesType"
+                )
+                try TypeAliasDeclSyntax(
+                    "typealias TimeToLiveAttributesType = \(raw: firstParameterType).TimeToLiveAttributesType"
+                )
 
                 let casesArray = ArrayExprSyntax(
                     leftSquare: .leftSquareToken(),
@@ -151,6 +163,7 @@ extension PolymorphicOperationReturnTypeMacro {
     ) -> OperationReturnTypeCases {
         var result = OperationReturnTypeCases(
             hasDiagnostics: false,
+            firstParameterType: nil,
             typesArrayElements: [],
             getItemKeyCases: [],
             assertions: []
@@ -170,6 +183,10 @@ extension PolymorphicOperationReturnTypeMacro {
                 }
 
                 let paramType = parameter.type.trimmedDescription
+
+                if result.firstParameterType == nil {
+                    result.firstParameterType = paramType
+                }
 
                 result.typesArrayElements.append(
                     ArrayElementSyntax(
@@ -203,29 +220,41 @@ extension PolymorphicOperationReturnTypeMacro {
     }
 
     /// Emits a per-case assertion helper that forces a compile-time check that the case parameter type
-    /// is a `TypedTTLDatabaseItem<StandardPrimaryKeyAttributes, _, StandardTimeToLiveAttributes>` (or
-    /// any typealias thereof). When the case has a known source location, wraps the call in
-    /// `#sourceLocation` directives so the diagnostic surfaces at the user's case declaration.
+    /// is a `TypedTTLDatabaseItem<AttributesType, _, TimeToLiveAttributesType>` — both confirming the
+    /// parameter shape and that the case's attributes/TTL match the enum's derived typealiases. When
+    /// the case has a known source location, wraps the call in `#sourceLocation` directives so the
+    /// diagnostic surfaces at the user's case declaration.
     private static func assertionDecl(
         for element: EnumCaseElementListSyntax.Element,
         paramType: String,
         in context: some MacroExpansionContext
     ) -> DeclSyntax {
-        let assertionCall = "_assertPolymorphicOperationReturnTypeParameter(\(paramType).self)"
-        let body: String
+        // The pretty-printer splits multi-line declarations across lines, so the
+        // `#sourceLocation` directive is placed immediately before the `_check` call site
+        // (where any diagnostic actually fires) rather than at the top of the body — that
+        // way the directive's line offset doesn't drift through the function declaration.
+        let assertionBody: String
         if let location = context.location(of: element) {
-            body = """
+            assertionBody = """
+                func _check<R: Codable & Sendable>(
+                    _: TypedTTLDatabaseItem<AttributesType, R, TimeToLiveAttributesType>.Type
+                ) {}
                 #sourceLocation(file: \(location.file), line: \(location.line))
-                \(assertionCall)
+                _check(\(paramType).self)
                 #sourceLocation()
                 """
         } else {
-            body = assertionCall
+            assertionBody = """
+                func _check<R: Codable & Sendable>(
+                    _: TypedTTLDatabaseItem<AttributesType, R, TimeToLiveAttributesType>.Type
+                ) {}
+                _check(\(paramType).self)
+                """
         }
         return DeclSyntax(
             stringLiteral: """
                 private static func _assertCase_\(element.name.text)() {
-                    \(body)
+                    \(assertionBody)
                 }
                 """
         )
