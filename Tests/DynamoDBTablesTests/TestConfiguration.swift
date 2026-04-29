@@ -78,3 +78,39 @@ enum TestPolymorphicTransactionConstraintEntry {
     case testTypeA(TestTypeAStandardTransactionConstraintEntry)
     case testTypeB(TestTypeBStandardTransactionConstraintEntry)
 }
+
+// Lock in that the macros work with non-Standard `PrimaryKeyAttributes` end-to-end. The rest of
+// the test suite uses `Standard*` everywhere; these fixtures exist purely to verify the
+// polymorphic behaviour of the macros.
+struct CustomPrimaryKeyAttributes: PrimaryKeyAttributes {
+    static var partitionKeyAttributeName: String { "CustomPK" }
+    static var sortKeyAttributeName: String { "CustomSK" }
+}
+
+typealias CustomAttributesWriteEntry<ItemType: Codable & Sendable> = WriteEntry<
+    CustomPrimaryKeyAttributes, ItemType, StandardTimeToLiveAttributes
+>
+typealias CustomAttributesTransactionConstraintEntry<ItemType: Codable & Sendable> = TransactionConstraintEntry<
+    CustomPrimaryKeyAttributes, ItemType, StandardTimeToLiveAttributes
+>
+typealias CustomAttributesTypedDatabaseItem<RowType: Codable & Sendable> = TypedTTLDatabaseItem<
+    CustomPrimaryKeyAttributes, RowType, StandardTimeToLiveAttributes
+>
+
+@PolymorphicWriteEntry
+enum CustomAttributesPolymorphicWriteEntry {
+    case testTypeA(CustomAttributesWriteEntry<TestTypeA>)
+    case testTypeB(CustomAttributesWriteEntry<TestTypeB>)
+}
+
+@PolymorphicTransactionConstraintEntry
+enum CustomAttributesPolymorphicTransactionConstraintEntry {
+    case testTypeA(CustomAttributesTransactionConstraintEntry<TestTypeA>)
+    case testTypeB(CustomAttributesTransactionConstraintEntry<TestTypeB>)
+}
+
+@PolymorphicOperationReturnType
+enum CustomAttributesQueryableTypes {
+    case testTypeA(CustomAttributesTypedDatabaseItem<TestTypeA>)
+    case testTypeB(CustomAttributesTypedDatabaseItem<TestTypeB>)
+}

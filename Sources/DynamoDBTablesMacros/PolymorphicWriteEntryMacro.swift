@@ -29,7 +29,7 @@ struct PolymorphicWriteEntryMacroAttributes: MacroAttributes {
 
     static let contextType: String = "PolymorphicWriteEntryContext"
 
-    static let assertHelperName: String = "_assertPolymorphicWriteEntryParameter"
+    static let caseParameterBaseTypeName: String = "WriteEntry"
 }
 
 public enum PolymorphicWriteEntryMacro: ExtensionMacro {

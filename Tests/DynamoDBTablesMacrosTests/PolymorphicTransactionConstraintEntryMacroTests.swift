@@ -32,8 +32,8 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
         )
     ]
 
-    // See PolymorphicWriteEntryMacroTests for context on why `#sourceLocation` directives
-    // don't appear in the test goldens (test framework returns nil from `location(of:)`).
+    // See PolymorphicWriteEntryMacroTests for context on the `AttributesType` derivation and
+    // why `#sourceLocation` directives don't appear in the test goldens.
     func testExpansionWithTwoCases() {
         assertMacroExpansion(
             """
@@ -50,6 +50,7 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
                 }
 
                 extension TestConstraint: PolymorphicTransactionConstraintEntry {
+                    typealias AttributesType = TestTypeAStandardTransactionConstraintEntry.AttributesType
                     func handle<Context: PolymorphicWriteEntryContext>(context: Context) throws -> Context.WriteTransactionConstraintType {
                         switch self {
                         case let .testTypeA(writeEntry):
@@ -58,7 +59,7 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
                             return try context.transform(writeEntry)
                         }
                     }
-                    var compositePrimaryKey: StandardCompositePrimaryKey {
+                    var compositePrimaryKey: CompositePrimaryKey<AttributesType> {
                         switch self {
                         case let .testTypeA(writeEntry):
                             return writeEntry.compositePrimaryKey
@@ -67,10 +68,18 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
                         }
                     }
                     private static func _assertCase_testTypeA() {
-                        _assertPolymorphicTransactionConstraintEntryParameter(TestTypeAStandardTransactionConstraintEntry.self)
+                        func _check<R: Codable & Sendable, T: TimeToLiveAttributes>(
+                        _: TransactionConstraintEntry<AttributesType, R, T>.Type
+                        ) {
+                        }
+                        _check(TestTypeAStandardTransactionConstraintEntry.self)
                     }
                     private static func _assertCase_testTypeB() {
-                        _assertPolymorphicTransactionConstraintEntryParameter(TestTypeBStandardTransactionConstraintEntry.self)
+                        func _check<R: Codable & Sendable, T: TimeToLiveAttributes>(
+                        _: TransactionConstraintEntry<AttributesType, R, T>.Type
+                        ) {
+                        }
+                        _check(TestTypeBStandardTransactionConstraintEntry.self)
                     }
                 }
                 """,

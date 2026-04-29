@@ -32,7 +32,10 @@ protocol MacroAttributes: CoreMacroAttributes {
 
     static var contextType: String { get }
 
-    static var assertHelperName: String { get }
+    /// The name of the concrete case-parameter base type (e.g. `"WriteEntry"`). Used inside the
+    /// generated per-case assertion to pin the parameter type's `AttributesType` to the enum's
+    /// derived `AttributesType` typealias.
+    static var caseParameterBaseTypeName: String { get }
 }
 
 enum BaseEntryDiagnostic<Attributes: CoreMacroAttributes>: String, DiagnosticMessage {
@@ -60,6 +63,7 @@ enum BaseEntryDiagnostic<Attributes: CoreMacroAttributes>: String, DiagnosticMes
 
 struct CaseExpansionResult {
     var hasDiagnostics: Bool
+    var firstParameterType: String?
     var handleCases: SwitchCaseListSyntax
     var compositePrimaryKeyCases: SwitchCaseListSyntax
     var assertions: [DeclSyntax]
@@ -72,6 +76,7 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
     ) -> CaseExpansionResult {
         var result = CaseExpansionResult(
             hasDiagnostics: false,
+            firstParameterType: nil,
             handleCases: [],
             compositePrimaryKeyCases: [],
             assertions: []
@@ -88,6 +93,10 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
                     result.hasDiagnostics = true
                     // do nothing for this case
                     continue
+                }
+
+                if result.firstParameterType == nil {
+                    result.firstParameterType = parameter.type.trimmedDescription
                 }
 
                 result.handleCases.append(
@@ -118,30 +127,42 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
     }
 
     /// Emits a per-case assertion helper that forces a compile-time check that the case parameter type
-    /// is a `WriteEntry<...>` (or `TransactionConstraintEntry<...>`). When the case has a known source
-    /// location, wraps the call in `#sourceLocation` directives so the diagnostic surfaces at the
-    /// user's enum case declaration rather than at the macro-generated buffer.
+    /// is a `<BaseType><AttributesType, _, _>` — both confirming the parameter shape and that the
+    /// case's attributes match the enum's derived `AttributesType` typealias. When the case has a
+    /// known source location, wraps the call in `#sourceLocation` directives so the diagnostic
+    /// surfaces at the user's enum case declaration rather than at the macro-generated buffer.
     private static func assertionDecl(
         for element: EnumCaseElementListSyntax.Element,
         parameter: EnumCaseParameterListSyntax.Element,
         in context: some MacroExpansionContext
     ) -> DeclSyntax {
         let paramType = parameter.type.trimmedDescription
-        let assertionCall = "\(Attributes.assertHelperName)(\(paramType).self)"
-        let body: String
+        // The pretty-printer splits multi-line declarations across lines, so the
+        // `#sourceLocation` directive is placed immediately before the `_check` call site
+        // (where any diagnostic actually fires) rather than at the top of the body — that
+        // way the directive's line offset doesn't drift through the function declaration.
+        let assertionBody: String
         if let location = context.location(of: element) {
-            body = """
+            assertionBody = """
+                func _check<R: Codable & Sendable, T: TimeToLiveAttributes>(
+                    _: \(Attributes.caseParameterBaseTypeName)<AttributesType, R, T>.Type
+                ) {}
                 #sourceLocation(file: \(location.file), line: \(location.line))
-                \(assertionCall)
+                _check(\(paramType).self)
                 #sourceLocation()
                 """
         } else {
-            body = assertionCall
+            assertionBody = """
+                func _check<R: Codable & Sendable, T: TimeToLiveAttributes>(
+                    _: \(Attributes.caseParameterBaseTypeName)<AttributesType, R, T>.Type
+                ) {}
+                _check(\(paramType).self)
+                """
         }
         return DeclSyntax(
             stringLiteral: """
                 private static func _assertCase_\(element.name.text)() {
-                    \(body)
+                    \(assertionBody)
                 }
                 """
         )
@@ -198,6 +219,12 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
             return []
         }
 
+        // The enum-level `AttributesType` is derived from the first case's parameter type. Subsequent
+        // cases are verified to have the same `AttributesType` via the per-case assertion helpers.
+        guard let firstParameterType = cases.firstParameterType else {
+            return []
+        }
+
         let type = TypeSyntax(
             extendedGraphemeClusterLiteral: requiresProtocolConformance
                 ? "\(type.trimmed): \(Attributes.protocolName) "
@@ -206,13 +233,17 @@ enum BaseEntryMacro<Attributes: MacroAttributes>: ExtensionMacro {
         let extensionDecl = try ExtensionDeclSyntax(
             extendedType: type,
             memberBlockBuilder: {
+                try TypeAliasDeclSyntax(
+                    "typealias AttributesType = \(raw: firstParameterType).AttributesType"
+                )
+
                 try FunctionDeclSyntax(
                     "func handle<Context: \(raw: Attributes.contextType)>(context: Context) throws -> Context.\(raw: Attributes.transformType)"
                 ) {
                     SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: cases.handleCases)
                 }
 
-                try VariableDeclSyntax("var compositePrimaryKey: StandardCompositePrimaryKey") {
+                try VariableDeclSyntax("var compositePrimaryKey: CompositePrimaryKey<AttributesType>") {
                     SwitchExprSyntax(subject: ExprSyntax(stringLiteral: "self"), cases: cases.compositePrimaryKeyCases)
                 }
 

@@ -29,7 +29,7 @@ struct PolymorphicTransactionConstraintEntryMacroAttributes: MacroAttributes {
 
     static let contextType: String = "PolymorphicWriteEntryContext"
 
-    static let assertHelperName: String = "_assertPolymorphicTransactionConstraintEntryParameter"
+    static let caseParameterBaseTypeName: String = "TransactionConstraintEntry"
 }
 
 public enum PolymorphicTransactionConstraintEntryMacro: ExtensionMacro {
