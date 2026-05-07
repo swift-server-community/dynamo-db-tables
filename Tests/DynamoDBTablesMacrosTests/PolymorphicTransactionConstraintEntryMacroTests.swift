@@ -33,7 +33,7 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
     ]
 
     // See PolymorphicWriteEntryMacroTests for context on the `AttributesType` derivation and
-    // why `#sourceLocation` directives don't appear in the test goldens.
+    // the `#sourceLocation` directives.
     func testExpansionWithTwoCases() {
         assertMacroExpansion(
             """
@@ -72,14 +72,18 @@ final class PolymorphicTransactionConstraintEntryMacroTests: XCTestCase {
                         _: TransactionConstraintEntry<AttributesType, R, T>.Type
                         ) {
                         }
+                        #sourceLocation(file: "TestModule/test.swift", line: 3)
                         _check(TestTypeAStandardTransactionConstraintEntry.self)
+                        #sourceLocation()
                     }
                     private static func _assertCase_testTypeB() {
                         func _check<R: Codable & Sendable, T: TimeToLiveAttributes>(
                         _: TransactionConstraintEntry<AttributesType, R, T>.Type
                         ) {
                         }
+                        #sourceLocation(file: "TestModule/test.swift", line: 4)
                         _check(TestTypeBStandardTransactionConstraintEntry.self)
+                        #sourceLocation()
                     }
                 }
                 """,
