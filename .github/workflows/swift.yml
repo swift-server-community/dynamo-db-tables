@@ -134,6 +134,51 @@ jobs:
       - name: SwiftLint unused imports
         if: matrix.os == 'ubuntu-24.04'
         run: grep -v DynamoDBTablesAWS build.log > analyze.log && swiftlint analyze --strict --quiet --compiler-log-path analyze.log
+  SwiftSyntaxMatrix:
+    name: swift-syntax ${{ matrix.swift-syntax-major }}.x / Swift ${{ matrix.swift-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04]
+        swift-version: ["6.3.1"]
+        swift-syntax-major: ["602", "603"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Swift
+        run: |
+          UBUNTU_VER="${{ matrix.os || 'ubuntu-24.04' }}"
+          UBUNTU_VER="${UBUNTU_VER#ubuntu-}"
+          UBUNTU_NO_DOT="${UBUNTU_VER//./}"
+          SWIFT_DIR="swift-${{ matrix.swift-version }}-RELEASE-ubuntu${UBUNTU_VER}"
+          curl -sL "https://download.swift.org/swift-${{ matrix.swift-version }}-release/ubuntu${UBUNTU_NO_DOT}/swift-${{ matrix.swift-version }}-RELEASE/${SWIFT_DIR}.tar.gz" -o swift.tar.gz
+          sudo tar -xzf swift.tar.gz -C /opt/
+          rm swift.tar.gz
+          echo "/opt/${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev libcurl4-openssl-dev ca-certificates curl
+      - name: Pin swift-syntax to ${{ matrix.swift-syntax-major }}.x
+        # Narrow the declared range to a single major so SPM resolves
+        # to the matrix's swift-syntax version. Targets the exact range
+        # string in Package.swift; if that string changes the sed
+        # needs to follow.
+        run: |
+          next=$((${{ matrix.swift-syntax-major }} + 1))
+          sed -i 's|"602.0.0"..<"604.0.0"|"${{ matrix.swift-syntax-major }}.0.0"..<"'${next}'.0.0"|' Package.swift
+          grep swift-syntax Package.swift
+      - name: Resolve dependencies
+        run: swift package update
+      - name: Build
+        run: swift build -c release -Xswiftc -strict-concurrency=complete
+      - name: Run tests
+        # IntegrationTests skipped — they need LocalStack auth and aren't
+        # exercised by the swift-syntax-version dimension. The macro-
+        # touching code under test compiles via the unit tests.
+        env:
+          SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+          SSL_CERT_DIR: /etc/ssl/certs
+        run: swift test --skip IntegrationTests
+
   StaticLinuxSDKSoto:
     name: Static Linux SDK Soto (cross-compile to aarch64-musl)
     runs-on: ubuntu-24.04
