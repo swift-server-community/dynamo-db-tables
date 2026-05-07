@@ -169,7 +169,13 @@ jobs:
       - name: Resolve dependencies
         run: swift package update
       - name: Build
-        run: swift build -c release -Xswiftc -strict-concurrency=complete
+        # Build with the SOTOSDK trait. The default AWSSDK path pulls
+        # in aws-sdk-swift, which hits a `_FoundationICU` vs `libxml2`
+        # module-redefinition error under Swift 6.3.1 — the existing
+        # `BuildAndTest` job pins itself to 6.2.4 to dodge that. Soto
+        # is trait-equivalent for the swift-syntax / macro path under
+        # test, and `BuildAndTestSoto` already validates it on 6.3.1.
+        run: swift build -c release --traits SOTOSDK -Xswiftc -strict-concurrency=complete
       - name: Run tests
         # IntegrationTests skipped — they need LocalStack auth and aren't
         # exercised by the swift-syntax-version dimension. The macro-
@@ -177,7 +183,7 @@ jobs:
         env:
           SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
           SSL_CERT_DIR: /etc/ssl/certs
-        run: swift test --skip IntegrationTests
+        run: swift test --traits SOTOSDK --skip IntegrationTests
 
   StaticLinuxSDKSoto:
     name: Static Linux SDK Soto (cross-compile to aarch64-musl)
