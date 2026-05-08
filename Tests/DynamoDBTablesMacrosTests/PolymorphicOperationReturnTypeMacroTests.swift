@@ -36,10 +36,11 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
     // case's parameter type and emits per-case `_assertCase_*` helpers that pin each case
     // parameter to `TypedTTLDatabaseItem<AttributesType, _, TimeToLiveAttributesType>`. The pin
     // catches both "wrong parameter shape" and "case attributes/TTL don't match the enum's" at
-    // the user's case declaration. In real builds the helpers wrap their assertion in
-    // `#sourceLocation(file:, line:)`; `BasicMacroExpansionContext` (used by `assertMacroExpansion`)
-    // returns nil from `location(of:)` for detached nodes, so the test goldens see the
-    // fallback (no `#sourceLocation` directives) path.
+    // the user's case declaration. The helpers wrap their assertion in `#sourceLocation(file:,
+    // line:)` so a diagnostic surfaces at the user's enum case rather than the macro-generated
+    // buffer. swift-syntax 602+'s `BasicMacroExpansionContext` (used by `assertMacroExpansion`)
+    // returns a synthesized `TestModule/test.swift` location for inputs, so the goldens
+    // reflect the production path.
     func testExpansionWithStandardTypedDatabaseItem() {
         assertMacroExpansion(
             """
@@ -73,14 +74,18 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
                         _: TypedTTLDatabaseItem<AttributesType, R, TimeToLiveAttributesType>.Type
                         ) {
                         }
+                        #sourceLocation(file: "TestModule/test.swift", line: 3)
                         _check(StandardTypedDatabaseItem<TestTypeA>.self)
+                        #sourceLocation()
                     }
                     private static func _assertCase_testTypeB() {
                         func _check<R: Codable & Sendable>(
                         _: TypedTTLDatabaseItem<AttributesType, R, TimeToLiveAttributesType>.Type
                         ) {
                         }
+                        #sourceLocation(file: "TestModule/test.swift", line: 4)
                         _check(StandardTypedDatabaseItem<TestTypeB>.self)
+                        #sourceLocation()
                     }
                 }
 
@@ -130,7 +135,9 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
                         _: TypedTTLDatabaseItem<AttributesType, R, TimeToLiveAttributesType>.Type
                         ) {
                         }
+                        #sourceLocation(file: "TestModule/test.swift", line: 3)
                         _check(MyAlias<TestTypeA>.self)
+                        #sourceLocation()
                     }
                 }
 
@@ -179,7 +186,9 @@ final class PolymorphicOperationReturnTypeMacroTests: XCTestCase {
                         _: TypedTTLDatabaseItem<AttributesType, R, TimeToLiveAttributesType>.Type
                         ) {
                         }
+                        #sourceLocation(file: "TestModule/test.swift", line: 3)
                         _check(ConcreteAlias.self)
+                        #sourceLocation()
                     }
                 }
 
