@@ -35,7 +35,7 @@ private let millisecondsToNanoSeconds: UInt64 = 1_000_000
 extension GenericDynamoDBCompositePrimaryKeyTable {
     /**
      Helper type that manages the state of a getItems request.
-    
+
      As suggested here - https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html - this helper type
      monitors the unprocessed items returned in the response from DynamoDB and uses an exponential backoff algorithm to retry those items using
      the same retry configuration as the underlying DynamoDB client.
