@@ -141,7 +141,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04]
         swift-version: ["6.3.3"]
-        swift-syntax-major: ["602", "603"]
+        swift-syntax-major: ["603"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -164,7 +164,7 @@ jobs:
         # needs to follow.
         run: |
           next=$((${{ matrix.swift-syntax-major }} + 1))
-          sed -i 's|"602.0.0"..<"604.0.0"|"${{ matrix.swift-syntax-major }}.0.0"..<"'${next}'.0.0"|' Package.swift
+          sed -i 's|"603.0.0"..<"604.0.0"|"${{ matrix.swift-syntax-major }}.0.0"..<"'${next}'.0.0"|' Package.swift
           grep swift-syntax Package.swift
       - name: Resolve dependencies
         run: swift package update
