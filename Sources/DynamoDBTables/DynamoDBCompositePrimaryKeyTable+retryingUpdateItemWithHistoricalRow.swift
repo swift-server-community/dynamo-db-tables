@@ -33,7 +33,7 @@ extension DynamoDBCompositePrimaryKeyTable {
       row is unable to be updated. The `historicalItemProvider` is called to
       provide the historical item based on the primary item that was
       inserted into the database table.
-    
+
      - Parameters:
         - key: The composite key for the version to update.
         - retries: the number of times to attempt to retry the update before failing.
