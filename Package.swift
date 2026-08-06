@@ -51,8 +51,8 @@ let package = Package(
         .trait(name: "SOTOSDK"),
     ],
     dependencies: [
-        .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "1.0.0"),
-        .package(url: "https://github.com/soto-project/soto.git", from: "7.0.0"),
+        .package(url: "https://github.com/awslabs/aws-sdk-swift.git", from: "1.7.0"),
+        .package(url: "https://github.com/soto-project/soto.git", from: "7.15.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
         .package(url: "https://github.com/apple/swift-configuration.git", from: "1.0.0"),
