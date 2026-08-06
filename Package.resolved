@@ -1,5 +1,5 @@
 {
-  "originHash" : "b4effee5ae858a295ec0f1658e250b4b7e82fc7e152dd69e9a79dea18f36834d",
+  "originHash" : "fa73d247e79889251a11e56089e8cf684165970eb95d73bb1fa06a8e9786fcc8",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -78,8 +78,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tachyonics/smockable",
       "state" : {
-        "revision" : "23c8c7cce2a63cd553dff4779b488f3cf726b5b2",
-        "version" : "1.0.0-rc.4"
+        "revision" : "b5a13ed774970fbd56f7c4be7e7b5f9741fc45af",
+        "version" : "1.0.0-rc.5"
       }
     },
     {
