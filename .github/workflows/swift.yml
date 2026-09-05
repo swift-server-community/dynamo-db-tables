@@ -45,7 +45,7 @@ jobs:
           echo "=== libcurl ===" && dpkg -l | grep -i libcurl
           echo "=== libssl/libcrypto ===" && ldconfig -p | grep -E "libssl|libcrypto" | head -10
       - name: Build
-        run: swift build -c release -Xswiftc -strict-concurrency=complete
+        run: swift build -c release --traits AWSSDK -Xswiftc -strict-concurrency=complete
       - name: Run tests
         # IntegrationTests skipped on the AWS SDK path: aws-crt-swift has a flaky
         # TLS-context init failure on Linux GHA runners. See aws-sdk-swift #1984.
@@ -58,13 +58,13 @@ jobs:
           SSL_CERT_DIR: /etc/ssl/certs
         run: |
           set -o pipefail
-          swift test --skip IntegrationTests 2>&1 | tee build.log
+          swift test --traits AWSSDK --skip IntegrationTests 2>&1 | tee build.log
       - name: Rebuild tests for SwiftLint analyze
         # Separate verbose build to produce a compiler invocation log;
         # needs to happen after the real test run so the crash-triggering
         # build path isn't the one that produced the test artifacts.
         if: matrix.os == 'ubuntu-24.04'
-        run: swift build --build-tests -v > build.log 2>&1
+        run: swift build --build-tests --traits AWSSDK -v > build.log 2>&1
       - name: Install SwiftLint
         # SwiftLint's prebuilt Linux binary requires a GLIBC only present on 24.04+
         if: matrix.os == 'ubuntu-24.04'
