@@ -78,8 +78,46 @@ become source-breaking after 1.0.
 
 - **Soto SDK trait.** Optional Soto integration via the `SOTOSDK` package trait
   (#123), so consumers that prefer Soto over aws-sdk-swift have a first-class
-  path. The default trait (`AWSSDK`) leaves the existing aws-sdk-swift path
-  unchanged.
+  path. It landed with `AWSSDK` as the default trait, leaving the existing
+  aws-sdk-swift path unchanged; that default has since been removed — see below.
+
+- **No default SDK backend.** `AWSSDK` was the default trait, which made
+  aws-sdk-swift the implicit choice; the default trait set is now empty and a
+  consumer names `AWSSDK` or `SOTOSDK`. Source-breaking for anyone relying on the
+  default, which is why it lands before 1.0.
+
+  Two reasons. The two traits are alternatives rather than options, so no default
+  is defensible — whichever is picked, half of consumers are opted into a
+  dependency they never link, and the manifest reads as though one backend is the
+  real one. And a non-empty default set trips a SwiftPM resolution bug: enabled
+  traits are reset to a dependency's *declared defaults* partway through PubGrub
+  rather than propagating the set the root package configured
+  (swiftlang/swift-package-manager#9269, whose fix does not cover this path;
+  reproduced on 6.4 snapshots from 2026-07-06 and 2026-08-01). A SOTO-only
+  consumer's resolution therefore came to believe aws-sdk-swift was required,
+  found nothing constraining it, ranged over its ~500 tags and gave up with
+  `exhausted attempts to resolve the dependencies graph`. It struck any
+  constrained re-solve — `swift package update`, even of one unrelated package —
+  while a clean resolve succeeded, which is what made it look intermittent. An
+  empty default set resets to nothing, so no backend is spuriously required in
+  either direction.
+
+  The cost is that forgetting the trait yields an empty backend module, whose
+  first symptom is `cannot find type ... in scope` naming neither this package nor
+  the trait. `TraitGuard.swift` in each backend module answers that: with the trait
+  off it declares the module's two public entry points as `@available(*,
+  unavailable)` stubs, so the name still resolves and the compiler reports the
+  unavailability — at the consumer's own use site, with a message naming the trait
+  and how to enable it. Only two stubs per module are needed; everything else there
+  is `internal` or an extension on an SDK type, and so was never nameable from
+  outside.
+
+  Preferred over a `#warning` in the empty module, which was the first attempt. A
+  stub is silent unless something names it, so it adds no diagnostic to a bare
+  `swift build` of this package and none to a `--traits SOTOSDK` build that still
+  compiles the AWS target; and it puts the explanation in the consumer's file
+  rather than in a dependency's. It does leave the usual cascade after the primary
+  error (the stub has no members), which is the accepted trade.
 
 - **swift-configuration integration.** Configurable behavior pulled from
   `swift-configuration` (#125), so consumers that already use it get
